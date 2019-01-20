@@ -40,15 +40,15 @@ class BlindController extends IPSModule
         //Never delete this line!
         parent::ApplyChanges();
 
+        $this->RegisterReferences();
+
+        $this->RegisterVariables();
+
         if ($this->GetValue('ACTIVATED')) {
             $this->SetTimerInterval('Update', $this->ReadPropertyInteger('UpdateInterval') * 60 * 1000);
         } else {
             $this->SetTimerInterval('Update', 0);
         }
-
-        $this->RegisterReferences();
-
-        $this->RegisterVariables();
 
         $this->SetInstanceStatus();
     }
