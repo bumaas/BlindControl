@@ -1,0 +1,13 @@
+{
+  "id": "{538f6461-5410-4f4c-91d3-b39122152d56}",
+  "name": "Blind Controller",
+  "type": 3,
+  "vendor": "",
+  "aliases":
+  [
+  ],
+  "parentRequirements": [],
+  "childRequirements": [],
+  "implemented": [],
+  "prefix": "BLC"
+}

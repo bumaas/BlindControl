@@ -1,0 +1,62 @@
+{
+  "elements": [
+    {"type": "SelectVariable", "name": "BlindLevelID", "caption": "Blind Level ID"},
+    {
+      "type":  "ExpansionPanel", "caption": "Is Day Detection",
+      "items": [
+        {"type": "SelectVariable", "name": "IsDayIndicatorID", "caption": "Is Day Indicator ID"},
+        {"type": "Label", "caption": "If no 'Is Day' indicator is available, the day will be calculated by brightness"},
+        {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
+        {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
+      ]
+    },
+    {
+      "type":  "ExpansionPanel", "caption": "Time Schedule",
+      "items": [
+        {"type": "SelectEvent", "name": "WeeklyTimeTableEventID", "caption": "Weekly Timetable Event ID"},
+        {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "WakeUp Time (optional)"},
+        {
+          "type":    "ExpansionPanel",
+          "caption": "Consider Holiday (optional)",
+          "items":   [
+            {"type": "SelectVariable", "name": "HolidayIndicatorID", "caption": "Holiday Indicator ID"},
+            {
+              "type": "Select", "name": "DayUsedWhenHoliday", "caption": "Used Weekday when Holiday", "options": [
+              {"caption": "- not used -", "value": 0},
+              {"caption": "Monday", "value": 1},
+              {"caption": "Tuesday", "value": 2},
+              {"caption": "Wednesday", "value": 3},
+              {"caption": "Thursday", "value": 4},
+              {"caption": "Friday", "value": 5},
+              {"caption": "Saturday", "value": 6},
+              {"caption": "Sunday", "value": 7}
+            ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type":  "ExpansionPanel", "caption": "Expert Parameters",
+      "items": [
+        {"type": "NumberSpinner", "name": "UpdateInterval", "caption": "Update Interval", "suffix": "Minutes"},
+        {"type": "NumberSpinner", "name": "DeactivationAutomaticMovement", "caption": "Deactivation Time after automatic Movement", "suffix": "Minutes"},
+        {"type": "NumberSpinner", "name": "DeactivationManualMovement", "caption": "Deactivation Time after manual Movement", "suffix": "Minutes"}
+      ]
+    }
+  ],
+  "actions":  [
+    {
+      "type":    "Button",
+      "caption": "Control Blind",
+      "onClick": "BLC_ControlBlind($id); echo 'Finished!'"
+    }
+  ],
+  "status":   [
+    {"code": 201, "icon": "error", "caption": "Weekly Timetable Event ID is not not valid"},
+    {"code": 202, "icon": "error", "caption": "Holiday Indicator ID is not valid"},
+    {"code": 203, "icon": "error", "caption": "Level ID is not valid"},
+    {"code": 204, "icon": "error", "caption": "Brightness ID is not valid"},
+    {"code": 205, "icon": "error", "caption": "Brightness Threshold ID is not valid"}
+  ]
+}
