@@ -51,9 +51,9 @@ BLC_ControlBind(int $InstanceID)
 Prüft die Rollladenposition gemäß der in der Instanz festgelegten Eigenschaften und fährt ihn auf die ermittelte Position.
 
 ```php
-BLC_MoveBlind(int $level, int $deactivationTimeAuto): bool
+BLC_CloseBlind(int $percent, int $deactivationTimeAuto): bool
 ```
-Fährt den Rollladen auf die gewünschte Position.
+Schließt den Rollladen auf die gewünschte Prozentzahl.
 $level: 0 - 100
 Angabe des Levels (0=geöffnet, 100 = geschlossen)
 $deactivationTimeAuto: Anzahl der Sekunden, die mindestens seit der letzten automatischen Bewegung vergangen sein müssen. Sonst wird der Rollladen nicht bewegt.

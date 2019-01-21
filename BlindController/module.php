@@ -140,11 +140,14 @@ class BlindController extends IPSModule
         // Das aktuelle Level im Jalousieaktor auslesen
         $rLevelist = GetValueFloat($idLevel);
 
-        //wurde der Rollladen manuell bewegt?
-        $bNoMove = $this->isMovementLocked($rLevelist, $tsBlindLastMovement, $tsAutomatik, $gestern_ab, $heute_auf, $heute_ab);
-
         $profile = $this->GetProfileInformation();
+
         // Das neue Solllevel für den Rollladen festlegen
+        // wurde der Rollladen manuell bewegt?
+        $bNoMove = $this->isMovementLocked(
+            $rLevelist, $tsBlindLastMovement, $tsAutomatik, $gestern_ab, $heute_auf, $heute_ab, $profile['LevelClosed'], $profile['LevelOpened']
+        );
+
         if ($bNoMove) {
             $rLevelneu = $rLevelist;
         } else {
@@ -179,7 +182,8 @@ class BlindController extends IPSModule
         );
 
         // am Tag (d.h. es ist hell und nach der Öffnungszeit) wird überprüft, ob das Fenster beschattet werden soll
-        if ($isDay && ($rLevelist > $this->blindLevelClosed) && (time() >= strtotime($heute_auf))) {
+        $now = time();
+        if ($isDay && ($now >= strtotime($heute_auf)) && ($now <= strtotime($heute_ab))) {
 
             $rLevelneu = $profile['LevelOpened'];
 
@@ -271,9 +275,8 @@ class BlindController extends IPSModule
                 }
         */
         // wenn es dunkel ist hängt das Level nur vom Fensterstatus ab
-        $secs                         = time();
         $closeBladeClockDependentOnly = false;
-        if ((!$isDay && !$closeBladeClockDependentOnly) || ($secs >= strtotime($heute_ab)) || ($secs <= strtotime($heute_auf))) {
+        if ((!$isDay && !$closeBladeClockDependentOnly) || ($now <= strtotime($heute_auf)) || ($now >= strtotime($heute_ab))) {
             $iDelta_auto = 0;
             if ($bWindowOpen) {
                 //$rLevelneu = $BlindLevelWhenWindowIsOpen;
@@ -312,11 +315,11 @@ class BlindController extends IPSModule
 */
 
         if (!$bNoMove) {
-            $level = $rLevelist/($profile['MaxValue'] - $profile['MinValue']);
-            if ($profile['Reversed']){
+            $level = $rLevelneu / ($profile['MaxValue'] - $profile['MinValue']);
+            if ($profile['Reversed']) {
                 $level = 1 - $level;
             }
-            $this->MoveBlind((int)($level * 100), $iDelta_auto);
+            $this->CloseBlind((int) ($level * 100), $iDelta_auto);
         }
 
         IPS_SemaphoreLeave($this->InstanceID . '- Blind');
@@ -494,7 +497,8 @@ class BlindController extends IPSModule
         return 0;
     }
 
-    private function isMovementLocked(float $rLevelist, int $tsBlindLastMovement, int $tsAutomatik, $gestern_ab, $heute_auf, $heute_ab): bool
+    private function isMovementLocked(float $rLevelist, int $tsBlindLastMovement, int $tsAutomatik, $gestern_ab, $heute_auf, $heute_ab,
+                                      $blindLevelClosed, $blindLevelOpened): bool
     {
 
         //zuerst prüfen, ob der Rollladen nach der letzten aut. Bewegung (+60sec) manuell bewegt wurde
@@ -511,15 +515,17 @@ class BlindController extends IPSModule
             $objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
 
             $this->Logger_Dbg(
-                __FUNCTION__, "Rollladenlevel ('" . $objectName . "') manuell gesetzt - Value: " . $rLevelist . ', tsBlindLastMovement: '
-                              . $this->FormatTimeStamp($tsBlindLastMovement) . ', TimestampManual: ' . $this->FormatTimeStamp(
-                                $this->ReadAttributeInteger('AttrTimeStampManual')
-                            ) . ', iDelta_manu: ' . (time() - $tsBlindLastMovement) . '/' . $iDelta_manu
+                __FUNCTION__,
+                "Rollladenlevel ('" . $objectName . "') manuell gesetzt - Value: " . $rLevelist . ', tsBlindLastMovement: ' . $this->FormatTimeStamp(
+                    $tsBlindLastMovement
+                ) . ', TimestampManual: ' . $this->FormatTimeStamp(
+                    $this->ReadAttributeInteger('AttrTimeStampManual')
+                ) . ', iDelta_manu: ' . (time() - $tsBlindLastMovement) . '/' . $iDelta_manu
             );
 
-            if ($rLevelist === $this->blindLevelClosed) {
+            if ($rLevelist === $blindLevelClosed) {
                 $this->Logger_Inf("Der Rollladen '" . $objectName . "' wurde manuell geschlossen.");
-            } else if ($rLevelist === $this->blindLevelOpened) {
+            } else if ($rLevelist === $blindLevelOpened) {
                 $this->Logger_Inf("Der Rollladen '" . $objectName . "' wurde manuell geöffnet.");
             } else {
                 $this->Logger_Inf(
@@ -536,7 +542,7 @@ class BlindController extends IPSModule
             //tagsüber gilt:
 
             // der Rollladen ist nicht bereits manuell geschlossen worden
-            if (($rLevelist === $this->blindLevelClosed) && ($tsManualMovement > strtotime($heute_auf))) {
+            if (($rLevelist === $blindLevelClosed) && ($tsManualMovement > strtotime($heute_auf))) {
                 $bNoMove = true;
             } else {
                 $bNoMove = (($now - $tsBlindLastMovement) < $iDelta_manu);
@@ -558,72 +564,77 @@ class BlindController extends IPSModule
     }
 
     //-----------------------------------------------
-    public function MoveBlind(int $level, int $deactivationTimeAuto): bool
+    public function CloseBlind(int $percent, int $deactivationTimeAuto): bool
     {
+
+        $this->Logger_Dbg(__FUNCTION__, sprintf('Parameter percent: %s, deactivationTimeAuto: %s', $percent, $deactivationTimeAuto));
 
         $objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
 
         $profile = $this->GetProfileInformation();
-        $this->Logger_Dbg(
-            __FUNCTION__, sprintf('Profile: %s', json_encode($profile)));
+        $this->Logger_Dbg(__FUNCTION__, sprintf('Profile: %s', json_encode($profile)));
 
         if ($profile === false) {
             return false;
         }
 
-        $levelAction = $profile['MinValue'] + ($level / 100) * ($profile['MaxValue'] - $profile['MinValue']);
+        $newLevel = $profile['MinValue'] + ($percent / 100) * ($profile['MaxValue'] - $profile['MinValue']);
 
         if ($profile['Reversed']) {
-            $levelAction = $profile['MaxValue'] - $levelAction;
+            $newLevel = $profile['MaxValue'] - $newLevel;
         }
 
         $levelID             = $this->ReadPropertyInteger('BlindLevelID');
-        $rLevelist           = GetValueFloat($levelID);
+        $actualLevel         = GetValueFloat($levelID);
         $tsBlindLastMovement = IPS_GetVariable($levelID)['VariableChanged'];
-        $LeveldiffPercentage = abs($levelAction - $rLevelist)/($profile['MaxValue'] - $profile['MinValue']);
-        $iTimediff           = time() - $tsBlindLastMovement;
+        $LeveldiffPercentage = abs($newLevel - $actualLevel) / ($profile['MaxValue'] - $profile['MinValue']);
+        $timediff            = time() - $tsBlindLastMovement;
+
+        $this->Logger_Dbg(__FUNCTION__, sprintf('actualLevel: %s, newLevel: %s', $actualLevel, $newLevel));
 
         $ret = true;
+
         // Wenn sich das aktuelle Level um mehr als 5% von neuem Level unterscheidet
-        if (($LeveldiffPercentage > 0.05) && ($iTimediff >= $deactivationTimeAuto)) {
+        if (($LeveldiffPercentage > 0.05) && ($timediff >= $deactivationTimeAuto)) {
 
             // Level setzen
             //Wert übertragen
-            if (@RequestAction($levelID, $levelAction)) {
+            if (@RequestAction($levelID, $newLevel)) {
                 // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
                 $this->WriteAttributeInteger('AttrTimeStampAutomatic', time());
                 $this->Logger_Dbg(
                     __FUNCTION__, "$objectName: TimestampAutomatik: " . $this->ReadAttributeInteger('AttrTimeStampAutomatic')
                 );
 
-                $this->WriteInfo($levelAction);
+                $this->WriteInfo($newLevel, $profile['LevelClosed'], $profile['LevelOpened']);
             } else {
                 $this->Logger_Dbg(
-                    __FUNCTION__,
-                    'Fehler beim Setzen der Werte. (id = ' . $levelID . ', Value = ' . $level . ')'
+                    __FUNCTION__, 'Fehler beim Setzen der Werte. (id = ' . $levelID . ', Value = ' . $percent . ')'
                 );
                 $ret = false;
             }
-            $this->Logger_Dbg(__FUNCTION__, $objectName . ': ' . $rLevelist . ' to ' . $levelAction );
+            $this->Logger_Dbg(__FUNCTION__, $objectName . ': ' . $actualLevel . ' to ' . $newLevel);
 
             // kleine Pause, um Kommunikationsstörungen zu vermeiden
             sleep(5);
 
         } else {
-            $this->Logger_Dbg(__FUNCTION__, "iDelta_auto: $iTimediff " . '/' . $deactivationTimeAuto . ', LeveldiffPercentage: ' . $LeveldiffPercentage);
+            $this->Logger_Dbg(
+                __FUNCTION__, "DeactivationTimeAuto: $timediff " . '/' . $deactivationTimeAuto . ', LeveldiffPercentage: ' . $LeveldiffPercentage
+            );
         }
 
         return $ret;
     }
 
-    private function WriteInfo(float $rLevelneu)
+    private function WriteInfo(float $rLevelneu, $blindLevelClosed, $blindLevelOpened)
     {
         global $iBrightness;
         $objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
 
-        if ($rLevelneu === $this->blindLevelClosed) {
+        if ($rLevelneu === $blindLevelClosed) {
             $this->Logger_Inf("Der Rollladen '" . $objectName . "' wurde geschlossen. (" . $iBrightness . ' lx)');
-        } else if ($rLevelneu === $this->blindLevelOpened) {
+        } else if ($rLevelneu === $blindLevelOpened) {
             $this->Logger_Inf("Der Rollladen '" . $objectName . "' wurde geöffnet. (" . $iBrightness . ' lx)');
         } else {
             $this->Logger_Inf("Der Rollladen '" . $objectName . "' wurde auf " . sprintf('%.0f', 100 * $rLevelneu) . '% gefahren.');
@@ -750,18 +761,17 @@ class BlindController extends IPSModule
             return null;
         }
 
-        $profile = IPS_GetVariableProfile($profileName);
+        $profile          = IPS_GetVariableProfile($profileName);
         $profileNameParts = explode('.', $profileName);
 
         $reversed = strcasecmp('reversed', end($profileNameParts)) === 0;
         return [
-            'Name' => $profileName,
-            'MinValue' => $profile['MinValue'],
-            'MaxValue' => $profile['MaxValue'],
-            'Reversed' => $reversed,
-            'LevelOpened' => $reversed?$profile['MaxValue']:$profile['MinValue'],
-            'LevelClosed' => $reversed?$profile['MinValue']:$profile['MaxValue']
-            ];
+            'Name'        => $profileName,
+            'MinValue'    => $profile['MinValue'],
+            'MaxValue'    => $profile['MaxValue'],
+            'Reversed'    => $reversed,
+            'LevelOpened' => $reversed ? $profile['MaxValue'] : $profile['MinValue'],
+            'LevelClosed' => $reversed ? $profile['MinValue'] : $profile['MaxValue']];
 
 
     }
