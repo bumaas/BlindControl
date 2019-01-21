@@ -27,7 +27,8 @@ Das Blind Control Modul dient der Steuerung von Rollläden oder anderweitigen Ab
  - Symcon 5.1
  
  - Es werden alle Aktoren unterstützt, die über eine Statusvariable verfügen und sich über RequestAction steuern lassen.
-Die Statusvariable muss vom Typ Float sein und einen Werteberich von 0.0 - 1.0 haben. 
+Die Statusvariable muss vom Typ Float sein und ein Profil mit einem korrekten Minimal- und Maximalwert besitzen. Bei einem Rollladen, der beim Minimalwert 
+geschlossen und beim Maximalwert geöffnet ist, ist ein Profil mit der Namensendung ".Reversed" zu verwenden.  
 
 ## 3. Installation
 
@@ -48,6 +49,14 @@ In Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Blind Contr
 BLC_ControlBind(int $InstanceID)
 ```
 Prüft die Rollladenposition gemäß der in der Instanz festgelegten Eigenschaften und fährt ihn auf die ermittelte Position.
+
+```php
+BLC_MoveBlind(int $level, int $deactivationTimeAuto): bool
+```
+Fährt den Rollladen auf die gewünschte Position.
+$level: 0 - 100
+Angabe des Levels (0=geöffnet, 100 = geschlossen)
+$deactivationTimeAuto: Anzahl der Sekunden, die mindestens seit der letzten automatischen Bewegung vergangen sein müssen. Sonst wird der Rollladen nicht bewegt.
 
 
 ## 5. Konfiguration
