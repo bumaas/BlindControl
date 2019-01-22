@@ -41,14 +41,16 @@
       "items": [
         {"type": "NumberSpinner", "name": "UpdateInterval", "caption": "Update Interval", "suffix": "Minutes"},
         {"type": "NumberSpinner", "name": "DeactivationAutomaticMovement", "caption": "Deactivation Time after automatic Movement", "suffix": "Minutes"},
-        {"type": "NumberSpinner", "name": "DeactivationManualMovement", "caption": "Deactivation Time after manual Movement", "suffix": "Minutes"}
+        {"type": "NumberSpinner", "name": "DeactivationManualMovement", "caption": "Deactivation Time after manual Movement", "suffix": "Minutes"},
+        {"type": "CheckBox", "name": "WriteLogInformationToIPSLogger", "caption": "Log Information are written to IPSLogger of IPSLibrary"},
+        {"type": "CheckBox", "name": "WriteDebugInformationToIPSLogger", "caption": "Debug Information are written to IPSLogger of IPSLibrary"}
       ]
     }
   ],
   "actions":  [
-    {"type":    "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id); echo 'Finished!'"},
-    {"type":    "Button", "caption": "Open Blind", "onClick": "BLC_CloseBlind($id, 0, 0); echo 'Finished!'"},
-    {"type":    "Button", "caption": "Close Blind", "onClick": "BLC_CloseBlind($id, 100, 0); echo 'Finished!'"}
+    {"type": "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id); echo 'Finished!'"},
+    {"type": "Button", "caption": "Open Blind", "onClick": "BLC_CloseBlind($id, 0, 0); echo 'Finished!'"},
+    {"type": "Button", "caption": "Close Blind", "onClick": "BLC_CloseBlind($id, 100, 0); echo 'Finished!'"}
   ],
   "status":   [
     {"code": 201, "icon": "error", "caption": "Weekly Timetable Event ID is not not valid"},

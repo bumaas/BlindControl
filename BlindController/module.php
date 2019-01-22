@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+if (function_exists('IPSUtils_Include')){
+    IPSUtils_Include('IPSLogger.inc.php', 'IPSLibrary::app::core::IPSLogger');
+}
 
 /** @noinspection AutoloadingIssuesInspection */
 
@@ -34,6 +37,10 @@ class BlindController extends IPSModule
     {
         //Never delete this line!
         parent::ApplyChanges();
+
+        if (function_exists('IPSLogger_Inf')){
+            IPSLogger_Inf(__FILE__, __FUNCTION__);
+        }
 
         $this->RegisterReferences();
 
@@ -93,7 +100,7 @@ class BlindController extends IPSModule
         }
 
 
-        $Hinweis = '';
+        //$Hinweis = '';
 
         // Eingansparameter prüfen
         /*        if (!ParametersOK($sRoom, $ini)) {
@@ -330,6 +337,8 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('DayUsedWhenHoliday', 0);
         $this->RegisterPropertyInteger('DeactivationAutomaticMovement', 20);
         $this->RegisterPropertyInteger('DeactivationManualMovement', 120);
+        $this->RegisterPropertyBoolean('WriteDebugInformationToIPSLogger', false);
+        $this->RegisterPropertyBoolean('WriteLogInformationToIPSLogger', false);
     }
 
     private function RegisterReferences(): void
@@ -538,8 +547,8 @@ class BlindController extends IPSModule
 
             if ($bNoMove) {
                 $this->Logger_Dbg(
-                    __FUNCTION__, 'Rollladen wurde manuell bewegt (Tag). DeactivationTimeManu: %s/%s', time() - $tsBlindLastMovement,
-                    $deactivationTimeManu);
+                    __FUNCTION__, sprintf('Rollladen wurde manuell bewegt (Tag). DeactivationTimeManu: %s/%s', time() - $tsBlindLastMovement,
+                    $deactivationTimeManu));
             }
 
         } elseif (($tsManualMovement > strtotime($heute_ab))
@@ -798,14 +807,22 @@ class BlindController extends IPSModule
 
     private function Logger_Inf(string $message): void
     {
-        $this->LogMessage($message, KL_MESSAGE);
-        $this->SetValue('LAST_MESSAGE', $message);
         $this->SendDebug('LOG_INFO', $message, 0);
+        if ($this->ReadPropertyBoolean('WriteLogInformationToIPSLogger') && function_exists('IPSLogger_Inf')){
+            IPSLogger_Inf(basename(__FILE__, '.php'), $message);
+        } else {
+            $this->LogMessage($message, KL_MESSAGE);
+        }
+
+        $this->SetValue('LAST_MESSAGE', $message);
     }
 
     private function Logger_Dbg(string $message, string $data): void
     {
         $this->SendDebug($message, $data, 0);
+        if ($this->ReadPropertyBoolean('WriteDebugInformationToIPSLogger') && function_exists('IPSLogger_Dbg')){
+            IPSLogger_Dbg(basename(__FILE__, '.php'), $data);
+        }
     }
 
 }
