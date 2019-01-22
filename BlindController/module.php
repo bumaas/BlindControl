@@ -809,7 +809,7 @@ class BlindController extends IPSModule
     {
         $this->SendDebug('LOG_INFO', $message, 0);
         if ($this->ReadPropertyBoolean('WriteLogInformationToIPSLogger') && function_exists('IPSLogger_Inf')){
-            IPSLogger_Inf(basename(__FILE__, '.php'), $message);
+            IPSLogger_Inf(__CLASS__, $message);
         } else {
             $this->LogMessage($message, KL_MESSAGE);
         }
@@ -821,7 +821,7 @@ class BlindController extends IPSModule
     {
         $this->SendDebug($message, $data, 0);
         if ($this->ReadPropertyBoolean('WriteDebugInformationToIPSLogger') && function_exists('IPSLogger_Dbg')){
-            IPSLogger_Dbg(basename(__FILE__, '.php'), $data);
+            IPSLogger_Dbg(basename(__CLASS__ . '.' . IPS_GetObject($this->InstanceID)['ObjectName'], '.php'), $data);
         }
     }
 
