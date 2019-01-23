@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-if (function_exists('IPSUtils_Include')){
+if (function_exists('IPSUtils_Include')) {
     IPSUtils_Include('IPSLogger.inc.php', 'IPSLibrary::app::core::IPSLogger');
 }
 
@@ -19,6 +19,7 @@ class BlindController extends IPSModule
     private const STATUS_INST_ISDAY_INDICATOR_ID_IS_INVALID = 206;
     private const STATUS_INST_DEACTIVATION_TIME_MANUAL_IS_INVALID = 207;
     private const STATUS_INST_DEACTIVATION_TIME_AUTOMATIC_IS_INVALID = 208;
+    private const STATUS_INST_TIMETABLE_IS_INVALID = 209;
 
 
     // Überschreibt die interne IPS_Create($id) Funktion
@@ -38,7 +39,7 @@ class BlindController extends IPSModule
         //Never delete this line!
         parent::ApplyChanges();
 
-        if (function_exists('IPSLogger_Inf')){
+        if (function_exists('IPSLogger_Inf')) {
             IPSLogger_Inf(__FILE__, __FUNCTION__);
         }
 
@@ -425,6 +426,10 @@ class BlindController extends IPSModule
             return;
         }
 
+        if ($ret = $this->checkTimeTable()){
+            $this->SetStatus($ret);
+            return;
+        }
         $this->SetStatus(IS_ACTIVE);
 
     }
@@ -547,8 +552,10 @@ class BlindController extends IPSModule
 
             if ($bNoMove) {
                 $this->Logger_Dbg(
-                    __FUNCTION__, sprintf('Rollladen wurde manuell bewegt (Tag). DeactivationTimeManu: %s/%s', time() - $tsBlindLastMovement,
-                    $deactivationTimeManu));
+                    __FUNCTION__, sprintf(
+                    'Rollladen wurde manuell bewegt (Tag). DeactivationTimeManu: %s/%s', time() - $tsBlindLastMovement, $deactivationTimeManu
+                )
+                );
             }
 
         } elseif (($tsManualMovement > strtotime($heute_ab))
@@ -632,8 +639,8 @@ class BlindController extends IPSModule
     {
         $objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
 
-        if ($this->ReadPropertyInteger('BrightnessID') > 0){
-            $brightness = sprintf (' (%s)', GetValueFormatted($this->ReadPropertyInteger('BrightnessID')));
+        if ($this->ReadPropertyInteger('BrightnessID') > 0) {
+            $brightness = sprintf(' (%s)', GetValueFormatted($this->ReadPropertyInteger('BrightnessID')));
         } else {
             $brightness = '';
         }
@@ -645,6 +652,36 @@ class BlindController extends IPSModule
         } else {
             $this->Logger_Inf("Der Rollladen '" . $objectName . "' wurde auf " . sprintf('%.0f', 100 * $rLevelneu) . '% gefahren.');
         }
+    }
+
+    public function checkTimeTable(): int
+    {
+        $eventScheduleGroups = IPS_GetEvent($this->ReadPropertyInteger('WeeklyTimeTableEventID'))['ScheduleGroups'];
+
+        foreach ($eventScheduleGroups as $scheduleGroup) {
+            $countID1 = $this->countNumberOfPointsWithActionId($scheduleGroup['Points'], 1);
+            $countID2 = $this->countNumberOfPointsWithActionId($scheduleGroup['Points'], 2);
+            if ($countID1 > 1) {
+                return self::STATUS_INST_TIMETABLE_IS_INVALID;
+            }
+            if (($countID1 + $countID2) === 0) {
+                return self::STATUS_INST_TIMETABLE_IS_INVALID;
+            }
+        }
+
+        return 0;
+
+    }
+
+    Private function CountNumberOfPointsWithActionId(array $points, int $actionID): int
+    {
+        $count = 0;
+        foreach ($points as $point) {
+            if ($point['ActionID'] === $actionID) {
+                $count++;
+            }
+        }
+        return $count;
     }
 
     //-------------------------------------
@@ -808,7 +845,7 @@ class BlindController extends IPSModule
     private function Logger_Inf(string $message): void
     {
         $this->SendDebug('LOG_INFO', $message, 0);
-        if ($this->ReadPropertyBoolean('WriteLogInformationToIPSLogger') && function_exists('IPSLogger_Inf')){
+        if ($this->ReadPropertyBoolean('WriteLogInformationToIPSLogger') && function_exists('IPSLogger_Inf')) {
             IPSLogger_Inf(__CLASS__, $message);
         } else {
             $this->LogMessage($message, KL_MESSAGE);
@@ -820,9 +857,10 @@ class BlindController extends IPSModule
     private function Logger_Dbg(string $message, string $data): void
     {
         $this->SendDebug($message, $data, 0);
-        if ($this->ReadPropertyBoolean('WriteDebugInformationToIPSLogger') && function_exists('IPSLogger_Dbg')){
-            IPSLogger_Dbg(basename(__CLASS__ . '.' . IPS_GetObject($this->InstanceID)['ObjectName'], '.php'), $data);
+        if ($this->ReadPropertyBoolean('WriteDebugInformationToIPSLogger') && function_exists('IPSLogger_Dbg')) {
+            IPSLogger_Dbg(__CLASS__ . '.' . IPS_GetObject($this->InstanceID)['ObjectName'], $data);
         }
     }
+
 
 }

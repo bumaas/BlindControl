@@ -57,6 +57,10 @@
     {"code": 202, "icon": "error", "caption": "Holiday Indicator ID is not valid"},
     {"code": 203, "icon": "error", "caption": "Level ID is not valid"},
     {"code": 204, "icon": "error", "caption": "Brightness ID is not valid"},
-    {"code": 205, "icon": "error", "caption": "Brightness Threshold ID is not valid"}
+    {"code": 205, "icon": "error", "caption": "Brightness Threshold ID is not valid"},
+    {"code": 206, "icon": "error", "caption": "IsDay ID is not valid"},
+    {"code": 207, "icon": "error", "caption": "Deactivation Time Manual is not valid"},
+    {"code": 208, "icon": "error", "caption": "Deactivation Time Automatic is not valid"},
+    {"code": 209, "icon": "error", "caption": "ScheduleGroups of Timetable are not valid"}
   ]
 }

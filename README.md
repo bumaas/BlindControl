@@ -68,7 +68,7 @@ Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstell
 **Wichtig:** 
 - der Wochenplan muss genau zwei Aktionen mit ID 1 und ID 2 beinhalten.
 - Die Aktion mit ID 1 stellt dabei die Aktion zum Hochfahren des Rollladens und die ID 2 die Aktion zum Runterfahren des Rollladens dar.
-- Es darf nur maximal einen Zeitraum zur Aktion 2 geben. 
+- Es darf nur maximal einen Zeitraum zur Aktion 1 (Hochfahren) geben. 
 
 ### Blind Controller
 
