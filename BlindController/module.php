@@ -44,6 +44,7 @@ class BlindController extends IPSModule
         }
 
         $this->RegisterReferences();
+        $this->RegisterMessages();
 
         $this->RegisterVariables();
 
@@ -78,6 +79,34 @@ class BlindController extends IPSModule
         return $this->SetValue($Ident, $Value);
     }
 
+    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    {
+        if (json_decode($this->GetBuffer('LastMessage')) === [$SenderID, $Message, $Data]) {
+            $this->Logger_Dbg(
+                __FUNCTION__, sprintf(
+                                'Duplicate Message: Timestamp: %s, SenderID: %s, $Message: %s, Data: %s', $TimeStamp, $SenderID, $Message,
+                                json_encode($Data)
+                            )
+            );
+            return;
+        }
+
+        $this->SetBuffer('LastMessage', json_encode([$SenderID, $Message, $Data]));
+
+        $this->Logger_Dbg(
+            __FUNCTION__, sprintf(
+                            'Timestamp: %s, SenderID: %s[%s], $Message: %s, Data: %s', $TimeStamp, IPS_GetObject($SenderID)['ObjectName'], $SenderID,
+                            $Message, json_encode($Data)
+                        )
+        );
+
+        $this->SetInstanceStatus();
+
+        if ($this->GetValue('ACTIVATED')) {
+            $this->ControlBlind();
+        }
+    }
+
     /**
      * Die folgenden Funktionen stehen automatisch zur Verfügung, wenn das Modul über die "Module Control" eingefügt wurden.
      * Die Funktionen werden, mit dem selbst eingerichteten Prefix, in PHP und JSON-RPC zur Verfügung gestellt:
@@ -85,6 +114,9 @@ class BlindController extends IPSModule
     public function ControlBlind(): bool
     {
 
+        if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
+            return false;
+        }
         /*        global $rSunAzimuth;
                 global $rSunAltitude;
                 global $rTemperature;*/
@@ -364,6 +396,39 @@ class BlindController extends IPSModule
         }
     }
 
+    private function RegisterMessages(): void
+    {
+        $objectIDs = [
+            $this->ReadPropertyInteger('WeeklyTimeTableEventID'),
+            $this->ReadPropertyInteger('HolidayIndicatorID'),
+            $this->ReadPropertyInteger('BrightnessID'),
+            $this->ReadPropertyInteger('BrightnessThresholdID'),
+            $this->ReadPropertyInteger('IsDayIndicatorID'),];
+
+        foreach ($this->GetMessageList() as $msgList) {
+            foreach ($msgList as $senderId => $msgs) {
+                foreach ($msgs as $msg) {
+                    $this->UnregisterMessage($senderId, $msg);
+                }
+            }
+        }
+
+        foreach ($objectIDs as $id) {
+            if ($id !== 0) {
+                switch (IPS_GetObject($id)['ObjectType']) {
+                    case OBJECTTYPE_EVENT:
+                        $this->RegisterMessage($id, EM_UPDATE);
+                        break;
+                    case OBJECTTYPE_VARIABLE:
+                        $this->RegisterMessage($id, VM_UPDATE);
+                        break;
+                    default:
+                        trigger_error(sprintf('Unknown ObjectType %s of id %s', IPS_GetObject($id)['ObjectType'], $id));
+                }
+            }
+        }
+    }
+
     private function RegisterAttributes(): void
     {
         $this->RegisterAttributeInteger('AttrTimeStampAutomatic', 0);
@@ -426,7 +491,7 @@ class BlindController extends IPSModule
             return;
         }
 
-        if ($ret = $this->checkTimeTable()){
+        if ($ret = $this->checkTimeTable()) {
             $this->SetStatus($ret);
             return;
         }
@@ -518,7 +583,7 @@ class BlindController extends IPSModule
             $this->WriteAttributeInteger('AttrTimeStampManual', $tsBlindLastMovement);
 
             $this->Logger_Dbg(
-                __FUNCTION__, "Rollladenlevel wurde manuell gesetzt - Value: " . $levelAct . ', tsBlindLastMovement: ' . $this->FormatTimeStamp(
+                __FUNCTION__, 'Rollladenlevel wurde manuell gesetzt - Value: ' . $levelAct . ', tsBlindLastMovement: ' . $this->FormatTimeStamp(
                                 $tsBlindLastMovement
                             ) . ', TimestampManual: ' . $this->FormatTimeStamp(
                                 $this->ReadAttributeInteger('AttrTimeStampManual')
@@ -531,7 +596,7 @@ class BlindController extends IPSModule
                 $this->Logger_Inf("Der Rollladen '" . $objectName . "' wurde manuell geöffnet.");
             } else {
                 $this->Logger_Inf(
-                    "Der Rollladen wurde manuell auf " . sprintf('%.0f', 100 * $levelAct) . '% gefahren.'
+                    'Der Rollladen wurde manuell auf ' . sprintf('%.0f', 100 * $levelAct) . '% gefahren.'
                 );
             }
 
@@ -553,8 +618,9 @@ class BlindController extends IPSModule
             if ($bNoMove) {
                 $this->Logger_Dbg(
                     __FUNCTION__, sprintf(
-                    'Rollladen wurde manuell bewegt (Tag). DeactivationTimeManu: %s/%s', time() - $tsBlindLastMovement, $deactivationTimeManu
-                )
+                                    'Rollladen wurde manuell bewegt (Tag). DeactivationTimeManu: %s/%s', time() - $tsBlindLastMovement,
+                                    $deactivationTimeManu
+                                )
                 );
             }
 
@@ -574,6 +640,10 @@ class BlindController extends IPSModule
     //-----------------------------------------------
     public function CloseBlind(int $percent, int $deactivationTimeAuto): bool
     {
+
+        if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
+            return false;
+        }
 
         $this->Logger_Dbg(__FUNCTION__, sprintf('Parameter percent: %s, deactivationTimeAuto: %s', $percent, $deactivationTimeAuto));
 
@@ -635,7 +705,7 @@ class BlindController extends IPSModule
         return $ret;
     }
 
-    private function WriteInfo($rLevelneu, $blindLevelClosed, $blindLevelOpened)
+    private function WriteInfo($rLevelneu, $blindLevelClosed, $blindLevelOpened): void
     {
         $objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
 
@@ -659,12 +729,23 @@ class BlindController extends IPSModule
         $eventScheduleGroups = IPS_GetEvent($this->ReadPropertyInteger('WeeklyTimeTableEventID'))['ScheduleGroups'];
 
         foreach ($eventScheduleGroups as $scheduleGroup) {
-            $countID1 = $this->countNumberOfPointsWithActionId($scheduleGroup['Points'], 1);
-            $countID2 = $this->countNumberOfPointsWithActionId($scheduleGroup['Points'], 2);
+            $countID1 = $this->CountNumberOfPointsWithActionId($scheduleGroup['Points'], 1);
+            $countID2 = $this->CountNumberOfPointsWithActionId($scheduleGroup['Points'], 2);
             if ($countID1 > 1) {
+                $this->Logger_Dbg(
+                    __FUNCTION__, sprintf(
+                                    'Invalid TimeTable: More (%s) than one Point with ActionID 1. (ScheduleGroup: %s)', $countID1,
+                                    json_encode($scheduleGroup)
+                                )
+                );
                 return self::STATUS_INST_TIMETABLE_IS_INVALID;
             }
             if (($countID1 + $countID2) === 0) {
+                $this->Logger_Dbg(
+                    __FUNCTION__, sprintf(
+                                    'Invalid TimeTable: No Points with ActionID 1 or 2 found. (ScheduleGroup: %s)', json_encode($scheduleGroup)
+                                )
+                );
                 return self::STATUS_INST_TIMETABLE_IS_INVALID;
             }
         }
@@ -828,7 +909,7 @@ class BlindController extends IPSModule
         //prüfen, ob Automatik nach der letzten Rollladenbewegung eingestellt wurde.
         $tsAutomatikVariable  = IPS_GetVariable(IPS_GetObjectIDByIdent('ACTIVATED', $this->InstanceID))['VariableChanged'];
         $tsAutomaticAttribute = $this->ReadAttributeInteger('AttrTimeStampAutomatic');
-        if ($this->GetValue('ACTIVATED') && ($tsAutomatikVariable > $tsBlindLevelChanged) && ($tsAutomaticAttribute !== $tsBlindLevelChanged)) {
+        if (($tsAutomatikVariable > $tsBlindLevelChanged) && ($tsAutomaticAttribute !== $tsBlindLevelChanged) && $this->GetValue('ACTIVATED')) {
             // .. dann Timestamp Automatik mit Timestamp des Rollladens gleichsetzen
             $this->WriteAttributeInteger('AttrTimeStampAutomatic', $tsBlindLevelChanged);
             $this->Logger_Inf('Rollladenautomatik wurde eingestellt');
@@ -845,7 +926,7 @@ class BlindController extends IPSModule
     private function Logger_Inf(string $message): void
     {
         $this->SendDebug('LOG_INFO', $message, 0);
-        if ($this->ReadPropertyBoolean('WriteLogInformationToIPSLogger') && function_exists('IPSLogger_Inf')) {
+        if (function_exists('IPSLogger_Inf') && $this->ReadPropertyBoolean('WriteLogInformationToIPSLogger')) {
             IPSLogger_Inf(__CLASS__, $message);
         } else {
             $this->LogMessage($message, KL_MESSAGE);
@@ -857,7 +938,7 @@ class BlindController extends IPSModule
     private function Logger_Dbg(string $message, string $data): void
     {
         $this->SendDebug($message, $data, 0);
-        if ($this->ReadPropertyBoolean('WriteDebugInformationToIPSLogger') && function_exists('IPSLogger_Dbg')) {
+        if (function_exists('IPSLogger_Dbg') && $this->ReadPropertyBoolean('WriteDebugInformationToIPSLogger')) {
             IPSLogger_Dbg(__CLASS__ . '.' . IPS_GetObject($this->InstanceID)['ObjectName'], $data);
         }
     }

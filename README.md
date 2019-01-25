@@ -46,12 +46,12 @@ In Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Blind Contr
 ## 4. Funktionsreferenz
 
 ```php
-BLC_ControlBind(int $InstanceID)
+BLC_ControlBlind(int $InstanceID)
 ```
-Prüft die Rollladenposition gemäß der in der Instanz festgelegten Eigenschaften und fährt ihn auf die ermittelte Position.
+Prüft die Rollladenposition gemäß der in der Instanz festgelegten Eigenschaften und fährt den Rollladen auf die ermittelte Position.
 
 ```php
-BLC_CloseBlind(int $percent, int $deactivationTimeAuto): bool
+BLC_CloseBlind(int $InstanceID, int $percent, int $deactivationTimeAuto): bool
 ```
 Schließt den Rollladen auf die gewünschte Prozentzahl.
 $level: 0 - 100
@@ -68,7 +68,8 @@ Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstell
 **Wichtig:** 
 - der Wochenplan muss genau zwei Aktionen mit ID 1 und ID 2 beinhalten.
 - Die Aktion mit ID 1 stellt dabei die Aktion zum Hochfahren des Rollladens und die ID 2 die Aktion zum Runterfahren des Rollladens dar.
-- Es darf nur maximal einen Zeitraum zur Aktion 1 (Hochfahren) geben. 
+- Es darf nur maximal einen Zeitraum zur Aktion 1 (Hochfahren) geben.
+- ob ein Wochenplan aktiv ist oder nicht wird nicht berücksichtigt 
 
 ### Blind Controller
 
@@ -85,8 +86,8 @@ Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstell
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
 | DeactivationAutomaticMovement | integer | 20| legt fest, wie lange nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird.|
 | DeactivationManualMovement | integer | 120  | legt fest, wie lange nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll.|
-| WriteLogInformationToIPSLogger | boolean | false  | legt fest, ob die Log Informationen zusätzlich zum IPS Logfile auch an den IPSLogger der IPSLIbrary übergeben werden sollen|
-| WriteDebugInformationToIPSLogger | boolean | false  | legt fest, ob die Debug Informationen zusätzlich zum Debugger auch an den IPSLogger der IPSLIbrary übergeben werden sollen|
+| WriteLogInformationToIPSLogger | boolean | false  | legt fest, ob die Log Informationen zusätzlich zum IPS Logfile auch an den IPSLogger der IPSLibrary übergeben werden sollen|
+| WriteDebugInformationToIPSLogger | boolean | false  | legt fest, ob die Debug Informationen zusätzlich zum Debugger auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 
 ## 6. Anhang
 
