@@ -405,11 +405,9 @@ class BlindController extends IPSModule
             $this->ReadPropertyInteger('BrightnessThresholdID'),
             $this->ReadPropertyInteger('IsDayIndicatorID'),];
 
-        foreach ($this->GetMessageList() as $msgList) {
-            foreach ($msgList as $senderId => $msgs) {
-                foreach ($msgs as $msg) {
-                    $this->UnregisterMessage($senderId, $msg);
-                }
+        foreach ($this->GetMessageList() as $senderId => $msgs) {
+            foreach ($msgs as $msg) {
+                $this->UnregisterMessage($senderId, $msg);
             }
         }
 
