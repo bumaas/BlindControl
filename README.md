@@ -68,7 +68,7 @@ Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstell
 Das Modul holt aus dem Wochenplan die Aktionszeiten und den Aktionstyp.
 
 **Wichtig:** 
-- der Wochenplan muss genau zwei Aktionen mit ID 1 und ID 2 beinhalten. Die eigentlichen Aktionen bleiben dabei leer, da der Wochenplan nicht von IP-Symcon direkt ausgeführt werden soll.
+- der Wochenplan muss genau zwei Aktionen mit ID 1 und ID 2 beinhalten. Die eigentlichen Aktionen bleiben dabei jedoch leer, da der Wochenplan nicht von IP-Symcon direkt ausgeführt werden soll.
 - Die Aktion mit ID 1 stellt dabei die Aktion zum Hochfahren des Rollladens und die ID 2 die Aktion zum Runterfahren des Rollladens dar.
 - Es darf nur maximal einen Zeitraum zur Aktion 1 (Hochfahren) geben.
 - ob ein Wochenplan aktiv ist oder nicht wird nicht berücksichtigt 
