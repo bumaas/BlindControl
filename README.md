@@ -95,11 +95,11 @@ Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstell
 
 #### Blind Control Modul
 
-GUID: `{7995e8c8-bd15-46a1-8ab6-2b795c33c0c5}` 
+GUID: `{7995E8C8-BD15-46A1-8AB6-2B795C33C0C5}` 
 
 #### Blind Controller
 
-GUID: `{538f6461-5410-4f4c-91d3-b39122152d56}` 
+GUID: `{538F6461-5410-4F4C-91D3-B39122152D56}` 
 
 
 

@@ -1,5 +1,5 @@
 {
-  "id": "{7995e8c8-bd15-46a1-8ab6-2b795c33c0c5}",
+  "id": "{7995E8C8-BD15-46A1-8AB6-2B795C33C0C5}",
   "author": "bumaas",
   "name": "Blind Control",
   "url": "",
@@ -7,7 +7,7 @@
     "version": "5.1",
     "date": 1518562800
   },
-  "version": "0.09",
+  "version": "0.10",
   "build": 1,
-  "date": 1548410290
+  "date": 1549635745
 }
