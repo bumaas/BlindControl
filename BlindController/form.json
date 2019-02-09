@@ -2,15 +2,6 @@
   "elements": [
     {"type": "SelectVariable", "name": "BlindLevelID", "caption": "Blind Level ID"},
     {
-      "type":  "ExpansionPanel", "caption": "Is Day Detection",
-      "items": [
-        {"type": "SelectVariable", "name": "IsDayIndicatorID", "caption": "Is Day Indicator ID"},
-        {"type": "Label", "caption": "If no 'Is Day' indicator is available, the day will be calculated by brightness"},
-        {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
-        {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
-      ]
-    },
-    {
       "type":  "ExpansionPanel", "caption": "Time Schedule",
       "items": [
         {"type": "SelectEvent", "name": "WeeklyTimeTableEventID", "caption": "Weekly Timetable Event ID"},
@@ -34,6 +25,15 @@
             }
           ]
         }
+      ]
+    },
+    {
+      "type":  "ExpansionPanel", "caption": "Is Day Detection (optional)",
+      "items": [
+        {"type": "SelectVariable", "name": "IsDayIndicatorID", "caption": "Is Day Indicator ID"},
+        {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day will be calculated by brightness"},
+        {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
+        {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
       ]
     },
     {

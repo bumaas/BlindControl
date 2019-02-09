@@ -190,12 +190,15 @@ class BlindController extends IPSModule
 
 
         // 'tagsüber' ermitteln
-        if ($this->ReadPropertyInteger('IsDayIndicatorID') > 0) {
-            $isDay = GetValueBoolean($this->ReadPropertyInteger('IsDayIndicatorID'));
-        } else {
-            $isDay = ($brightness > $brightnessThreshold);
-        }
+        // Wochenplan auswerten
+        $isDay = (time() >= strtotime($heute_auf)) && (time() <= strtotime($heute_ab));
 
+        // DayIndikator auswerten
+        if ($this->ReadPropertyInteger('IsDayIndicatorID') > 0) {
+            $isDay = $isDay && GetValueBoolean($this->ReadPropertyInteger('IsDayIndicatorID'));
+        } elseif (isset($brightness) && isset($brightnessThreshold)) {
+            $isDay = $isDay && ($brightness > $brightnessThreshold);
+        }
 
         //        $bWindowOpen = isWindowOpened($aContact); //todo
         $bWindowOpen = null;
@@ -203,15 +206,14 @@ class BlindController extends IPSModule
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
                             'gestern_ab: %s, heute_auf: %s, heute_ab: %s, TSAutomatik: %s, levelAct: %s, TSBlind: %s, bWindowOpen: %s'
-                            . ', bNoMove: %s, isDay: %s, brightness: %s', $gestern_ab, $heute_auf, $heute_ab, $this->FormatTimeStamp($tsAutomatik),
+                            . ', bNoMove: %s, isDay: %s, brightness: %s, brightnessThreshold: %s', $gestern_ab, $heute_auf, $heute_ab, $this->FormatTimeStamp($tsAutomatik),
                             $levelAct, $this->FormatTimeStamp($tsBlindLastMovement), (isset($bWindowOpen) ? (int) $bWindowOpen : 'null'),
-                            (int) $bNoMove, (isset($isDay) ? (int) $isDay : 'null'), $brightness ?? 'null'
+                            (int) $bNoMove, (isset($isDay) ? (int) $isDay : 'null'), $brightness ?? 'null', $brightnessThreshold ?? 'null'
                         )
         );
 
-        // am Tag (d.h. es ist hell und nach der Öffnungszeit) wird überprüft, ob das Fenster beschattet werden soll
-        $now = time();
-        if ($isDay && ($now >= strtotime($heute_auf)) && ($now <= strtotime($heute_ab))) {
+        // am Tag wird überprüft, ob das Fenster beschattet werden soll
+        if ($isDay) {
 
             $levelNew = $profile['LevelOpened'];
 
@@ -304,7 +306,7 @@ class BlindController extends IPSModule
         */
         // wenn es dunkel ist hängt das Level nur vom Fensterstatus ab
         $closeBladeClockDependentOnly = false;
-        if ((!$isDay && !$closeBladeClockDependentOnly) || ($now <= strtotime($heute_auf)) || ($now >= strtotime($heute_ab))) {
+        if ((!$isDay && !$closeBladeClockDependentOnly)) {
             $deactivationTimeAuto = 0;
             if ($bWindowOpen) {
                 //$levelNew = $BlindLevelWhenWindowIsOpen;
@@ -696,7 +698,7 @@ class BlindController extends IPSModule
 
         } else {
             $this->Logger_Dbg(
-                __FUNCTION__, "DeactivationTimeAuto: $timediff " . '/' . $deactivationTimeAuto . ', LeveldiffPercentage: ' . $LeveldiffPercentage
+                __FUNCTION__, "DeactivationTimeAuto: $timediff" . '/' . $deactivationTimeAuto . ', LeveldiffPercentage: ' . $LeveldiffPercentage
             );
         }
 
