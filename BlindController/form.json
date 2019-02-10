@@ -37,6 +37,15 @@
       ]
     },
     {
+      "type":  "ExpansionPanel", "caption": "Contacts (optional)",
+      "items": [
+        {"type": "Label", "caption": "Define up to two contacts/variables"},
+        {"type": "SelectVariable", "name": "Contact1ID", "caption": "Contact 1"},
+        {"type": "SelectVariable", "name": "Contact2ID", "caption": "Contact 2"},
+        {"type": "NumberSpinner", "name": "ContactOpenLevel", "caption": "Level when Contact is open", "digits": "2"}
+      ]
+    },
+    {
       "type":  "ExpansionPanel", "caption": "Expert Parameters",
       "items": [
         {"type": "NumberSpinner", "name": "UpdateInterval", "caption": "Update Interval", "suffix": "Minutes"},
@@ -48,7 +57,7 @@
     }
   ],
   "actions":  [
-    {"type": "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id); echo 'Finished!'"},
+    {"type": "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id, false); echo 'Finished!'"},
     {"type": "Button", "caption": "Open Blind", "onClick": "BLC_CloseBlind($id, 0, 0); echo 'Finished!'"},
     {"type": "Button", "caption": "Close Blind", "onClick": "BLC_CloseBlind($id, 100, 0); echo 'Finished!'"}
   ],
@@ -61,6 +70,8 @@
     {"code": 206, "icon": "error", "caption": "IsDay ID is not valid"},
     {"code": 207, "icon": "error", "caption": "Deactivation Time Manual is not valid"},
     {"code": 208, "icon": "error", "caption": "Deactivation Time Automatic is not valid"},
-    {"code": 209, "icon": "error", "caption": "ScheduleGroups of Timetable are not valid"}
+    {"code": 209, "icon": "error", "caption": "ScheduleGroups of Timetable are not valid"},
+    {"code": 210, "icon": "error", "caption": "Contact 1 ID is not valid"},
+    {"code": 211, "icon": "error", "caption": "Contact 2 ID is not valid"}
   ]
 }

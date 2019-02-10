@@ -46,16 +46,16 @@ In Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Blind Contr
 ## 4. Funktionsreferenz
 
 ```php
-BLC_ControlBlind(int $InstanceID)
+BLC_ControlBlind(int $InstanceID, bool $considerDeactvationTimes)
 ```
-Prüft die Rollladenposition gemäß der in der Instanz festgelegten Eigenschaften und fährt den Rollladen auf die ermittelte Position.
+Prüft die Rollladenposition gemäß der in der Instanz festgelegten Eigenschaften und fährt den Rollladen auf die ermittelte Position. Wenn $considerDeactivationTimes == true, dann wird DeactivationAutomaticMovement berücksichtigt.
 
 ```php
-BLC_CloseBlind(int $InstanceID, int $percent, int $deactivationTimeAuto): bool
+BLC_CloseBlind(int $InstanceID, int $percentClose, int $deactivationTimeAuto): bool
 ```
 Schließt den Rollladen auf die gewünschte Prozentzahl.
-$level: 0 - 100
-Angabe des Levels (0=geöffnet, 100 = geschlossen)
+$percentClose: 0 - 100
+Angabe des Schließungsgrades (0=geöffnet, 100 = geschlossen)
 $deactivationTimeAuto: Anzahl der Sekunden, die mindestens seit der letzten automatischen Bewegung vergangen sein müssen. Sonst wird der Rollladen nicht bewegt.
 
 
@@ -78,13 +78,15 @@ Das Modul holt aus dem Wochenplan die Aktionszeiten und den Aktionstyp.
 | Eigenschaft | Typ     | Standardwert            | Funktion                                  |
 | :--------- | :-----: | :------------------------| :--------------------------------------- |
 | BlindLevelID               | integer | 0 | Statusvariable, des zu steuernden Rollladens. Sie muss vom Typ Integer oder Float sein und über ein korrektes Profil verfügen. |
-| IsDayIndicatorID           | integer | 0 | Indikatorvariable, die den anzeigt, ob es Tag oder Nacht ist. Es kann z.B. die ISDAY Statusvariable des Location Controls genutzt werden.
-| BrightnessID               | integer | 0 | Indikatorvariable, die die Helligkeit zur Tag/Nacht Bestimmung abbildet.  |
-| BrightnessThresholdID      | integer | 0 | Indikatorvariable, die den Schwellwert zur Tag/Nacht Bestimmung zur Verfügung stellt |
 | WeeklyTimeTableEventID     | integer | 0 | Verweis auf ein Wochenplanevent, dass die täglichen Grundzeiten für Rollladen rauf und Rollladen runter abbildet.       |                  |
 | WakeUpTimeID               | integer | 0 | - noch nicht unterstützt -|
 | HolidayIndicatorID         | integer | 0 | Indikatorvariable, die anzeigt, ob ein Urlaubs-/Feiertag anliegt|
 | DayUsedWhenHoliday         | integer | 0 | legt fest, welcher Wochentag des Wochenplans im Fall eines Urlaubs-/Feiertages herangezogen werden soll|
+| IsDayIndicatorID           | integer | 0 | Indikatorvariable, die anzeigt, ob es Tag oder Nacht ist. Es kann z.B. die ISDAY Statusvariable des Location Controls genutzt werden.
+| BrightnessID               | integer | 0 | Indikatorvariable, die die Helligkeit zur Tag/Nacht Bestimmung abbildet.  |
+| BrightnessThresholdID      | integer | 0 | Indikatorvariable, die den Schwellwert zur Tag/Nacht Bestimmung zur Verfügung stellt |
+| Contact1ID, Contact2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Position gefahren
+| ContactOpenLevel           | float   | 0 | Position, auf die der Rollladen mindestens gefahren wird, wenn ein Kontakt offen ist.
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
 | DeactivationAutomaticMovement | integer | 20| legt fest, wie lange nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird.|
 | DeactivationManualMovement | integer | 120  | legt fest, wie lange nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll.|
