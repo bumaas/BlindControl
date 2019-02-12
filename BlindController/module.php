@@ -1,4 +1,4 @@
-<?php
+<?PHP
 declare(strict_types=1);
 
 if (function_exists('IPSUtils_Include')) {
@@ -22,6 +22,8 @@ class BlindController extends IPSModule
     private const STATUS_INST_TIMETABLE_IS_INVALID = 209;
     private const STATUS_INST_CONTACT1_ID_IS_INVALID = 210;
     private const STATUS_INST_CONTACT2_ID_IS_INVALID = 211;
+    private const STATUS_INST_WAKEUPTIME_ID_IS_INVALID = 212;
+    private const STATUS_INST_SLEEPTIME_ID_IS_INVALID = 213;
 
 
     // Überschreibt die interne IPS_Create($id) Funktion
@@ -104,7 +106,7 @@ class BlindController extends IPSModule
         $this->SetInstanceStatus();
 
         if ($this->GetValue('ACTIVATED')) {
-            if (in_array($SenderID, [$this->ReadPropertyInteger('Contact1ID'), $this->ReadPropertyInteger('Contact2ID')])) {
+            if (in_array($SenderID, [$this->ReadPropertyInteger('Contact1ID'), $this->ReadPropertyInteger('Contact2ID')], true)) {
                 $this->ControlBlind(false);
             } else {
                 $this->ControlBlind(true);
@@ -115,6 +117,10 @@ class BlindController extends IPSModule
     /**
      * Die folgenden Funktionen stehen automatisch zur Verfügung, wenn das Modul über die "Module Control" eingefügt wurden.
      * Die Funktionen werden, mit dem selbst eingerichteten Prefix, in PHP und JSON-RPC zur Verfügung gestellt:
+     *
+     * @param bool $considerDeactivationTimes
+     *
+     * @return bool
      */
     public function ControlBlind(bool $considerDeactivationTimes): bool
     {
@@ -204,12 +210,10 @@ class BlindController extends IPSModule
 
         if ($bNoMove) {
             $levelNew = $levelAct;
+        } else if ($isDay){
+            $levelNew = $profile['LevelOpened'];
         } else {
-            if ($isDay){
-                $levelNew = $profile['LevelOpened'];
-            } else {
-                $levelNew = $profile['LevelClosed'];
-            }
+            $levelNew = $profile['LevelClosed'];
         }
 
 
@@ -368,6 +372,7 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('WeeklyTimeTableEventID', 0);
         $this->RegisterPropertyInteger('BlindLevelID', 0);
         $this->RegisterPropertyInteger('WakeUpTimeID', 0);
+        $this->RegisterPropertyInteger('SleepTimeID', 0);
         $this->RegisterPropertyInteger('UpdateInterval', 1);
         $this->RegisterPropertyInteger('HolidayIndicatorID', 0);
         $this->RegisterPropertyInteger('BrightnessID', 0);
@@ -390,6 +395,7 @@ class BlindController extends IPSModule
             $this->ReadPropertyInteger('WeeklyTimeTableEventID'),
             $this->ReadPropertyInteger('BlindLevelID'),
             $this->ReadPropertyInteger('WakeUpTimeID'),
+            $this->ReadPropertyInteger('SleepTimeID'),
             $this->ReadPropertyInteger('HolidayIndicatorID'),
             $this->ReadPropertyInteger('BrightnessID'),
             $this->ReadPropertyInteger('BrightnessThresholdID'),
@@ -465,6 +471,16 @@ class BlindController extends IPSModule
         }
 
         if ($ret = $this->checkEventId('WeeklyTimeTableEventID', false, EVENTTYPE_SCHEDULE, self::STATUS_INST_TIMETABLE_ID_IS_INVALID)) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkVariableId('WakeUpTimeID', true, [VARIABLETYPE_STRING], self::STATUS_INST_WAKEUPTIME_ID_IS_INVALID)) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkVariableId('SleepTimeID', true, [VARIABLETYPE_STRING], self::STATUS_INST_SLEEPTIME_ID_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
         }
@@ -594,6 +610,7 @@ class BlindController extends IPSModule
 
     private function isContactOpen(): ?bool
     {
+        $contacts = [];
         if ($this->ReadPropertyInteger('Contact1ID') !== 0) {
             $contacts[] = $this->ReadPropertyInteger('Contact1ID');
         }
@@ -828,14 +845,34 @@ class BlindController extends IPSModule
             return false;
         }
 
+
+
         //Ermitteln, welche Zeiten gestern galten
         if (!$this->getUpDownTime((int) date('N', strtotime('-1 day')), $gestern_auf, $gestern_ab)) {
             return false;
         }
 
+        //Berücksichtigung von übersteuernden Fahrzeiten
+        $heute_auf = $this->GetIndividualTime($heute_auf, $this->ReadPropertyInteger('WakeUpTimeID'));
+        $heute_ab = $this->GetIndividualTime($heute_ab, $this->ReadPropertyInteger('SleepTimeID'));
+        $gestern_ab = $this->GetIndividualTime($gestern_ab, $this->ReadPropertyInteger('SleepTimeID'));
+
         return true;
     }
 
+private function GetIndividualTime(string $defaultTime, int $timeId): string
+{
+    if ($timeId !== 0){
+        $time = GetValueString($timeId);
+        if ( $time !== ''){
+            return $time;
+        } else {
+            return $defaultTime;
+        }
+    }
+
+    return $defaultTime;
+}
     //-----------------------------------------------
     private function getUpDownTime(int $weekDay, ?string &$auf, ?string &$ab): bool
     {

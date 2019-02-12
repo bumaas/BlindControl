@@ -5,7 +5,13 @@
       "type":  "ExpansionPanel", "caption": "Time Schedule",
       "items": [
         {"type": "SelectEvent", "name": "WeeklyTimeTableEventID", "caption": "Weekly Timetable Event ID"},
-        {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "WakeUp Time (optional)"},
+        {
+          "type":  "ExpansionPanel", "caption": "Overruling Up and Down Times (optional)",
+          "items": [
+            {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "WakeUp Time"},
+            {"type": "SelectVariable", "name": "SleepTimeID", "caption": "Sleep Time"}
+          ]
+        },
         {
           "type":    "ExpansionPanel",
           "caption": "Consider Holiday (optional)",
@@ -72,6 +78,8 @@
     {"code": 208, "icon": "error", "caption": "Deactivation Time Automatic is not valid"},
     {"code": 209, "icon": "error", "caption": "ScheduleGroups of Timetable are not valid"},
     {"code": 210, "icon": "error", "caption": "Contact 1 ID is not valid"},
-    {"code": 211, "icon": "error", "caption": "Contact 2 ID is not valid"}
+    {"code": 211, "icon": "error", "caption": "Contact 2 ID is not valid"},
+    {"code": 212, "icon": "error", "caption": "SleepTime ID is not valid"},
+    {"code": 213, "icon": "error", "caption": "WakeUpTime ID is not valid"}
   ]
 }
