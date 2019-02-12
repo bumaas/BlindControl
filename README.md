@@ -65,7 +65,7 @@ Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstell
  
 ![image](docs/Wochenplan.PNG))
 
-Das Modul holt aus dem Wochenplan die Aktionszeiten und den Aktionstyp.
+Das Modul holt aus dem Wochenplan ausschließlich die Aktionszeiten und den Aktionstyp.
 
 **Wichtig:** 
 - der Wochenplan muss genau zwei Aktionen mit ID 1 und ID 2 beinhalten. Die eigentlichen Aktionen bleiben dabei jedoch leer, da der Wochenplan nicht von IP-Symcon direkt ausgeführt werden soll.
@@ -80,7 +80,9 @@ Das Modul holt aus dem Wochenplan die Aktionszeiten und den Aktionstyp.
 | BlindLevelID               | integer | 0 | Statusvariable, des zu steuernden Rollladens. Sie muss vom Typ Integer oder Float sein und über ein korrektes Profil verfügen. |
 | WeeklyTimeTableEventID     | integer | 0 | Verweis auf ein Wochenplanevent, dass die täglichen Grundzeiten für Rollladen rauf und Rollladen runter abbildet.       |                  |
 | WakeUpTimeID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Hochfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein|
-| SleepTimeID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Runterfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein|
+| WakeUpTimeOffset               | integer | 0 | Offset zur WakeUpTime in Minuten|
+| BedTimeID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Runterfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein|
+| BedTimeOffset               | integer | 0 | Offset zur BedTime in Minuten|
 | HolidayIndicatorID         | integer | 0 | Indikatorvariable, die anzeigt, ob ein Urlaubs-/Feiertag anliegt|
 | DayUsedWhenHoliday         | integer | 0 | legt fest, welcher Wochentag des Wochenplans im Fall eines Urlaubs-/Feiertages herangezogen werden soll|
 | IsDayIndicatorID           | integer | 0 | Indikatorvariable, die anzeigt, ob es Tag oder Nacht ist. Es kann z.B. die ISDAY Statusvariable des Location Controls genutzt werden.
@@ -88,6 +90,10 @@ Das Modul holt aus dem Wochenplan die Aktionszeiten und den Aktionstyp.
 | BrightnessThresholdID      | integer | 0 | Indikatorvariable, die den Schwellwert zur Tag/Nacht Bestimmung zur Verfügung stellt |
 | Contact1ID, Contact2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Position gefahren
 | ContactOpenLevel           | float   | 0 | Position, auf die der Rollladen mindestens gefahren wird, wenn ein Kontakt offen ist.
+| ActivatorIDShadowingBrightness | integer   | 0 | 
+| BrightnessIDShadowingBrightness| integer   | 0 | 
+| ThresholdIDHighBrightness      | integer   | 0 | 
+| ThresholdIDLessBrightness      | integer   | 0 | 
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
 | DeactivationAutomaticMovement | integer | 20| legt fest, wie lange nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird.|
 | DeactivationManualMovement | integer | 120  | legt fest, wie lange nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll.|

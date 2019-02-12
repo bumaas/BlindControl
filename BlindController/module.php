@@ -24,6 +24,10 @@ class BlindController extends IPSModule
     private const STATUS_INST_CONTACT2_ID_IS_INVALID = 211;
     private const STATUS_INST_WAKEUPTIME_ID_IS_INVALID = 212;
     private const STATUS_INST_SLEEPTIME_ID_IS_INVALID = 213;
+    private const STATUS_INST_ACTIVATORIDSHADOWINGBRIGHTNESS_IS_INVALID = 214;
+    private const STATUS_INST_BRIGHTNESSIDSHADOWINGBRIGHTNESS_IS_INVALID = 215;
+    private const STATUS_INST_THRESHOLDIDHIGHBRIGHTNESS_IS_INVALID = 216;
+    private const STATUS_INST_THRESHOLDIDLESSRIGHTNESS_IS_INVALID = 217;
 
 
     // Überschreibt die interne IPS_Create($id) Funktion
@@ -62,17 +66,15 @@ class BlindController extends IPSModule
 
     public function RequestAction($Ident, $Value): bool
     {
-        switch (strtoupper($Ident)) {
-            case 'ACTIVATED':
-                if ($Value) {
-                    $this->SetTimerInterval('Update', $this->ReadPropertyInteger('UpdateInterval') * 60 * 1000);
-                } else {
-                    $this->SetTimerInterval('Update', 0);
-                }
-                break;
-            default:
-                trigger_error('Unknown Ident: ' . $Ident);
-                return false;
+        if (strtoupper($Ident) === 'ACTIVATED') {
+            if ($Value) {
+                $this->SetTimerInterval('Update', $this->ReadPropertyInteger('UpdateInterval') * 60 * 1000);
+            } else {
+                $this->SetTimerInterval('Update', 0);
+            }
+        } else {
+            trigger_error('Unknown Ident: ' . $Ident);
+            return false;
         }
         if (is_bool($Value)) {
             $this->Logger_Dbg(__FUNCTION__, sprintf('Ident: %s, Value: %s', $Ident, (int) $Value));
@@ -187,7 +189,7 @@ class BlindController extends IPSModule
         // ...dann prüfen ob neues Level in Aktor geschrieben werden muss.
 
         // Das aktuelle Level im Jalousieaktor auslesen
-        $levelAct = GetValue($idLevel);
+        $levelAct = (float) GetValue($idLevel);
 
         $profile = $this->GetProfileInformation();
 
@@ -210,7 +212,7 @@ class BlindController extends IPSModule
 
         if ($bNoMove) {
             $levelNew = $levelAct;
-        } else if ($isDay){
+        } else if ($isDay) {
             $levelNew = $profile['LevelOpened'];
         } else {
             $levelNew = $profile['LevelClosed'];
@@ -276,22 +278,14 @@ class BlindController extends IPSModule
                         }
             */
 
-            /*            // prüfen, ob Beschattung für TV notwendig
-                        if ($tv_position_anfahren) {
-                            $rLevelneuTV = $this->blindLevelClosed;
+            // prüfen, ob Beschattung bei Helligkeit notwendig
+            $levelShadowingBrightness = $this->getLevelOfShadowingByBrightness($levelNew);
+            if ($profile['Reversed']) {
+                $levelNew = min ($levelNew, $levelShadowingBrightness);
+            } else {
+                $levelNew = max ($levelNew, $levelShadowingBrightness);
+            }
 
-                            $brightnessThreshold = getBrightnessThresholdTV($levelAct);
-                            if (istBeschattungNotwendig($sIniSection, $levelAct, $brightness, $brightness, $brightnessThreshold)) {
-                                $rLevelneuTV = getLevelForTV($sIniSection, $ini[$sIniSection], $brightness, $brightness);
-                            }
-
-                            if ($rLevelneuTV < $levelNew) {
-                                $levelNew = $rLevelneuTV;
-                                $Hinweis   = 'TV Abdunklung';
-                            }
-
-                        }
-            */
         }
 
         /*
@@ -321,7 +315,7 @@ class BlindController extends IPSModule
             $deactivationTimeAuto = 0;
             if ($isContactOpen) {
                 $levelNew = $contactOpenLevel;
-                $Hinweis  = 'Fenster geöffnet';
+                //$Hinweis  = 'Fenster geöffnet';
             } else {
                 $levelNew = $profile['LevelClosed'];
             }
@@ -336,21 +330,21 @@ class BlindController extends IPSModule
         if (($levelNew <= $contactOpenLevel) && $isContactOpen) {
 
             $deactivationTimeAuto = 0;
-            $bNoMove = false;
-            $levelNew   = $contactOpenLevel;
+            $bNoMove              = false;
+            $levelNew             = $contactOpenLevel;
             $this->Logger_Dbg(__FUNCTION__, "Fenster geöffnet (levelAct: $levelAct, levelNew: $levelNew)");
         }
 
-/*        if (($contactOpenLevel < $levelNew) && $isContactOpen && GetValueBoolean(ID_REGEN_UND_WIND)
-            && ((time() - GetTimeStampVariableChanged(
-                        ID_REGEN_UND_WIND
-                    )) >= 180)) {
-            $levelNew = $contactOpenLevel;
-            $Hinweis   = 'Regen';
-            $bNoMove   = false;
-            //Bewegung erzwingen
-            $deactivationTimeAuto = 0;
-        }*/
+        /*        if (($contactOpenLevel < $levelNew) && $isContactOpen && GetValueBoolean(ID_REGEN_UND_WIND)
+                    && ((time() - GetTimeStampVariableChanged(
+                                ID_REGEN_UND_WIND
+                            )) >= 180)) {
+                    $levelNew = $contactOpenLevel;
+                    $Hinweis   = 'Regen';
+                    $bNoMove   = false;
+                    //Bewegung erzwingen
+                    $deactivationTimeAuto = 0;
+                }*/
 
         if (!$bNoMove) {
             $level = $levelNew / ($profile['MaxValue'] - $profile['MinValue']);
@@ -372,7 +366,9 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('WeeklyTimeTableEventID', 0);
         $this->RegisterPropertyInteger('BlindLevelID', 0);
         $this->RegisterPropertyInteger('WakeUpTimeID', 0);
-        $this->RegisterPropertyInteger('SleepTimeID', 0);
+        $this->RegisterPropertyInteger('WakeUpTimeOffset', 0);
+        $this->RegisterPropertyInteger('BedTimeID', 0);
+        $this->RegisterPropertyInteger('BedTimeOffset', 0);
         $this->RegisterPropertyInteger('UpdateInterval', 1);
         $this->RegisterPropertyInteger('HolidayIndicatorID', 0);
         $this->RegisterPropertyInteger('BrightnessID', 0);
@@ -384,6 +380,12 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('Contact1ID', 0);
         $this->RegisterPropertyInteger('Contact2ID', 0);
         $this->RegisterPropertyFloat('ContactOpenLevel', 0);
+        $this->RegisterPropertyInteger('ActivatorIDShadowingBrightness', 0);
+        $this->RegisterPropertyInteger('BrightnessIDShadowingBrightness', 0);
+        $this->RegisterPropertyInteger('ThresholdIDHighBrightness', 0);
+        $this->RegisterPropertyInteger('ThresholdIDLessBrightness', 0);
+        $this->RegisterPropertyFloat('LevelHighBrightnessShadowingBrightness', 0);
+        $this->RegisterPropertyFloat('LevelLessBrightnessShadowingBrightness', 0);
 
         $this->RegisterPropertyBoolean('WriteDebugInformationToIPSLogger', false);
         $this->RegisterPropertyBoolean('WriteLogInformationToIPSLogger', false);
@@ -395,13 +397,17 @@ class BlindController extends IPSModule
             $this->ReadPropertyInteger('WeeklyTimeTableEventID'),
             $this->ReadPropertyInteger('BlindLevelID'),
             $this->ReadPropertyInteger('WakeUpTimeID'),
-            $this->ReadPropertyInteger('SleepTimeID'),
+            $this->ReadPropertyInteger('BedTimeID'),
             $this->ReadPropertyInteger('HolidayIndicatorID'),
             $this->ReadPropertyInteger('BrightnessID'),
             $this->ReadPropertyInteger('BrightnessThresholdID'),
             $this->ReadPropertyInteger('IsDayIndicatorID'),
             $this->ReadPropertyInteger('Contact1ID'),
-            $this->ReadPropertyInteger('Contact2ID'),];
+            $this->ReadPropertyInteger('Contact2ID'),
+            $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
+            $this->ReadPropertyInteger('BrightnessIDShadowingBrightness'),
+            $this->ReadPropertyInteger('ThresholdIDHighBrightness'),
+            $this->ReadPropertyInteger('ThresholdIDLessBrightness'),];
 
         foreach ($this->GetReferenceList() as $ref) {
             $this->UnregisterReference($ref);
@@ -423,7 +429,11 @@ class BlindController extends IPSModule
             $this->ReadPropertyInteger('BrightnessThresholdID'),
             $this->ReadPropertyInteger('IsDayIndicatorID'),
             $this->ReadPropertyInteger('Contact1ID'),
-            $this->ReadPropertyInteger('Contact2ID'),];
+            $this->ReadPropertyInteger('Contact2ID'),
+            $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
+            $this->ReadPropertyInteger('BrightnessIDShadowingBrightness'),
+            $this->ReadPropertyInteger('ThresholdIDHighBrightness'),
+            $this->ReadPropertyInteger('ThresholdIDLessBrightness'),];
 
         foreach ($this->GetMessageList() as $senderId => $msgs) {
             foreach ($msgs as $msg) {
@@ -480,7 +490,7 @@ class BlindController extends IPSModule
             return;
         }
 
-        if ($ret = $this->checkVariableId('SleepTimeID', true, [VARIABLETYPE_STRING], self::STATUS_INST_SLEEPTIME_ID_IS_INVALID)) {
+        if ($ret = $this->checkVariableId('BedTimeID', true, [VARIABLETYPE_STRING], self::STATUS_INST_SLEEPTIME_ID_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
         }
@@ -518,6 +528,36 @@ class BlindController extends IPSModule
 
         if ($ret = $this->checkVariableId(
             'Contact2ID', true, [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT], self::STATUS_INST_CONTACT2_ID_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkVariableId(
+            'ActivatorIDShadowingBrightness', true, [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            self::STATUS_INST_ACTIVATORIDSHADOWINGBRIGHTNESS_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkVariableId(
+            'BrightnessIDShadowingBrightness', true, [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            self::STATUS_INST_BRIGHTNESSIDSHADOWINGBRIGHTNESS_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkVariableId(
+            'ThresholdIDHighBrightness', true, [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT], self::STATUS_INST_THRESHOLDIDHIGHBRIGHTNESS_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkVariableId(
+            'ThresholdIDLessBrightness', true, [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT], self::STATUS_INST_THRESHOLDIDLESSRIGHTNESS_IS_INVALID
         )) {
             $this->SetStatus($ret);
             return;
@@ -627,9 +667,37 @@ class BlindController extends IPSModule
         return $contactOpen;
     }
 
+    private function getLevelOfShadowingByBrightness(float $level): float
+    {
+        $activatorIDShadowingBrightness = $this->ReadPropertyInteger('ActivatorIDShadowingBrightness');
+        if ($activatorIDShadowingBrightness !== 0) {
+            $brightnessIDShadowingBrightness = $this->ReadPropertyInteger('BrightnessIDShadowingBrightness');
+            if ($brightnessIDShadowingBrightness === 0) {
+                trigger_error('BrightnessIDShadowingBrightness === 0', E_ERROR);
+            }
+            $thresholdIDHighBrightness = $this->ReadPropertyInteger('ThresholdIDHighBrightness');
+            $thresholdIDLessBrightness = $this->ReadPropertyInteger('ThresholdIDLessBrightness');
+            if ($thresholdIDHighBrightness === 0 && $thresholdIDLessBrightness == 0) {
+                trigger_error('ThresholdIDHighBrightness === 0 and ThresholdIDLowBrightness === 0', E_ERROR);
+            }
+        }
 
-    private function isMovementLocked($levelAct, int $tsBlindLastMovement, int $tsAutomatik, string $gestern_ab, string $heute_auf, string $heute_ab,
-                                      $blindLevelClosed, $blindLevelOpened): bool
+        if (GetValue($activatorIDShadowingBrightness)) {
+            if (($thresholdIDHighBrightness > 0) && (GetValue($brightnessIDShadowingBrightness) > GetValue($thresholdIDHighBrightness))) {
+                return $this->ReadPropertyFloat('LevelHighBrightnessShadowingBrightness');
+            }
+
+            if (($thresholdIDLessBrightness > 0) && (GetValue($brightnessIDShadowingBrightness) > GetValue($thresholdIDLessBrightness))) {
+                return $this->ReadPropertyFloat('LevelLessBrightnessShadowingBrightness');
+            }
+
+        }
+
+        return $level;
+    }
+
+    private function isMovementLocked(float $levelAct, int $tsBlindLastMovement, int $tsAutomatik, string $gestern_ab, string $heute_auf,
+                                      string $heute_ab, float $blindLevelClosed, float $blindLevelOpened): bool
     {
         //zuerst prüfen, ob der Rollladen nach der letzten aut. Bewegung (+60sec) manuell bewegt wurde
         if ($tsBlindLastMovement <= strtotime('+1 minute', $tsAutomatik)) {
@@ -637,7 +705,7 @@ class BlindController extends IPSModule
         }
 
         $deactivationTimeManu = $this->ReadPropertyInteger('DeactivationManualMovement') * 60;
-        $objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
+        $objectName           = IPS_GetObject($this->InstanceID)['ObjectName'];
 
         //Zeitpunkt festhalten, sofern noch nicht geschehen
         if ($tsBlindLastMovement !== $this->ReadAttributeInteger('AttrTimeStampManual')) {
@@ -724,7 +792,7 @@ class BlindController extends IPSModule
         }
 
         $levelID             = $this->ReadPropertyInteger('BlindLevelID');
-        $levelAct         = GetValue($levelID); //integer and float are supported
+        $levelAct            = GetValue($levelID); //integer and float are supported
         $tsBlindLastMovement = IPS_GetVariable($levelID)['VariableChanged'];
         $LeveldiffPercentage = abs($levelNew - $levelAct) / ($profile['MaxValue'] - $profile['MinValue']);
         $timediff            = time() - $tsBlindLastMovement;
@@ -846,38 +914,18 @@ class BlindController extends IPSModule
         }
 
 
-
         //Ermitteln, welche Zeiten gestern galten
         if (!$this->getUpDownTime((int) date('N', strtotime('-1 day')), $gestern_auf, $gestern_ab)) {
             return false;
         }
 
-        //Berücksichtigung von übersteuernden Fahrzeiten
-        $heute_auf = $this->GetIndividualTime($heute_auf, $this->ReadPropertyInteger('WakeUpTimeID'));
-        $heute_ab = $this->GetIndividualTime($heute_ab, $this->ReadPropertyInteger('SleepTimeID'));
-        $gestern_ab = $this->GetIndividualTime($gestern_ab, $this->ReadPropertyInteger('SleepTimeID'));
 
         return true;
     }
 
-private function GetIndividualTime(string $defaultTime, int $timeId): string
-{
-    if ($timeId !== 0){
-        $time = GetValueString($timeId);
-        if ( $time !== ''){
-            return $time;
-        } else {
-            return $defaultTime;
-        }
-    }
-
-    return $defaultTime;
-}
     //-----------------------------------------------
     private function getUpDownTime(int $weekDay, ?string &$auf, ?string &$ab): bool
     {
-        global $idAufstehzeit;
-
         $weeklyTimeTableEventId = $this->ReadPropertyInteger('WeeklyTimeTableEventID');
         if (!$event = @IPS_GetEvent($weeklyTimeTableEventId)) {
             trigger_error(sprintf('falsche Event ID #%s', $weeklyTimeTableEventId));
@@ -889,13 +937,19 @@ private function GetIndividualTime(string $defaultTime, int $timeId): string
             return false;
         }
 
-        if ($idAufstehzeit > 0) {
-            $auf = date('H:i', strtotime(GetValueFormatted($idAufstehzeit)) + AUFSTEHZEIT_VORLAUF * 60);
+        $idWakeUpTime = $this->ReadPropertyInteger('WakeUpTimeID');
+        if ($idWakeUpTime > 0) {
+            $auf = date('H:i', strtotime(GetValueString($idWakeUpTime)) + $this->ReadPropertyInteger('WakeUpTimeOffset') * 60);
         } else {
             $auf = $this->getUpTimeOfDay($weekDay, $event['ScheduleGroups']);
         }
 
-        $ab = $this->getDownTimeOfDay($weekDay, $event['ScheduleGroups']);
+        $idBedTime = $this->ReadPropertyInteger('BedTimeID');
+        if ($idBedTime > 0) {
+            $ab = date('H:i', strtotime(GetValueString($idBedTime)) + $this->ReadPropertyInteger('BedTimeOffset') * 60);
+        } else {
+            $ab = $this->getDownTimeOfDay($weekDay, $event['ScheduleGroups']);
+        }
 
         return true;
     }
@@ -976,8 +1030,8 @@ private function GetIndividualTime(string $defaultTime, int $timeId): string
             'MinValue'    => $profile['MinValue'],
             'MaxValue'    => $profile['MaxValue'],
             'Reversed'    => $reversed,
-            'LevelOpened' => $reversed ? $profile['MaxValue'] : $profile['MinValue'],
-            'LevelClosed' => $reversed ? $profile['MinValue'] : $profile['MaxValue']];
+            'LevelOpened' => $reversed ? (float) $profile['MaxValue'] : (float) $profile['MinValue'],
+            'LevelClosed' => $reversed ? (float) $profile['MinValue'] : (float) $profile['MaxValue']];
 
 
     }

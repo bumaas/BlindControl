@@ -6,16 +6,8 @@
       "items": [
         {"type": "SelectEvent", "name": "WeeklyTimeTableEventID", "caption": "Weekly Timetable Event ID"},
         {
-          "type":  "ExpansionPanel", "caption": "Overruling Up and Down Times (optional)",
+          "type":  "ExpansionPanel", "caption": "Consider Holiday (optional)",
           "items": [
-            {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "WakeUp Time"},
-            {"type": "SelectVariable", "name": "SleepTimeID", "caption": "Sleep Time"}
-          ]
-        },
-        {
-          "type":    "ExpansionPanel",
-          "caption": "Consider Holiday (optional)",
-          "items":   [
             {"type": "SelectVariable", "name": "HolidayIndicatorID", "caption": "Holiday Indicator ID"},
             {
               "type": "Select", "name": "DayUsedWhenHoliday", "caption": "Used Weekday when Holiday", "options": [
@@ -29,6 +21,15 @@
               {"caption": "Sunday", "value": 7}
             ]
             }
+          ]
+        },
+        {
+          "type":  "ExpansionPanel", "caption": "Overruling Up and Down Times (optional)",
+          "items": [
+            {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "Wake-Up Time"},
+            {"type": "NumberSpinner", "name": "WakeUpTimeOffset", "caption": "Wake-Up Time Offset", "suffix": "Minutes"},
+            {"type": "SelectVariable", "name": "BedTimeID", "caption": "Bedtime"},
+            {"type": "NumberSpinner", "name": "BedTimeOffset", "caption": "Bedtime Offset", "suffix": "Minutes"}
           ]
         }
       ]
@@ -45,10 +46,22 @@
     {
       "type":  "ExpansionPanel", "caption": "Contacts (optional)",
       "items": [
-        {"type": "Label", "caption": "Define up to two contacts/variables"},
+        {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened to the given level if one of the contacts are open (>0)."},
         {"type": "SelectVariable", "name": "Contact1ID", "caption": "Contact 1"},
         {"type": "SelectVariable", "name": "Contact2ID", "caption": "Contact 2"},
         {"type": "NumberSpinner", "name": "ContactOpenLevel", "caption": "Level when Contact is open", "digits": "2"}
+      ]
+    },
+    {
+      "type":  "ExpansionPanel", "caption": "Shadowing according to Brightness (optional)",
+      "items": [
+        {"type": "Label", "caption": "Define a brightness indicator and up to two different levels"},
+        {"type": "SelectVariable", "name": "ActivatorIDShadowingBrightness", "caption": "Activator ID"},
+        {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "caption": "Brightness ID"},
+        {"type": "NumberSpinner", "name": "LevelHighBrightnessShadowingBrightness", "caption": "Level at high brightness", "digits": "2"},
+        {"type": "NumberSpinner", "name": "LevelLessBrightnessShadowingBrightness", "caption": "Level at less brightness", "digits": "2"},
+        {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "caption": "Threshold high brightness ID"},
+        {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "caption": "Threshold less brightness ID"}
       ]
     },
     {
@@ -57,7 +70,7 @@
         {"type": "NumberSpinner", "name": "UpdateInterval", "caption": "Update Interval", "suffix": "Minutes"},
         {"type": "NumberSpinner", "name": "DeactivationAutomaticMovement", "caption": "Deactivation Time after automatic Movement", "suffix": "Minutes"},
         {"type": "NumberSpinner", "name": "DeactivationManualMovement", "caption": "Deactivation Time after manual Movement", "suffix": "Minutes"},
-        {"type": "CheckBox", "name": "WriteLogInformationToIPSLogger", "caption": "Log Information are written to IPSLogger of IPSLibrary"},
+        {"type": "CheckBox", "name": "WriteLogInformationToIPSLogger", "caption": "Log and Error Information are written to IPSLogger of IPSLibrary"},
         {"type": "CheckBox", "name": "WriteDebugInformationToIPSLogger", "caption": "Debug Information are written to IPSLogger of IPSLibrary"}
       ]
     }
