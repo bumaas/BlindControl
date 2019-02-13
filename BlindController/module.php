@@ -281,9 +281,9 @@ class BlindController extends IPSModule
             // prüfen, ob Beschattung bei Helligkeit notwendig
             $levelShadowingBrightness = $this->getLevelOfShadowingByBrightness($levelNew);
             if ($profile['Reversed']) {
-                $levelNew = min ($levelNew, $levelShadowingBrightness);
+                $levelNew = min($levelNew, $levelShadowingBrightness);
             } else {
-                $levelNew = max ($levelNew, $levelShadowingBrightness);
+                $levelNew = max($levelNew, $levelShadowingBrightness);
             }
 
         }
@@ -677,22 +677,22 @@ class BlindController extends IPSModule
             }
             $thresholdIDHighBrightness = $this->ReadPropertyInteger('ThresholdIDHighBrightness');
             $thresholdIDLessBrightness = $this->ReadPropertyInteger('ThresholdIDLessBrightness');
-            if ($thresholdIDHighBrightness === 0 && $thresholdIDLessBrightness == 0) {
+            if ($thresholdIDHighBrightness === 0 && $thresholdIDLessBrightness === 0) {
                 trigger_error('ThresholdIDHighBrightness === 0 and ThresholdIDLowBrightness === 0', E_ERROR);
             }
-        }
 
-        if (GetValue($activatorIDShadowingBrightness)) {
-            if (($thresholdIDHighBrightness > 0) && (GetValue($brightnessIDShadowingBrightness) > GetValue($thresholdIDHighBrightness))) {
-                return $this->ReadPropertyFloat('LevelHighBrightnessShadowingBrightness');
+
+            if (GetValue($activatorIDShadowingBrightness)) {
+                if (($thresholdIDHighBrightness > 0) && (GetValue($brightnessIDShadowingBrightness) > GetValue($thresholdIDHighBrightness))) {
+                    return $this->ReadPropertyFloat('LevelHighBrightnessShadowingBrightness');
+                }
+
+                if (($thresholdIDLessBrightness > 0) && (GetValue($brightnessIDShadowingBrightness) > GetValue($thresholdIDLessBrightness))) {
+                    return $this->ReadPropertyFloat('LevelLessBrightnessShadowingBrightness');
+                }
+
             }
-
-            if (($thresholdIDLessBrightness > 0) && (GetValue($brightnessIDShadowingBrightness) > GetValue($thresholdIDLessBrightness))) {
-                return $this->ReadPropertyFloat('LevelLessBrightnessShadowingBrightness');
-            }
-
         }
-
         return $level;
     }
 
