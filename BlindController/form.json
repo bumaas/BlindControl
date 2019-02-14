@@ -58,10 +58,10 @@
         {"type": "Label", "caption": "Define a brightness indicator and up to two different levels"},
         {"type": "SelectVariable", "name": "ActivatorIDShadowingBrightness", "caption": "Activator ID"},
         {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "caption": "Brightness ID"},
-        {"type": "NumberSpinner", "name": "LevelHighBrightnessShadowingBrightness", "caption": "Level at high brightness", "digits": "2"},
+        {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "caption": "Threshold less brightness ID"},
         {"type": "NumberSpinner", "name": "LevelLessBrightnessShadowingBrightness", "caption": "Level at less brightness", "digits": "2"},
         {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "caption": "Threshold high brightness ID"},
-        {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "caption": "Threshold less brightness ID"}
+        {"type": "NumberSpinner", "name": "LevelHighBrightnessShadowingBrightness", "caption": "Level at high brightness", "digits": "2"}
       ]
     },
     {
@@ -78,10 +78,11 @@
   "actions":  [
     {"type": "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id, false); echo 'Finished!'"},
     {"type": "Button", "caption": "Open Blind", "onClick": "BLC_CloseBlind($id, 0, 0); echo 'Finished!'"},
-    {"type": "Button", "caption": "Close Blind", "onClick": "BLC_CloseBlind($id, 100, 0); echo 'Finished!'"}
+    {"type": "Button", "caption": "Close Blind", "onClick": "BLC_CloseBlind($id, 100, 0); echo 'Finished!'"},
+    {"type": "Button", "caption": "Show Configuration", "onClick": "print_r(json_decode(IPS_GetConfiguration ($id), true))"}
   ],
   "status":   [
-    {"code": 201, "icon": "error", "caption": "Weekly Timetable Event ID is not not valid"},
+    {"code": 201, "icon": "error", "caption": "Weekly Timetable Event ID is not valid"},
     {"code": 202, "icon": "error", "caption": "Holiday Indicator ID is not valid"},
     {"code": 203, "icon": "error", "caption": "Level ID is not valid"},
     {"code": 204, "icon": "error", "caption": "Brightness ID is not valid"},

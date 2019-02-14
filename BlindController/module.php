@@ -108,7 +108,10 @@ class BlindController extends IPSModule
         $this->SetInstanceStatus();
 
         if ($this->GetValue('ACTIVATED')) {
-            if (in_array($SenderID, [$this->ReadPropertyInteger('Contact1ID'), $this->ReadPropertyInteger('Contact2ID')], true)) {
+            // prüfen, ob der Rollladen sofort bewegt werden soll
+            if (in_array($SenderID, [$this->ReadPropertyInteger('Contact1ID')
+                                     , $this->ReadPropertyInteger('Contact2ID')
+                                     , $this->ReadPropertyInteger('ActivatorIDShadowingBrightness')], true)) {
                 $this->ControlBlind(false);
             } else {
                 $this->ControlBlind(true);
@@ -278,12 +281,15 @@ class BlindController extends IPSModule
                         }
             */
 
-            // prüfen, ob Beschattung bei Helligkeit notwendig
-            $levelShadowingBrightness = $this->getLevelOfShadowingByBrightness($levelNew);
-            if ($profile['Reversed']) {
-                $levelNew = min($levelNew, $levelShadowingBrightness);
-            } else {
-                $levelNew = max($levelNew, $levelShadowingBrightness);
+            // prüfen, ob Beschattung bei Helligkeit gewünscht und notwendig
+            $levelShadowingBrightness = $this->getLevelOfShadowingByBrightness();
+            if ($levelShadowingBrightness !== null) {
+
+                if ($profile['Reversed']) {
+                    $levelNew = min($levelNew, $levelShadowingBrightness);
+                } else {
+                    $levelNew = max($levelNew, $levelShadowingBrightness);
+                }
             }
 
         }
@@ -363,32 +369,33 @@ class BlindController extends IPSModule
 
     private function RegisterProperties(): void
     {
-        $this->RegisterPropertyInteger('WeeklyTimeTableEventID', 0);
         $this->RegisterPropertyInteger('BlindLevelID', 0);
+        $this->RegisterPropertyInteger('WeeklyTimeTableEventID', 0);
+        $this->RegisterPropertyInteger('HolidayIndicatorID', 0);
+        $this->RegisterPropertyInteger('DayUsedWhenHoliday', 0);
         $this->RegisterPropertyInteger('WakeUpTimeID', 0);
         $this->RegisterPropertyInteger('WakeUpTimeOffset', 0);
         $this->RegisterPropertyInteger('BedTimeID', 0);
         $this->RegisterPropertyInteger('BedTimeOffset', 0);
-        $this->RegisterPropertyInteger('UpdateInterval', 1);
-        $this->RegisterPropertyInteger('HolidayIndicatorID', 0);
+        $this->RegisterPropertyInteger('IsDayIndicatorID', 0);
+
         $this->RegisterPropertyInteger('BrightnessID', 0);
         $this->RegisterPropertyInteger('BrightnessThresholdID', 0);
-        $this->RegisterPropertyInteger('IsDayIndicatorID', 0);
-        $this->RegisterPropertyInteger('DayUsedWhenHoliday', 0);
-        $this->RegisterPropertyInteger('DeactivationAutomaticMovement', 20);
-        $this->RegisterPropertyInteger('DeactivationManualMovement', 120);
         $this->RegisterPropertyInteger('Contact1ID', 0);
         $this->RegisterPropertyInteger('Contact2ID', 0);
         $this->RegisterPropertyFloat('ContactOpenLevel', 0);
         $this->RegisterPropertyInteger('ActivatorIDShadowingBrightness', 0);
         $this->RegisterPropertyInteger('BrightnessIDShadowingBrightness', 0);
-        $this->RegisterPropertyInteger('ThresholdIDHighBrightness', 0);
         $this->RegisterPropertyInteger('ThresholdIDLessBrightness', 0);
-        $this->RegisterPropertyFloat('LevelHighBrightnessShadowingBrightness', 0);
         $this->RegisterPropertyFloat('LevelLessBrightnessShadowingBrightness', 0);
+        $this->RegisterPropertyInteger('ThresholdIDHighBrightness', 0);
+        $this->RegisterPropertyFloat('LevelHighBrightnessShadowingBrightness', 0);
 
-        $this->RegisterPropertyBoolean('WriteDebugInformationToIPSLogger', false);
+        $this->RegisterPropertyInteger('UpdateInterval', 1);
+        $this->RegisterPropertyInteger('DeactivationAutomaticMovement', 20);
+        $this->RegisterPropertyInteger('DeactivationManualMovement', 120);
         $this->RegisterPropertyBoolean('WriteLogInformationToIPSLogger', false);
+        $this->RegisterPropertyBoolean('WriteDebugInformationToIPSLogger', false);
     }
 
     private function RegisterReferences(): void
@@ -667,33 +674,48 @@ class BlindController extends IPSModule
         return $contactOpen;
     }
 
-    private function getLevelOfShadowingByBrightness(float $level): float
+    private function getLevelOfShadowingByBrightness(): ?float
     {
         $activatorIDShadowingBrightness = $this->ReadPropertyInteger('ActivatorIDShadowingBrightness');
-        if ($activatorIDShadowingBrightness !== 0) {
-            $brightnessIDShadowingBrightness = $this->ReadPropertyInteger('BrightnessIDShadowingBrightness');
-            if ($brightnessIDShadowingBrightness === 0) {
-                trigger_error('BrightnessIDShadowingBrightness === 0', E_ERROR);
-            }
-            $thresholdIDHighBrightness = $this->ReadPropertyInteger('ThresholdIDHighBrightness');
-            $thresholdIDLessBrightness = $this->ReadPropertyInteger('ThresholdIDLessBrightness');
-            if ($thresholdIDHighBrightness === 0 && $thresholdIDLessBrightness === 0) {
-                trigger_error('ThresholdIDHighBrightness === 0 and ThresholdIDLowBrightness === 0', E_ERROR);
-            }
 
-
-            if (GetValue($activatorIDShadowingBrightness)) {
-                if (($thresholdIDHighBrightness > 0) && (GetValue($brightnessIDShadowingBrightness) > GetValue($thresholdIDHighBrightness))) {
-                    return $this->ReadPropertyFloat('LevelHighBrightnessShadowingBrightness');
-                }
-
-                if (($thresholdIDLessBrightness > 0) && (GetValue($brightnessIDShadowingBrightness) > GetValue($thresholdIDLessBrightness))) {
-                    return $this->ReadPropertyFloat('LevelLessBrightnessShadowingBrightness');
-                }
-
-            }
+        if (($activatorIDShadowingBrightness === 0) || !GetValue($activatorIDShadowingBrightness)) {
+            // keine Beschattung bei Helligkeit gewünscht bzw. nicht notwendig
+            return null;
         }
-        return $level;
+
+
+        $brightnessIDShadowingBrightness = $this->ReadPropertyInteger('BrightnessIDShadowingBrightness');
+        if ($brightnessIDShadowingBrightness === 0) {
+            trigger_error('BrightnessIDShadowingBrightness === 0');
+            return null;
+        }
+        $thresholdIDHighBrightness = $this->ReadPropertyInteger('ThresholdIDHighBrightness');
+        $thresholdIDLessBrightness = $this->ReadPropertyInteger('ThresholdIDLessBrightness');
+        if ($thresholdIDHighBrightness === 0 && $thresholdIDLessBrightness === 0) {
+            trigger_error('ThresholdIDHighBrightness === 0 and ThresholdIDLowBrightness === 0');
+            return null;
+        }
+
+
+        $brightness = GetValue($brightnessIDShadowingBrightness);
+
+        $thresholdBrightness = GetValue($thresholdIDHighBrightness);
+        if (($thresholdIDHighBrightness > 0) && ($brightness > $thresholdBrightness)) {
+            $level = $this->ReadPropertyFloat('LevelHighBrightnessShadowingBrightness');
+            $this->Logger_Dbg(
+                __FUNCTION__, sprintf('Beschattung bei hoher Helligkeit (%s/%s): level: %s', $brightness, $thresholdBrightness, $level));
+            return $level;
+        }
+
+        $thresholdBrightness = GetValue($thresholdIDLessBrightness);
+        if (($thresholdIDLessBrightness > 0) && ($brightness > $thresholdBrightness)) {
+            $level = $this->ReadPropertyFloat('LevelLessBrightnessShadowingBrightness');
+            $this->Logger_Dbg(
+                __FUNCTION__, sprintf('Beschattung bei niedriger Helligkeit (%s/%s): level: %s', $brightness, $thresholdBrightness, $level));
+            return $level;
+        }
+
+        return null;
     }
 
     private function isMovementLocked(float $levelAct, int $tsBlindLastMovement, int $tsAutomatik, string $gestern_ab, string $heute_auf,
