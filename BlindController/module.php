@@ -109,9 +109,12 @@ class BlindController extends IPSModule
 
         if ($this->GetValue('ACTIVATED')) {
             // prüfen, ob der Rollladen sofort bewegt werden soll
-            if (in_array($SenderID, [$this->ReadPropertyInteger('Contact1ID')
-                                     , $this->ReadPropertyInteger('Contact2ID')
-                                     , $this->ReadPropertyInteger('ActivatorIDShadowingBrightness')], true)) {
+            if (in_array(
+                $SenderID, [
+                $this->ReadPropertyInteger('Contact1ID'),
+                $this->ReadPropertyInteger('Contact2ID'),
+                $this->ReadPropertyInteger('ActivatorIDShadowingBrightness')], true
+            )) {
                 $this->ControlBlind(false);
             } else {
                 $this->ControlBlind(true);
@@ -384,6 +387,19 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('Contact1ID', 0);
         $this->RegisterPropertyInteger('Contact2ID', 0);
         $this->RegisterPropertyFloat('ContactOpenLevel', 0);
+
+        $this->RegisterPropertyBoolean('ShadowingBySunPosition', false);
+        $this->RegisterPropertyInteger('BrightnessIDShadowingBySunPosition', 0);
+        $this->RegisterPropertyInteger('ThresholdIDShadowingBySunPosition', 0);
+        $this->RegisterPropertyInteger('AzimuthID', 0);
+        $this->RegisterPropertyInteger('Altitude', 0);
+        $this->RegisterPropertyFloat('AzimuthShadowingStart', 0);
+        $this->RegisterPropertyFloat('AzimuthShadowingEnd', 0);
+        $this->RegisterPropertyFloat('AltitudeLowSunPosition', 0);
+        $this->RegisterPropertyFloat('AltitudeHighSunPosition', 0);
+        $this->RegisterPropertyFloat('BlindLevelHighSunPosition', 0);
+        $this->RegisterPropertyFloat('BlindLevelLowSunPosition', 0);
+
         $this->RegisterPropertyInteger('ActivatorIDShadowingBrightness', 0);
         $this->RegisterPropertyInteger('BrightnessIDShadowingBrightness', 0);
         $this->RegisterPropertyInteger('ThresholdIDLessBrightness', 0);
@@ -703,7 +719,8 @@ class BlindController extends IPSModule
         if (($thresholdIDHighBrightness > 0) && ($brightness > $thresholdBrightness)) {
             $level = $this->ReadPropertyFloat('LevelHighBrightnessShadowingBrightness');
             $this->Logger_Dbg(
-                __FUNCTION__, sprintf('Beschattung bei hoher Helligkeit (%s/%s): level: %s', $brightness, $thresholdBrightness, $level));
+                __FUNCTION__, sprintf('Beschattung bei hoher Helligkeit (%s/%s): level: %s', $brightness, $thresholdBrightness, $level)
+            );
             return $level;
         }
 
@@ -711,7 +728,8 @@ class BlindController extends IPSModule
         if (($thresholdIDLessBrightness > 0) && ($brightness > $thresholdBrightness)) {
             $level = $this->ReadPropertyFloat('LevelLessBrightnessShadowingBrightness');
             $this->Logger_Dbg(
-                __FUNCTION__, sprintf('Beschattung bei niedriger Helligkeit (%s/%s): level: %s', $brightness, $thresholdBrightness, $level));
+                __FUNCTION__, sprintf('Beschattung bei niedriger Helligkeit (%s/%s): level: %s', $brightness, $thresholdBrightness, $level)
+            );
             return $level;
         }
 
