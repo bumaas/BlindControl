@@ -61,9 +61,25 @@ $deactivationTimeAuto: Anzahl der Sekunden, die mindestens seit der letzten auto
 
 ## 5. Konfiguration
 
+### Überprüfen, ob der zu steuernde Rollladen korrekt in IP-Symcon eingerichtet ist
+
+Damit das Modul korrekt arbeiten kann, ist eine richtige und vollständige Einrichtung des zu steuernden Rollladens in IP-Symcon Voraussetzung. Es muss sichergestellt sein, dass der Rollladen sich korrekt positionieren lässt (offen, geschlossen und in Zwischenstufen) und die Laufrichtung richtig erkannt wird.
+Dies lässt sich am einfachsten überprüfen, indem die zu steuernde Positions Variable (bei Homematic z.B. LEVEL genannt) mit einem adaptiven Icon (z.B. "Jalousie") versehen wird und das Webfront eingebunden wird.
+
+Nun sollte sich im Webfront folgendes Bild für einen geöffneten bzw. geschlossenen Rollladen ergeben:
+
+![image](docs/Rollladen geöffnet.jpg)
+![image](docs/Rollladen geschlossen.jpg)
+
+Zeigt das Icon den falschen Zustand an, dann ist dem Profil im Namen ein '.Reversed' anzuhängen. Man erreicht dies, indem ein bestehendes Profil kopiert wird und dabei der Name ergänzt wird.
+
+
+
+
+### Einrichtung des Wochenplans
 Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstellungen:
  
-![image](docs/Wochenplan.PNG))
+![image](docs/Wochenplan.PNG)
 
 Das Modul holt aus dem Wochenplan ausschließlich die Aktionszeiten und den Aktionstyp.
 
@@ -71,8 +87,26 @@ Das Modul holt aus dem Wochenplan ausschließlich die Aktionszeiten und den Akti
 - der Wochenplan muss genau zwei Aktionen mit ID 1 und ID 2 beinhalten. Die eigentlichen Aktionen bleiben dabei jedoch leer, da der Wochenplan nicht von IP-Symcon direkt ausgeführt werden soll.
 - Die Aktion mit ID 1 stellt dabei die Aktion zum Hochfahren des Rollladens und die ID 2 die Aktion zum Runterfahren des Rollladens dar.
 - Es darf nur maximal einen Zeitraum zur Aktion 1 (Hochfahren) geben.
-- ob ein Wochenplan aktiv ist oder nicht wird nicht berücksichtigt 
+- ob ein Wochenplan aktiv ist oder nicht wird nicht berücksichtigt
 
+Über den Wochenplan werden die Grundfahrzeiten (morgens hoch/ abends runter) definiert.
+
+### Tagerkennung (optional)
+Als Ergänzung zum Wochenplan kann eine zusätzliche Tagerkennung eingerichtet werden. Sie kommt zum Einsatz, wenn neben den Fahrzeiten gemäß Wochenplan auch die Helligkeit berücksichtigt werden soll.
+
+Beispiel:
+ 
+Der Rollladen wird gemäß Wochenplan morgens um 8:00 Uhr hochgefahren und abends um 23:00 Uhr wieder herunter.
+Er soll aber nur dann hochgefahren werden, wenn es Tag ist und nur dann heruntergefahren werden, wenn es nicht mehr Tag ist.
+
+Hierzu kann die Tagerkennung zusätzlich eingerichtet werden. Dann ist der Rollladen nur dann hochgefahren, wenn beide Bedingungen (Öffnungszeit laut Wochenplan und "es ist Tag") erfüllt sind.
+
+Damit der Tag erkannt wird, kann entweder auf eine bereits bestehenden Variable verwiesen werden (hier bietet sich die 'IsDay' Variable des Location Moduls an) oder durch einen Helligkeitvergleich erfolgen.
+Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen Helligkeitswert beinhaltet (z.B. von einem Helligkeitssensor) sowie eine Variable, die den Schwellwert beinhaltet.
+ 
+![image](docs/LUX Messwert.jpg)
+
+![image](docs/Helligkeitsschwellwert.jpg)
 ### Blind Controller
 
 | Eigenschaft | Typ     | Standardwert            | Funktion                                  |
