@@ -24,10 +24,16 @@ class BlindController extends IPSModule
     private const STATUS_INST_CONTACT2_ID_IS_INVALID = 211;
     private const STATUS_INST_WAKEUPTIME_ID_IS_INVALID = 212;
     private const STATUS_INST_SLEEPTIME_ID_IS_INVALID = 213;
-    private const STATUS_INST_ACTIVATORIDSHADOWINGBRIGHTNESS_IS_INVALID = 214;
-    private const STATUS_INST_BRIGHTNESSIDSHADOWINGBRIGHTNESS_IS_INVALID = 215;
-    private const STATUS_INST_THRESHOLDIDHIGHBRIGHTNESS_IS_INVALID = 216;
-    private const STATUS_INST_THRESHOLDIDLESSRIGHTNESS_IS_INVALID = 217;
+    private const STATUS_INST_ACTIVATORIDSHADOWINGBYSUNPOSITION_IS_INVALID = 220;
+    private const STATUS_INST_AZIMUTHID_IS_INVALID = 221;
+    private const STATUS_INST_ALTITUDEID_IS_INVALID = 222;
+    private const STATUS_INST_BRIGTHNESSIDSHADOWINGBYSUNPOSITION_IS_INVALID = 223;
+    private const STATUS_INST_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION_IS_INVALID = 224;
+    private const STATUS_INST_ROOMTEMPERATUREID_IS_INVALID = 225;
+    private const STATUS_INST_ACTIVATORIDSHADOWINGBRIGHTNESS_IS_INVALID = 230;
+    private const STATUS_INST_BRIGHTNESSIDSHADOWINGBRIGHTNESS_IS_INVALID = 231;
+    private const STATUS_INST_THRESHOLDIDHIGHBRIGHTNESS_IS_INVALID = 232;
+    private const STATUS_INST_THRESHOLDIDLESSRIGHTNESS_IS_INVALID = 233;
 
 
     // Überschreibt die interne IPS_Create($id) Funktion
@@ -241,48 +247,17 @@ class BlindController extends IPSModule
         // am Tag wird überprüft, ob das Fenster beschattet werden soll
         if ($isDay) {
 
-            /*            // soll die Beschattungsfunktion aktiv sein?
-                        $bShadowingEnabled = array_key_exists('LevelControlledBySunPosition', $ini[$sIniSection]);
 
-                        $brightnessThreshold = getBrightnessThreshold($levelAct, $rTemperature);
-                        if ($bShadowingEnabled && istBeschattungNotwendig($sIniSection, $levelAct, $brightness, $brightness, $brightnessThreshold)) {
+            // prüfen, ob Beschattung nach Sonnenstand gewünscht und notwendig
+            $levelShadowingBySunPosition = $this->getLevelOfShadowingBySunPosition($levelAct, $profile['LevelOpened'], null);
+            if ($levelShadowingBySunPosition !== null) {
 
-                            $bLevelControlledBySunPosition = (boolean) $ini[$sIniSection]['LevelControlledBySunPosition'];
-
-                            if ($bLevelControlledBySunPosition) {
-                                $levelNew = getLevelFromSunPosition($ini[$sIniSection], $rSunAzimuth, $rSunAltitude);
-                                Logger_Trc("$sIniSection: LevelFromSunPosition (levelNew) = " . $levelNew);
-                            } else {
-                                // bei Rollläden steht in der Zeitleiste das Öffnungslevel (0..9) in 10% Schritten
-                                trigger_error($sIniSection . ': Überprüfen, ob die Berechnung noch richtig ist');
-                                $levelNew = (int) getValueFromZeitleiste($ini[$sIniSection]['Zeitleiste'], $ini[$sIniSection]['iWoche']) / 10;
-                                if ($levelNew === $this->blindLevelClosed) {
-                                    $levelNew = $bladeLevelOpened;
-                                }
-
-                                Logger_Trc("$sIniSection: LevelFromZeitleiste (levelNew) = $levelNew");
-                            }
-
-                            if ($levelNew < $this->blindLevelOpened) {
-
-                                //wenn Wärmeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
-                                if (($rTemperature > 27.0) || ((round($levelAct, 2) === round($levelNew, 2) - 0.15) && ($rTemperature > (27.0 - 0.5)))) {
-                                    Logger_Dbg("$sIniSection: levelAct: " . round($levelAct, 2) . ', levelNew: ' . round($levelNew, 2));
-
-                                    $levelNew -= 0.15;
-                                    $Hinweis   = 'Temp > 27°';
-                                }
-
-                                //wenn Hitzeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
-                                if (($rTemperature > 30.0) || (($levelAct === 0.1) && ($rTemperature > (30.0 - 0.5)))) {
-                                    Logger_Dbg("$sIniSection: levelAct: $levelAct");
-                                    $levelNew = 0.1;
-                                    $Hinweis   = 'Temp > 30°';
-                                }
-                            }
-
-                        }
-            */
+                if ($profile['Reversed']) {
+                    $levelNew = min($levelNew, $levelShadowingBySunPosition);
+                } else {
+                    $levelNew = max($levelNew, $levelShadowingBySunPosition);
+                }
+            }
 
             // prüfen, ob Beschattung bei Helligkeit gewünscht und notwendig
             $levelShadowingBrightness = $this->getLevelOfShadowingByBrightness();
@@ -388,18 +363,21 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('Contact2ID', 0);
         $this->RegisterPropertyFloat('ContactOpenLevel', 0);
 
-        $this->RegisterPropertyBoolean('ShadowingBySunPosition', false);
-        $this->RegisterPropertyInteger('BrightnessIDShadowingBySunPosition', 0);
-        $this->RegisterPropertyInteger('ThresholdIDShadowingBySunPosition', 0);
+        //shadowing according to sun position
+        $this->RegisterPropertyInteger('ActivatorIDShadowingBySunPosition', 0);
         $this->RegisterPropertyInteger('AzimuthID', 0);
-        $this->RegisterPropertyInteger('Altitude', 0);
-        $this->RegisterPropertyFloat('AzimuthShadowingStart', 0);
-        $this->RegisterPropertyFloat('AzimuthShadowingEnd', 0);
-        $this->RegisterPropertyFloat('AltitudeLowSunPosition', 0);
-        $this->RegisterPropertyFloat('AltitudeHighSunPosition', 0);
-        $this->RegisterPropertyFloat('BlindLevelHighSunPosition', 0);
-        $this->RegisterPropertyFloat('BlindLevelLowSunPosition', 0);
+        $this->RegisterPropertyInteger('AltitudeID', 0);
+        $this->RegisterPropertyFloat('AzimuthFrom', 0);
+        $this->RegisterPropertyFloat('AzimuthTo', 0);
+        $this->RegisterPropertyInteger('BrightnessIDShadowingBySunPosition', 0);
+        $this->RegisterPropertyInteger('BrightnessThresholdIDShadowingBySunPosition', 0);
+        $this->RegisterPropertyInteger('TemperatureIDShadowingBySunPosition', 0);
+        $this->RegisterPropertyFloat('LowSunPositionAltitude', 0);
+        $this->RegisterPropertyFloat('HighSunPositionAltitude', 0);
+        $this->RegisterPropertyFloat('LowSunPositionBlindLevel', 0);
+        $this->RegisterPropertyFloat('HighSunPositionBlindLevel', 0);
 
+        //shadowing according to brightness
         $this->RegisterPropertyInteger('ActivatorIDShadowingBrightness', 0);
         $this->RegisterPropertyInteger('BrightnessIDShadowingBrightness', 0);
         $this->RegisterPropertyInteger('ThresholdIDLessBrightness', 0);
@@ -419,6 +397,7 @@ class BlindController extends IPSModule
         $objectIDs = [
             $this->ReadPropertyInteger('WeeklyTimeTableEventID'),
             $this->ReadPropertyInteger('BlindLevelID'),
+            $this->ReadPropertyInteger('HolidayIndicatorID'),
             $this->ReadPropertyInteger('WakeUpTimeID'),
             $this->ReadPropertyInteger('BedTimeID'),
             $this->ReadPropertyInteger('HolidayIndicatorID'),
@@ -427,6 +406,12 @@ class BlindController extends IPSModule
             $this->ReadPropertyInteger('IsDayIndicatorID'),
             $this->ReadPropertyInteger('Contact1ID'),
             $this->ReadPropertyInteger('Contact2ID'),
+            $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition'),
+            $this->ReadPropertyInteger('AzimuthID'),
+            $this->ReadPropertyInteger('AltitudeID'),
+            $this->ReadPropertyInteger('BrightnessIDShadowingBySunPosition'),
+            $this->ReadPropertyInteger('BrightnessThresholdIDShadowingBySunPosition'),
+            $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition'),
             $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
             $this->ReadPropertyInteger('BrightnessIDShadowingBrightness'),
             $this->ReadPropertyInteger('ThresholdIDHighBrightness'),
@@ -453,6 +438,12 @@ class BlindController extends IPSModule
             $this->ReadPropertyInteger('IsDayIndicatorID'),
             $this->ReadPropertyInteger('Contact1ID'),
             $this->ReadPropertyInteger('Contact2ID'),
+            $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition'),
+            $this->ReadPropertyInteger('AzimuthID'),
+            $this->ReadPropertyInteger('AltitudeID'),
+            $this->ReadPropertyInteger('BrightnessIDShadowingBySunPosition'),
+            $this->ReadPropertyInteger('BrightnessThresholdIDShadowingBySunPosition'),
+            $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition'),
             $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
             $this->ReadPropertyInteger('BrightnessIDShadowingBrightness'),
             $this->ReadPropertyInteger('ThresholdIDHighBrightness'),
@@ -557,6 +548,51 @@ class BlindController extends IPSModule
         }
 
         if ($ret = $this->checkVariableId(
+            'ActivatorIDShadowingBySunPosition', true, [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            self::STATUS_INST_ACTIVATORIDSHADOWINGBYSUNPOSITION_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+/*        if ($ret = $this->checkVariableId(
+            'AzimuthID', $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === '', [VARIABLETYPE_FLOAT], self::STATUS_INST_AZIMUTHID_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+*/
+        if ($ret = $this->checkVariableId(
+            'AltitudeID', true, [VARIABLETYPE_FLOAT], self::STATUS_INST_ALTITUDEID_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkVariableId(
+            'BrightnessIDShadowingBySunPosition', true, [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            self::STATUS_INST_BRIGTHNESSIDSHADOWINGBYSUNPOSITION_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkVariableId(
+            'BrightnessThresholdIDShadowingBySunPosition', true, [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            self::STATUS_INST_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkVariableId(
+            'TemperatureIDShadowingBySunPosition', true, [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT], self::STATUS_INST_ROOMTEMPERATUREID_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkVariableId(
             'ActivatorIDShadowingBrightness', true, [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
             self::STATUS_INST_ACTIVATORIDSHADOWINGBRIGHTNESS_IS_INVALID
         )) {
@@ -617,13 +653,13 @@ class BlindController extends IPSModule
         if ($variableID !== 0) {
 
             if (!$variable = @IPS_GetVariable($variableID)) {
-                $this->Logger_Err(sprintf('falsche Variablen ID #%s', $propName));
+                $this->Logger_Err(sprintf('falsche Variablen ID (#%s) für "%s"', $variableID, $propName));
                 return $errStatus;
             }
 
             if (!in_array($variable['VariableType'], $variableTypes, true)) {
                 $this->Logger_Err(
-                    sprintf('falscher Variablentyp - nur %s erlaubt', implode(', ', $variableTypes))
+                    sprintf('falscher Variablentyp für "%s" - nur %s erlaubt', $propName, implode(', ', $variableTypes))
                 );
                 return $errStatus;
             }
@@ -690,21 +726,142 @@ class BlindController extends IPSModule
         return $contactOpen;
     }
 
+    private function getLevelOfShadowingBySunPosition(float $levelAct, float $levelOpened, float $temperature = null): ?float
+    {
+
+        $activatorID = $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition');
+
+        if (($activatorID === 0) || !GetValue($activatorID)) {
+            // keine Beschattung nach Sonnenstand gewünscht bzw. nicht notwendig
+            return null;
+        }
+
+        $brightnessID = $this->ReadPropertyInteger('BrightnessIDShadowingBySunPosition');
+        if ($brightnessID === 0) {
+            trigger_error('BrightnessIDShadowingBySunPosition === 0');
+            return null;
+        }
+
+        $thresholdIDBrightness = $this->ReadPropertyInteger('BrightnessThresholdIDShadowingBySunPosition');
+        if ($thresholdIDBrightness === 0) {
+            trigger_error('BrightnessThresholdIDShadowingBySunPosition === 0');
+            return null;
+        }
+
+        $roomTemperatureID = $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition');
+        if ($roomTemperatureID === 0) {
+            $roomTemperature = null;
+        } else {
+            $roomTemperature = (float) GetValue($roomTemperatureID);
+        }
+
+
+        $brightness = GetValue($brightnessID);
+
+        $thresholdBrightness = $this->getBrightnessThreshold($thresholdIDBrightness, $levelAct, $roomTemperature);
+
+        if ($brightness >= $thresholdBrightness) {
+
+            return null;
+
+            $levelNew = $this->getLevelFromSunPosition($rSunAzimuth, $rSunAltitude);
+            Logger_Trc("$sIniSection: LevelFromSunPosition (levelNew) = " . $levelNew);
+
+
+            if ($levelNew < $this->blindLevelOpened) {
+
+                //wenn Wärmeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
+                if (($rTemperature > 27.0) || ((round($levelAct, 2) === round($levelNew, 2) - 0.15) && ($rTemperature > (27.0 - 0.5)))) {
+                    Logger_Dbg("$sIniSection: levelAct: " . round($levelAct, 2) . ', levelNew: ' . round($levelNew, 2));
+
+                    $levelNew -= 0.15;
+                    $Hinweis  = 'Temp > 27°';
+                }
+
+                //wenn Hitzeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
+                if (($rTemperature > 30.0) || (($levelAct === 0.1) && ($rTemperature > (30.0 - 0.5)))) {
+                    Logger_Dbg("$sIniSection: levelAct: $levelAct");
+                    $levelNew = 0.1;
+                    $Hinweis  = 'Temp > 30°';
+                }
+            }
+
+        }
+
+
+    }
+
+    private function getBrightnessThreshold(int $thresholdIDBrightness, float $levelAct, float $temperature = null): float
+    {
+
+        $thresholdBrightness = (float) GetValue($thresholdIDBrightness);
+
+        $iBrightnessHysteresis = 0.1 * $thresholdBrightness;
+
+        if ($temperature !== null) {
+            //bei Temperaturen über 24 Grad soll der Rollladen auch bei geringerer Helligkeit heruntergefahren werden (10% je Grad Temperaturdifferenz zu 24°C)
+            if ($temperature > 24) {
+                $thresholdBrightness -= ($temperature - 24) * 0.10 * $thresholdBrightness;
+            } //bei Temperaturen unter 10 Grad soll der Rollladen auch bei höherer Helligkeit nicht heruntergefahren werden
+            else if ($temperature < 10) {
+                $thresholdBrightness += (10 - $temperature) * 0.10 * $thresholdBrightness;
+            }
+        }
+
+        //Hysterese berücksichtigen
+        //der Rollladen ist (teilweise) herabgefahren
+        if ($levelAct < BLADE_LEVEL_OPENED) {
+            $thresholdBrightness -= $iBrightnessHysteresis;
+        } else {
+            $thresholdBrightness += $iBrightnessHysteresis;
+        }
+
+        return $thresholdBrightness;
+    }
+
+    private function getLevelFromSunPosition(float $rSunAzimuth, float $rSunAltitude): float
+    {
+
+
+        $rLevelSunPosition = BLADE_LEVEL_OPENED;
+        if (($rSunAzimuth >= $this->ReadPropertyFloat('AzimuthFrom')) && ($rSunAzimuth <= $this->ReadPropertyFloat('AzimuthTo'))) {
+            $AltitudeLow      = $this->ReadPropertyFloat('LowSunPositionAltitude');
+            $AltitudeHigh     = $this->ReadPropertyFloat('HighSunPositionAltitude');
+            $rAltitudeTanLow  = tan($AltitudeLow * M_PI / 180);
+            $rAltitudeTanHigh = tan($AltitudeHigh * M_PI / 180);
+            $rAltitudeTanAct  = tan($rSunAltitude * M_PI / 180);
+
+            $blindLevelLow  = $this->ReadPropertyFloat('LowSunPositionBlindLevel');
+            $blindLevelHigh = $this->ReadPropertyFloat('HighSunPositionBlindLevel');
+
+            $rLevelSunPosition =
+                $blindLevelLow + ($blindLevelHigh - $blindLevelLow) * ($rAltitudeTanAct - $rAltitudeTanLow) / ($rAltitudeTanHigh - $rAltitudeTanLow);
+
+            $rLevelSunPosition = min($rLevelSunPosition, BLADE_LEVEL_OPENED);
+            $rLevelSunPosition = max($rLevelSunPosition, BLADE_LEVEL_CLOSED);
+        }
+
+        return $rLevelSunPosition;
+
+    }
+
+
     private function getLevelOfShadowingByBrightness(): ?float
     {
-        $activatorIDShadowingBrightness = $this->ReadPropertyInteger('ActivatorIDShadowingBrightness');
+        $activatorID = $this->ReadPropertyInteger('ActivatorIDShadowingBrightness');
 
-        if (($activatorIDShadowingBrightness === 0) || !GetValue($activatorIDShadowingBrightness)) {
+        if (($activatorID === 0) || !GetValue($activatorID)) {
             // keine Beschattung bei Helligkeit gewünscht bzw. nicht notwendig
             return null;
         }
 
 
-        $brightnessIDShadowingBrightness = $this->ReadPropertyInteger('BrightnessIDShadowingBrightness');
-        if ($brightnessIDShadowingBrightness === 0) {
+        $brightnessID = $this->ReadPropertyInteger('BrightnessIDShadowingBrightness');
+        if ($brightnessID === 0) {
             trigger_error('BrightnessIDShadowingBrightness === 0');
             return null;
         }
+
         $thresholdIDHighBrightness = $this->ReadPropertyInteger('ThresholdIDHighBrightness');
         $thresholdIDLessBrightness = $this->ReadPropertyInteger('ThresholdIDLessBrightness');
         if ($thresholdIDHighBrightness === 0 && $thresholdIDLessBrightness === 0) {
@@ -713,7 +870,7 @@ class BlindController extends IPSModule
         }
 
 
-        $brightness = GetValue($brightnessIDShadowingBrightness);
+        $brightness = GetValue($brightnessID);
 
         $thresholdBrightness = GetValue($thresholdIDHighBrightness);
         if (($thresholdIDHighBrightness > 0) && ($brightness > $thresholdBrightness)) {

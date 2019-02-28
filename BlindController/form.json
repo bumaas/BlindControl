@@ -26,9 +26,9 @@
         {
           "type":  "ExpansionPanel", "caption": "Overruling Up and Down Times (optional)",
           "items": [
-            {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "Wake-Up Time"},
+            {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "Wake-Up Time ID"},
             {"type": "NumberSpinner", "name": "WakeUpTimeOffset", "caption": "Wake-Up Time Offset", "suffix": "Minutes"},
-            {"type": "SelectVariable", "name": "BedTimeID", "caption": "Bedtime"},
+            {"type": "SelectVariable", "name": "BedTimeID", "caption": "Bedtime ID"},
             {"type": "NumberSpinner", "name": "BedTimeOffset", "caption": "Bedtime Offset", "suffix": "Minutes"}
           ]
         }
@@ -38,7 +38,7 @@
       "type":  "ExpansionPanel", "caption": "Is Day Detection (optional)",
       "items": [
         {"type": "SelectVariable", "name": "IsDayIndicatorID", "caption": "Is Day Indicator ID"},
-        {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day will be calculated by brightness"},
+        {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day is determined by the brightness"},
         {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
         {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
       ]
@@ -47,16 +47,43 @@
       "type":  "ExpansionPanel", "caption": "Contacts (optional)",
       "items": [
         {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened to the given level if one of the contacts are open (>0)."},
-        {"type": "SelectVariable", "name": "Contact1ID", "caption": "Contact 1"},
-        {"type": "SelectVariable", "name": "Contact2ID", "caption": "Contact 2"},
+        {"type": "SelectVariable", "name": "Contact1ID", "caption": "Contact 1 ID"},
+        {"type": "SelectVariable", "name": "Contact2ID", "caption": "Contact 2 ID"},
         {"type": "NumberSpinner", "name": "ContactOpenLevel", "caption": "Level when Contact is open", "digits": "2"}
       ]
     },
     {
-      "type":  "ExpansionPanel", "caption": "Shadowing according to Brightness (optional)",
+      "type":  "ExpansionPanel", "caption": "Shadowing According to Sun Position (optional) - coming soon -",
       "items": [
-        {"type": "Label", "caption": "Define a brightness indicator and up to two different levels"},
+        {"type": "SelectVariable", "name": "ActivatorIDShadowingBySunPosition", "caption": "Activator ID"},
+        {"type": "Label", "caption": "Define the sun positions indicators and the range of azimuth for shadowing"},
+        {"type": "SelectVariable", "name": "AzimuthID", "caption": "Azimuth ID"},
+        {"type": "SelectVariable", "name": "AltitudeID", "caption": "Altitude ID"},
+        {"type": "Label", "caption": "Define the range of azimuth for shadowing"},
+        {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "2"},
+        {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "2"},
+        {"type": "Label", "caption": "Define the brightness indicator"},
+        {"type": "SelectVariable", "name": "BrightnessIDShadowingBySunPosition", "caption": "Brightness ID"},
+        {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "caption": "Threshold brightness ID"},
+        {"type": "Label", "caption": "Define an additional temperature sensor when the room temperature should be considered"},
+        {"type": "SelectVariable", "name": "TemperatureIDShadowingBySunPosition", "caption": "Temperature ID"},
+        {
+          "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing",
+          "items": [
+            {"type": "Label", "caption": "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate roller shutter height is calculated to the current altitude."},
+            {"type": "NumberSpinner", "name": "LowSunPositionAltitude", "caption": "Low Sun Position (Altitude)", "digits": "2"},
+            {"type": "NumberSpinner", "name": "HighSunPositionAltitude", "caption": "High Sun Position (Altitude)", "digits": "2"},
+            {"type": "NumberSpinner", "name": "LowSunPositionBlindLevel", "caption": "Low Sun Position (Blind Level)", "digits": "2"},
+            {"type": "NumberSpinner", "name": "HighSunPositionBlindLevel", "caption": "High Sun Position (Blind Level)", "digits": "2"}
+          ]
+        }
+      ]
+    },
+    {
+      "type":  "ExpansionPanel", "caption": "Shadowing According to Brightness (optional)",
+      "items": [
         {"type": "SelectVariable", "name": "ActivatorIDShadowingBrightness", "caption": "Activator ID"},
+        {"type": "Label", "caption": "Define the brightness indicator and up to two different levels"},
         {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "caption": "Brightness ID"},
         {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "caption": "Threshold less brightness ID"},
         {"type": "NumberSpinner", "name": "LevelLessBrightnessShadowingBrightness", "caption": "Level at less brightness", "digits": "2"},
@@ -76,10 +103,10 @@
     }
   ],
   "actions":  [
-    {"type": "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id, false); echo 'Finished!'"},
-    {"type": "Button", "caption": "Open Blind", "onClick": "BLC_CloseBlind($id, 0, 0); echo 'Finished!'"},
-    {"type": "Button", "caption": "Close Blind", "onClick": "BLC_CloseBlind($id, 100, 0); echo 'Finished!'"},
-    {"type": "Button", "caption": "Show Configuration", "onClick": "print_r(json_decode(IPS_GetConfiguration ($id), true))"}
+    {"type": "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id, false); echo 'Finished!';"},
+    {"type": "Button", "caption": "Open Blind", "onClick": "BLC_CloseBlind($id, 0, 0); echo 'Finished!';"},
+    {"type": "Button", "caption": "Close Blind", "onClick": "BLC_CloseBlind($id, 100, 0); echo 'Finished!';"},
+    {"type": "Button", "caption": "Show Configuration", "onClick": "print_r(json_decode(IPS_GetConfiguration ($id), true));"}
   ],
   "status":   [
     {"code": 201, "icon": "error", "caption": "Weekly Timetable Event ID is not valid"},
@@ -93,7 +120,17 @@
     {"code": 209, "icon": "error", "caption": "ScheduleGroups of Timetable are not valid"},
     {"code": 210, "icon": "error", "caption": "Contact 1 ID is not valid"},
     {"code": 211, "icon": "error", "caption": "Contact 2 ID is not valid"},
-    {"code": 212, "icon": "error", "caption": "SleepTime ID is not valid"},
-    {"code": 213, "icon": "error", "caption": "WakeUpTime ID is not valid"}
+    {"code": 212, "icon": "error", "caption": "WakeUpTime ID is not valid"},
+    {"code": 213, "icon": "error", "caption": "SleepTime ID is not valid"},
+    {"code": 220, "icon": "error", "caption": "Shadowing according to sun position: Activator ID is not valid"},
+    {"code": 221, "icon": "error", "caption": "Shadowing according to sun position: Azimuth ID is not valid"},
+    {"code": 222, "icon": "error", "caption": "Shadowing according to sun position: Altitude ID is not valid"},
+    {"code": 223, "icon": "error", "caption": "Shadowing according to sun position: Brightness ID is not valid"},
+    {"code": 224, "icon": "error", "caption": "Shadowing according to sun position: Brightness Threshold ID is not valid"},
+    {"code": 225, "icon": "error", "caption": "Shadowing according to sun position: Temperature ID is not valid"},
+    {"code": 230, "icon": "error", "caption": "Shadowing according to brightness: Activator ID is not valid"},
+    {"code": 231, "icon": "error", "caption": "Shadowing according to brightness: Brightness ID is not valid"},
+    {"code": 232, "icon": "error", "caption": "Shadowing according to brightness: Threshold high brightness ID is not valid"},
+    {"code": 233, "icon": "error", "caption": "Shadowing according to brightness: Threshold low brightness ID is not valid"}
   ]
 }
