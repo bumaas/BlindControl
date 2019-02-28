@@ -85,8 +85,8 @@ Das Modul holt aus dem Wochenplan ausschließlich die Aktionszeiten und den Akti
 
 **Wichtig:** 
 - der Wochenplan muss genau zwei Aktionen mit ID 1 und ID 2 beinhalten. Die eigentlichen Aktionen bleiben dabei jedoch leer, da der Wochenplan nicht von IP-Symcon direkt ausgeführt werden soll.
-- Die Aktion mit ID 1 stellt dabei die Aktion zum Hochfahren des Rollladens und die ID 2 die Aktion zum Runterfahren des Rollladens dar.
-- Es darf nur maximal einen Zeitraum zur Aktion 1 (Hochfahren) geben.
+- Die Aktion mit ID 1 stellt dabei die Aktion zum Runterfahren des Rollladens und die ID 2 die Aktion zum Hochfahren des Rollladens dar.
+- Es darf nur maximal einen Zeitraum zur Aktion 2 (Hochfahren) geben.
 - ob ein Wochenplan aktiv ist oder nicht wird nicht berücksichtigt
 
 Über den Wochenplan werden die Grundfahrzeiten (morgens hoch/ abends runter) definiert.
