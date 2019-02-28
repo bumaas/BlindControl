@@ -1055,21 +1055,23 @@ class BlindController extends IPSModule
         $eventScheduleGroups = IPS_GetEvent($this->ReadPropertyInteger('WeeklyTimeTableEventID'))['ScheduleGroups'];
 
         foreach ($eventScheduleGroups as $scheduleGroup) {
-            $countID1 = $this->CountNumberOfPointsWithActionId($scheduleGroup['Points'], 1);
-            $countID2 = $this->CountNumberOfPointsWithActionId($scheduleGroup['Points'], 2);
-            if ($countID1 > 1) {
-                $this->Logger_Dbg(
-                    __FUNCTION__, sprintf(
-                                    'Invalid TimeTable: More (%s) than one Point with ActionID 1. (ScheduleGroup: %s)', $countID1,
-                                    json_encode($scheduleGroup)
-                                )
-                );
-                return self::STATUS_INST_TIMETABLE_IS_INVALID;
-            }
+            $countID1 = $this->CountNumberOfPointsWithActionId($scheduleGroup['Points'], 1); //down
+            $countID2 = $this->CountNumberOfPointsWithActionId($scheduleGroup['Points'], 2); //up
+
             if (($countID1 + $countID2) === 0) {
                 $this->Logger_Dbg(
                     __FUNCTION__, sprintf(
                                     'Invalid TimeTable: No Points with ActionID 1 or 2 found. (ScheduleGroup: %s)', json_encode($scheduleGroup)
+                                )
+                );
+                return self::STATUS_INST_TIMETABLE_IS_INVALID;
+            }
+
+            if ($countID2 > 1) {
+                $this->Logger_Dbg(
+                    __FUNCTION__, sprintf(
+                                    'Invalid TimeTable: More (%s) than one Point with ActionID 2. (ScheduleGroup: %s)', $countID2,
+                                    json_encode($scheduleGroup)
                                 )
                 );
                 return self::STATUS_INST_TIMETABLE_IS_INVALID;
@@ -1166,7 +1168,7 @@ class BlindController extends IPSModule
         foreach ($groups as $group) {
             if ($group['Days'] & $weekDay) {
                 foreach ($group['Points'] as $point) {
-                    if ($point['ActionID'] === 1) {
+                    if ($point['ActionID'] === 2) {
                         return sprintf("%'.02s:%'.02s", $point['Start']['Hour'], $point['Start']['Minute']);
                     }
                 }
@@ -1190,7 +1192,7 @@ class BlindController extends IPSModule
         foreach ($groups as $group) {
             if ($group['Days'] & $weekDay) {
                 foreach ($group['Points'] as $point) {
-                    if ($point['ActionID'] === 2) {
+                    if ($point['ActionID'] === 1) {
                         $count++;
                         if ($count === 2) {
                             return sprintf("%'.02s:%'.02s", $point['Start']['Hour'], $point['Start']['Minute']);

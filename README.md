@@ -79,7 +79,7 @@ Zeigt das Icon den falschen Zustand an, dann ist dem Profil im Namen ein '.Rever
 ### Einrichtung des Wochenplans
 Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstellungen:
  
-![image](docs/Wochenplan.PNG)
+![image](docs/Wochenplan.jpg)
 
 Das Modul holt aus dem Wochenplan ausschließlich die Aktionszeiten und den Aktionstyp.
 
