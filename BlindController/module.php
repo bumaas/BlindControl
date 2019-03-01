@@ -555,15 +555,16 @@ class BlindController extends IPSModule
             return;
         }
 
-/*        if ($ret = $this->checkVariableId(
-            'AzimuthID', $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === '', [VARIABLETYPE_FLOAT], self::STATUS_INST_AZIMUTHID_IS_INVALID
+        if ($ret = $this->checkVariableId(
+            'AzimuthID', $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0, [VARIABLETYPE_FLOAT],
+            self::STATUS_INST_AZIMUTHID_IS_INVALID
         )) {
             $this->SetStatus($ret);
             return;
         }
-*/
+
         if ($ret = $this->checkVariableId(
-            'AltitudeID', true, [VARIABLETYPE_FLOAT], self::STATUS_INST_ALTITUDEID_IS_INVALID
+            'AltitudeID', $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0, [VARIABLETYPE_FLOAT], self::STATUS_INST_ALTITUDEID_IS_INVALID
         )) {
             $this->SetStatus($ret);
             return;
@@ -1108,14 +1109,29 @@ class BlindController extends IPSModule
             $weekDay = (int) date('N');
         }
 
+        //Ermitteln, welche Zeiten heute laut Wochenplan gelten
         if (!$this->getUpDownTime($weekDay, $heute_auf, $heute_ab)) {
             return false;
         }
 
-
-        //Ermitteln, welche Zeiten gestern galten
+        //Ermitteln, welche Zeiten gestern laut Wochenplan galten
         if (!$this->getUpDownTime((int) date('N', strtotime('-1 day')), $gestern_auf, $gestern_ab)) {
             return false;
+        }
+
+        //gibt es übersteuernde Zeiten?
+        $idWakeUpTime = $this->ReadPropertyInteger('WakeUpTimeID');
+        if ($idWakeUpTime > 0) {
+            $heute_auf   = date('H:i', strtotime(GetValueString($idWakeUpTime)) + $this->ReadPropertyInteger('WakeUpTimeOffset') * 60);
+            $gestern_auf = $heute_auf;
+            $this->Logger_Dbg(__FUNCTION__, sprintf('WakeUpTime found: %s', $heute_auf));
+        }
+
+        $idBedTime = $this->ReadPropertyInteger('BedTimeID');
+        if ($idBedTime > 0) {
+            $heute_ab   = date('H:i', strtotime(GetValueString($idBedTime)) + $this->ReadPropertyInteger('BedTimeOffset') * 60);
+            $gestern_ab = $heute_ab;
+            $this->Logger_Dbg(__FUNCTION__, sprintf('BedTime: %s', $heute_ab));
         }
 
 
@@ -1136,19 +1152,8 @@ class BlindController extends IPSModule
             return false;
         }
 
-        $idWakeUpTime = $this->ReadPropertyInteger('WakeUpTimeID');
-        if ($idWakeUpTime > 0) {
-            $auf = date('H:i', strtotime(GetValueString($idWakeUpTime)) + $this->ReadPropertyInteger('WakeUpTimeOffset') * 60);
-        } else {
-            $auf = $this->getUpTimeOfDay($weekDay, $event['ScheduleGroups']);
-        }
-
-        $idBedTime = $this->ReadPropertyInteger('BedTimeID');
-        if ($idBedTime > 0) {
-            $ab = date('H:i', strtotime(GetValueString($idBedTime)) + $this->ReadPropertyInteger('BedTimeOffset') * 60);
-        } else {
-            $ab = $this->getDownTimeOfDay($weekDay, $event['ScheduleGroups']);
-        }
+        $auf = $this->getUpTimeOfDay($weekDay, $event['ScheduleGroups']);
+        $ab  = $this->getDownTimeOfDay($weekDay, $event['ScheduleGroups']);
 
         return true;
     }

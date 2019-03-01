@@ -134,7 +134,17 @@ Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen He
 | WriteLogInformationToIPSLogger | boolean | false  | legt fest, ob die Log Informationen zusätzlich zum IPS Logfile auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 | WriteDebugInformationToIPSLogger | boolean | false  | legt fest, ob die Debug Informationen zusätzlich zum Debugger auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 
-## 6. Anhang
+## 6. Statusvariablen und Profile
+
+Folgende Statusvariablen werden angelegt:
+
+#####ACTIVATED
+Über die Statusvariable kann die automatische Steuerung aktiviert und deaktiviert werden.
+
+#####LAST_MESSAGE
+Die Statusvariable beinhaltet einen Hinweis über die letzte Bewegung.
+
+## 7. Anhang
 
 ###  GUIDs und Datenaustausch
 
