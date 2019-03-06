@@ -119,7 +119,8 @@ class BlindController extends IPSModule
                 $SenderID, [
                 $this->ReadPropertyInteger('Contact1ID'),
                 $this->ReadPropertyInteger('Contact2ID'),
-                $this->ReadPropertyInteger('ActivatorIDShadowingBrightness')], true
+                $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
+                $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition')], true
             )) {
                 $this->ControlBlind(false);
             } else {
@@ -237,10 +238,10 @@ class BlindController extends IPSModule
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
                             'gestern_ab: %s, heute_auf: %s, heute_ab: %s, TSAutomatik: %s, levelAct: %s, TSBlind: %s, isContactOpen: %s'
-                            . ', contactOpenLevel: %s, bNoMove: %s, isDay: %s, brightness: %s, brightnessThreshold: %s', $gestern_ab, $heute_auf,
+                            . ', contactOpenLevel: %s, bNoMove: %s, isDay: %s, considerDeactivationTimes: %s, brightness: %s, brightnessThreshold: %s', $gestern_ab, $heute_auf,
                             $heute_ab, $this->FormatTimeStamp($tsAutomatik), $levelAct, $this->FormatTimeStamp($tsBlindLastMovement),
                             (isset($isContactOpen) ? (int) $isContactOpen : 'null'), $contactOpenLevel, (int) $bNoMove,
-                            (isset($isDay) ? (int) $isDay : 'null'), $brightness ?? 'null', $brightnessThreshold ?? 'null'
+                            (isset($isDay) ? (int) $isDay : 'null'), (int) $considerDeactivationTimes, $brightness ?? 'null', $brightnessThreshold ?? 'null'
                         )
         );
 
@@ -335,7 +336,7 @@ class BlindController extends IPSModule
             if ($profile['Reversed']) {
                 $level = 1 - $level;
             }
-            $this->CloseBlind((int) ($level * 100), $deactivationTimeAuto);
+            $this->MoveBlind((int) ($level * 100), $deactivationTimeAuto);
         }
 
         IPS_SemaphoreLeave($this->InstanceID . '- Blind');
@@ -390,6 +391,7 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('DeactivationManualMovement', 120);
         $this->RegisterPropertyBoolean('WriteLogInformationToIPSLogger', false);
         $this->RegisterPropertyBoolean('WriteDebugInformationToIPSLogger', false);
+        $this->RegisterPropertyBoolean('WriteDebugInformationToLogfile', false);
     }
 
     private function RegisterReferences(): void
@@ -564,7 +566,8 @@ class BlindController extends IPSModule
         }
 
         if ($ret = $this->checkVariableId(
-            'AltitudeID', $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0, [VARIABLETYPE_FLOAT], self::STATUS_INST_ALTITUDEID_IS_INVALID
+            'AltitudeID', $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0, [VARIABLETYPE_FLOAT],
+            self::STATUS_INST_ALTITUDEID_IS_INVALID
         )) {
             $this->SetStatus($ret);
             return;
@@ -945,7 +948,7 @@ class BlindController extends IPSModule
             if ($bNoMove) {
                 $this->Logger_Dbg(
                     __FUNCTION__, sprintf(
-                                    'Rollladen wurde manuell bewegt (Tag). DeactivationTimeManu: %s/%s', time() - $tsBlindLastMovement,
+                                    'Rollladen wurde manuell bewegt (Tag: %s). DeactivationTimeManu: %s/%s', date('H:i:s',$tsManualMovement), time() - $tsBlindLastMovement,
                                     $deactivationTimeManu
                                 )
                 );
@@ -957,7 +960,7 @@ class BlindController extends IPSModule
             //nachts gilt:
             //wenn die Bewegung nachts passiert ist
             $bNoMove = true;
-            $this->Logger_Dbg(__FUNCTION__, 'Rollladen wurde manuell bewegt (Nacht)');
+            $this->Logger_Dbg(__FUNCTION__, sprintf('Rollladen wurde manuell bewegt (Nacht: %s)', date('H:i:s',$tsManualMovement)));
         }
 
         return $bNoMove;
@@ -965,14 +968,14 @@ class BlindController extends IPSModule
     }
 
     //-----------------------------------------------
-    public function CloseBlind(int $percentClose, int $deactivationTimeAuto): bool
+    public function MoveBlind(int $percentClose, int $deactivationTimeAuto): bool
     {
 
         if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
             return false;
         }
 
-        $this->Logger_Dbg(__FUNCTION__, sprintf('Parameter percentClose: %s, deactivationTimeAuto: %s', $percentClose, $deactivationTimeAuto));
+        $this->Logger_Dbg(__FUNCTION__, sprintf('- percentClose: %s, deactivationTimeAuto: %s -', $percentClose, $deactivationTimeAuto));
 
         $objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
 
@@ -1280,7 +1283,7 @@ class BlindController extends IPSModule
         if (function_exists('IPSLogger_Inf') && $this->ReadPropertyBoolean('WriteLogInformationToIPSLogger')) {
             IPSLogger_Inf(__CLASS__, $message);
         } else {
-            $this->LogMessage($message, KL_MESSAGE);
+            $this->LogMessage($message, KL_NOTIFY);
         }
 
         $this->SetValue('LAST_MESSAGE', $message);
@@ -1291,6 +1294,9 @@ class BlindController extends IPSModule
         $this->SendDebug($message, $data, 0);
         if (function_exists('IPSLogger_Dbg') && $this->ReadPropertyBoolean('WriteDebugInformationToIPSLogger')) {
             IPSLogger_Dbg(__CLASS__ . '.' . IPS_GetObject($this->InstanceID)['ObjectName'], $data);
+        }
+        if ($this->ReadPropertyBoolean('WriteDebugInformationToLogfile')) {
+            $this->LogMessage(sprintf('%s: %s', $message, $data), KL_DEBUG);
         }
     }
 

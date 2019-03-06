@@ -51,9 +51,9 @@ BLC_ControlBlind(int $InstanceID, bool $considerDeactvationTimes)
 Prüft die Rollladenposition gemäß der in der Instanz festgelegten Eigenschaften und fährt den Rollladen auf die ermittelte Position. Wenn $considerDeactivationTimes == true, dann wird DeactivationAutomaticMovement berücksichtigt.
 
 ```php
-BLC_CloseBlind(int $InstanceID, int $percentClose, int $deactivationTimeAuto): bool
+BLC_MoveBlind(int $InstanceID, int $percentClose, int $deactivationTimeAuto): bool
 ```
-Schließt den Rollladen auf die gewünschte Prozentzahl.
+Fährt den Rollladen auf den gewünschten Schließungsgrad.
 $percentClose: 0 - 100
 Angabe des Schließungsgrades (0=geöffnet, 100 = geschlossen)
 $deactivationTimeAuto: Anzahl der Sekunden, die mindestens seit der letzten automatischen Bewegung vergangen sein müssen. Sonst wird der Rollladen nicht bewegt.
@@ -131,9 +131,10 @@ Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen He
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
 | DeactivationAutomaticMovement | integer | 20| legt fest, wie lange nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird.|
 | DeactivationManualMovement | integer | 120  | legt fest, wie lange nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll.|
-| WriteLogInformationToIPSLogger | boolean | false  | legt fest, ob die Log Informationen zusätzlich zum IPS Logfile auch an den IPSLogger der IPSLibrary übergeben werden sollen|
+| WriteLogInformationToIPSLogger | boolean | false  | legt fest, ob die Log Informationen zusätzlich zum Standard Logfile auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 | WriteDebugInformationToIPSLogger | boolean | false  | legt fest, ob die Debug Informationen zusätzlich zum Debugger auch an den IPSLogger der IPSLibrary übergeben werden sollen|
-
+| WriteDebugInformationToLogfile | boolean | false  | legt fest, ob die Debug Informationen zusätzlich in das Standard Logfile geschrieben werden sollen. Wichtig: dazu muss der Symcon Spezialschalter 'LogfileVerbose' aktiviert sein
+ 
 ## 6. Statusvariablen und Profile
 
 Folgende Statusvariablen werden angelegt:

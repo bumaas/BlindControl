@@ -97,15 +97,16 @@
         {"type": "NumberSpinner", "name": "UpdateInterval", "caption": "Update Interval", "suffix": "Minutes"},
         {"type": "NumberSpinner", "name": "DeactivationAutomaticMovement", "caption": "Deactivation Time after automatic Movement", "suffix": "Minutes"},
         {"type": "NumberSpinner", "name": "DeactivationManualMovement", "caption": "Deactivation Time after manual Movement", "suffix": "Minutes"},
-        {"type": "CheckBox", "name": "WriteLogInformationToIPSLogger", "caption": "Log and Error Information are written to IPSLogger of IPSLibrary"},
-        {"type": "CheckBox", "name": "WriteDebugInformationToIPSLogger", "caption": "Debug Information are written to IPSLogger of IPSLibrary"}
+        {"type": "CheckBox", "name": "WriteLogInformationToIPSLogger", "caption": "Log and Error Information are written to IPSLogger of IPSLibrary instead of standard logfile"},
+        {"type": "CheckBox", "name": "WriteDebugInformationToLogfile", "caption": "Debug information are written additionally to standard logfile"},
+        {"type": "CheckBox", "name": "WriteDebugInformationToIPSLogger", "caption": "Debug information are written additionally to IPSLogger of IPSLibrary"}
       ]
     }
   ],
   "actions":  [
     {"type": "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id, false); echo 'Finished!';"},
-    {"type": "Button", "caption": "Open Blind", "onClick": "BLC_CloseBlind($id, 0, 0); echo 'Finished!';"},
-    {"type": "Button", "caption": "Close Blind", "onClick": "BLC_CloseBlind($id, 100, 0); echo 'Finished!';"},
+    {"type": "Button", "caption": "Open Blind", "onClick": "BLC_MoveBlind($id, 0, 0); echo 'Finished!';"},
+    {"type": "Button", "caption": "Close Blind", "onClick": "BLC_MoveBlind($id, 100, 0); echo 'Finished!';"},
     {"type": "Button", "caption": "Show Configuration", "onClick": "print_r(json_decode(IPS_GetConfiguration ($id), true));"}
   ],
   "status":   [
