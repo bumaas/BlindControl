@@ -24,6 +24,8 @@ class BlindController extends IPSModule
     private const STATUS_INST_CONTACT2_ID_IS_INVALID = 211;
     private const STATUS_INST_WAKEUPTIME_ID_IS_INVALID = 212;
     private const STATUS_INST_SLEEPTIME_ID_IS_INVALID = 213;
+    private const STATUS_INST_DAYSTART_ID_IS_INVALID = 214;
+    private const STATUS_INST_DAYEND_ID_IS_INVALID = 215;
     private const STATUS_INST_ACTIVATORIDSHADOWINGBYSUNPOSITION_IS_INVALID = 220;
     private const STATUS_INST_AZIMUTHID_IS_INVALID = 221;
     private const STATUS_INST_ALTITUDEID_IS_INVALID = 222;
@@ -223,6 +225,27 @@ class BlindController extends IPSModule
             $isDay = $isDay && ($brightness > $brightnessThreshold);
         }
 
+        // übersteuernde Zeiten auswerten
+        $dayStart = null;
+        $dayEnd = null;
+
+        if ($this->ReadPropertyInteger('DayStartID') > 0){
+            $dayStart = GetValueString($this->ReadPropertyInteger('DayStartID'));
+        }
+
+        if ($this->ReadPropertyInteger('DayEndID') > 0){
+            $dayEnd = GetValueString($this->ReadPropertyInteger('DayEndID'));
+        }
+
+        if (($dayStart !== null) && ($dayEnd !== null)){
+            $isDay = (time() > strtotime($dayStart)) && (time() < strtotime($dayEnd));
+        } elseif (($dayStart !== null) && (time() < strtotime('12:00'))){
+            $isDay = time() > strtotime($dayStart);
+        } elseif (($dayEnd !== null) && (time() > strtotime('12:00'))) {
+            $isDay = time() < strtotime($dayEnd);
+        }
+
+
         if ($bNoMove) {
             $levelNew = $levelAct;
         } else if ($isDay) {
@@ -238,10 +261,10 @@ class BlindController extends IPSModule
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
                             'gestern_ab: %s, heute_auf: %s, heute_ab: %s, TSAutomatik: %s, levelAct: %s, TSBlind: %s, isContactOpen: %s'
-                            . ', contactOpenLevel: %s, bNoMove: %s, isDay: %s, considerDeactivationTimes: %s, brightness: %s, brightnessThreshold: %s', $gestern_ab, $heute_auf,
+                            . ', contactOpenLevel: %s, bNoMove: %s, isDay: %s, dayStart: %s, dayEnd: %s, considerDeactivationTimes: %s, brightness: %s, brightnessThreshold: %s', $gestern_ab, $heute_auf,
                             $heute_ab, $this->FormatTimeStamp($tsAutomatik), $levelAct, $this->FormatTimeStamp($tsBlindLastMovement),
                             (isset($isContactOpen) ? (int) $isContactOpen : 'null'), $contactOpenLevel, (int) $bNoMove,
-                            (isset($isDay) ? (int) $isDay : 'null'), (int) $considerDeactivationTimes, $brightness ?? 'null', $brightnessThreshold ?? 'null'
+                            (isset($isDay) ? (int) $isDay : 'null'), $dayStart?? 'null', $dayEnd?? 'null', (int) $considerDeactivationTimes, $brightness ?? 'null', $brightnessThreshold ?? 'null'
                         )
         );
 
@@ -356,10 +379,15 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('WakeUpTimeOffset', 0);
         $this->RegisterPropertyInteger('BedTimeID', 0);
         $this->RegisterPropertyInteger('BedTimeOffset', 0);
-        $this->RegisterPropertyInteger('IsDayIndicatorID', 0);
 
+        //day detection
+        $this->RegisterPropertyInteger('IsDayIndicatorID', 0);
         $this->RegisterPropertyInteger('BrightnessID', 0);
         $this->RegisterPropertyInteger('BrightnessThresholdID', 0);
+        $this->RegisterPropertyInteger('DayStartID', 0);
+        $this->RegisterPropertyInteger('DayEndID', 0);
+
+        //contacts
         $this->RegisterPropertyInteger('Contact1ID', 0);
         $this->RegisterPropertyInteger('Contact2ID', 0);
         $this->RegisterPropertyFloat('ContactOpenLevel', 0);
@@ -390,8 +418,8 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('DeactivationAutomaticMovement', 20);
         $this->RegisterPropertyInteger('DeactivationManualMovement', 120);
         $this->RegisterPropertyBoolean('WriteLogInformationToIPSLogger', false);
-        $this->RegisterPropertyBoolean('WriteDebugInformationToIPSLogger', false);
         $this->RegisterPropertyBoolean('WriteDebugInformationToLogfile', false);
+        $this->RegisterPropertyBoolean('WriteDebugInformationToIPSLogger', false);
     }
 
     private function RegisterReferences(): void
@@ -404,6 +432,8 @@ class BlindController extends IPSModule
             $this->ReadPropertyInteger('BedTimeID'),
             $this->ReadPropertyInteger('HolidayIndicatorID'),
             $this->ReadPropertyInteger('BrightnessID'),
+            $this->ReadPropertyInteger('DayStartID'),
+            $this->ReadPropertyInteger('DayStartID'),
             $this->ReadPropertyInteger('BrightnessThresholdID'),
             $this->ReadPropertyInteger('IsDayIndicatorID'),
             $this->ReadPropertyInteger('Contact1ID'),
@@ -518,6 +548,20 @@ class BlindController extends IPSModule
 
         if ($ret = $this->checkVariableId(
             'BrightnessID', true, [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT], self::STATUS_INST_BRIGHTNESS_ID_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkVariableId(
+            'DayStartID', true, [VARIABLETYPE_STRING], self::STATUS_INST_DAYSTART_ID_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkVariableId(
+            'DayEndID', true, [VARIABLETYPE_STRING], self::STATUS_INST_DAYEND_ID_IS_INVALID
         )) {
             $this->SetStatus($ret);
             return;
@@ -1293,7 +1337,7 @@ class BlindController extends IPSModule
     {
         $this->SendDebug($message, $data, 0);
         if (function_exists('IPSLogger_Dbg') && $this->ReadPropertyBoolean('WriteDebugInformationToIPSLogger')) {
-            IPSLogger_Dbg(__CLASS__ . '.' . IPS_GetObject($this->InstanceID)['ObjectName'], $data);
+            IPSLogger_Dbg(__CLASS__ . '.' . IPS_GetObject($this->InstanceID)['ObjectName'] . '.' . $message, $data);
         }
         if ($this->ReadPropertyBoolean('WriteDebugInformationToLogfile')) {
             $this->LogMessage(sprintf('%s: %s', $message, $data), KL_DEBUG);
