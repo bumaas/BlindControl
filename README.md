@@ -126,6 +126,18 @@ Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen He
 | DayEndID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein|
 | Contact1ID, Contact2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Position gefahren
 | ContactOpenLevel           | float   | 0 | Position, auf die der Rollladen mindestens gefahren wird, wenn ein Kontakt offen ist.
+| ActivatorIDShadowingBySunPosition | integer   | 0 | 
+| AzimuthID| integer   | 0 | 
+| AltitudeID      | integer   | 0 | 
+| AzimuthFrom      | integer   | 0 | 
+| AzimuthTo      | integer   | 0 | 
+| BrightnessIDShadowingBySunPosition      | integer   | 0 | 
+| BrightnessThresholdIDShadowingBySunPosition      | integer   | 0 | 
+| TemperatureIDShadowingBySunPosition      | integer   | 0 | 
+| LowSunPositionAltitude      | integer   | 0 | 
+| HighSunPositionAltitude      | integer   | 0 | 
+| LowSunPositionBlindLevel      | integer   | 0 | 
+| HighSunPositionBlindLevel      | integer   | 0 | 
 | ActivatorIDShadowingBrightness | integer   | 0 | 
 | BrightnessIDShadowingBrightness| integer   | 0 | 
 | ThresholdIDHighBrightness      | integer   | 0 | 
