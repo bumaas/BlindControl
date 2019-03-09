@@ -13,7 +13,8 @@ Steuert einen Rollladen nach vorgegebenen Einstellungen.
 3. [Installation](#3-installation)  
 4. [Funktionsreferenz](#4-funktionsreferenz)
 5. [Konfiguration](#5-konfiguration)  
-6. [Anhang](#6-anhang)  
+6. [Statusvariablen und Profile](#6-statusvariablen-und-profile)  
+7. [Anhang](#7-anhang)  
 
 ## 1. Funktionsumfang
 

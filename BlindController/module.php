@@ -149,8 +149,6 @@ class BlindController extends IPSModule
         }
 
 
-        //$Hinweis = '';
-
         if (!IPS_SemaphoreEnter($this->InstanceID . '- Blind', 9 * 1000)) {
             return false;
         }
@@ -163,6 +161,8 @@ class BlindController extends IPSModule
         } else {
             $deactivationTimeAuto = 0;
         }
+
+        $Hinweis = null;
 
         //Ermitteln, welche Zeiten heute und gestern gelten
 
@@ -200,11 +200,13 @@ class BlindController extends IPSModule
         );
 
 
-
         // 'tagsüber' nach Wochenplan ermitteln
         $isDayTimeSchedule = (time() >= strtotime($heute_auf)) && (time() <= strtotime($heute_ab));
 
+
         // DayIndikator auswerten
+
+        $isDayDayDetection = null;
 
         if ($this->ReadPropertyInteger('IsDayIndicatorID') > 0) {
             $isDayDayDetection = $isDayTimeSchedule && GetValueBoolean($this->ReadPropertyInteger('IsDayIndicatorID'));
@@ -245,13 +247,26 @@ class BlindController extends IPSModule
         }
 
 
-        $isDay = $isDayTimeSchedule && $isDayDayDetection;
+        if ($isDayDayDetection === null) {
+            $isDay = $isDayTimeSchedule;
+        } else {
+            $isDay = $isDayTimeSchedule && $isDayDayDetection;
+        }
+
         if ($bNoMove) {
             $levelNew = $levelAct;
         } else if ($isDay) {
             $levelNew = $this->profile['LevelOpened'];
+            $Hinweis  = 'Tagesanfang';
+            if (isset($isDayDayDetection, $brightness)) {
+                $Hinweis .= ', ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
+            }
         } else {
             $levelNew = $this->profile['LevelClosed'];
+            $Hinweis  = 'Tagesende';
+            if (isset($isDayDayDetection, $brightness)) {
+                $Hinweis .= ', ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
+            }
         }
 
 
@@ -264,8 +279,9 @@ class BlindController extends IPSModule
                             . ', contactOpenLevel: %s, bNoMove: %s, isDay (TimeSchedule): %s, isDay (DayDetection): %s, dayStart: %s, dayEnd: %s, considerDeactivationTimes: %s, brightness: %s, brightnessThreshold: %s',
                             $gestern_ab, $heute_auf, $heute_ab, $this->FormatTimeStamp($tsAutomatik), $levelAct,
                             $this->FormatTimeStamp($tsBlindLastMovement), (isset($isContactOpen) ? (int) $isContactOpen : 'null'), $contactOpenLevel,
-                            (int) $bNoMove, (int) $isDayTimeSchedule, (isset($isDayDayDetection) ? (int) $isDayDayDetection : 'null'), $dayStart ?? 'null', $dayEnd ?? 'null',
-                            (int) $considerDeactivationTimes, $brightness ?? 'null', $brightnessThreshold ?? 'null'
+                            (int) $bNoMove, (int) $isDayTimeSchedule, (isset($isDayDayDetection) ? (int) $isDayDayDetection : 'null'),
+                            $dayStart ?? 'null', $dayEnd ?? 'null', (int) $considerDeactivationTimes, $brightness ?? 'null',
+                            $brightnessThreshold ?? 'null'
                         )
         );
 
@@ -282,6 +298,7 @@ class BlindController extends IPSModule
                 } else {
                     $levelNew = max($levelNew, $levelShadowingBySunPosition);
                 }
+                $Hinweis = 'Beschattung nach Sonnenstand, ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBySunPosition'));
             }
 
             // prüfen, ob Beschattung bei Helligkeit gewünscht und notwendig
@@ -289,25 +306,20 @@ class BlindController extends IPSModule
             if ($levelShadowingBrightness !== null) {
 
                 if ($this->profile['Reversed']) {
-                    $levelNew = min($levelNew, $levelShadowingBrightness);
-                } else {
-                    $levelNew = max($levelNew, $levelShadowingBrightness);
+                    if ($levelShadowingBrightness < $levelNew) {
+                        $levelNew = $levelShadowingBrightness;
+                        $Hinweis  =
+                            'Beschattung nach Helligkeit, ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
+                    }
+                } elseif ($levelShadowingBrightness > $levelNew) {
+                    $levelNew = $levelShadowingBrightness;
+                    $Hinweis  = 'Beschattung nach Helligkeit, ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
                 }
             }
 
         }
 
         /*
-
-                //prüfen, ob der Rollladen abends unabhängig von der Helligkeit geschlossen werden soll
-                $closeBladeClockDependentOnly = false;
-                if (getSecsOfDeltaHHMM($sZeit) > getSecsOfDeltaHHMM('12:00')) {
-                    if (array_key_exists('CloseBladeClockDependentOnly', $ini[$sIniSection])) {
-                        $closeBladeClockDependentOnly = (boolean) $ini[$sIniSection]['CloseBladeClockDependentOnly'];
-                    } else {
-                        $closeBladeClockDependentOnly = false;
-                    }
-                }
 
                 //wenn das Script aufgrund einer Änderung des Fensterstatus aufgerufen wurde, soll der Rollladen auf jeden Fall bewegt werden
                 if ($_IPS['SENDER'] === 'Variable') {
@@ -318,15 +330,13 @@ class BlindController extends IPSModule
                     $deactivationTimeAuto = getSecsOfDeltaHHMM($sDeltaStdMinAuto);
                 }
         */
+
         // wenn es dunkel ist hängt das Level nur vom Fensterstatus ab
-        $closeBladeClockDependentOnly = false;
-        if (!$isDay && !$closeBladeClockDependentOnly) {
+        if (!$isDay) {
             $deactivationTimeAuto = 0;
             if ($isContactOpen) {
                 $levelNew = $contactOpenLevel;
-                //$Hinweis  = 'Fenster geöffnet';
-            } else {
-                $levelNew = $this->profile['LevelClosed'];
+                $Hinweis  = 'Kontakt offen';
             }
         } elseif ($levelAct === $contactOpenLevel) {
             // es ist hell
@@ -341,7 +351,8 @@ class BlindController extends IPSModule
             $deactivationTimeAuto = 0;
             $bNoMove              = false;
             $levelNew             = $contactOpenLevel;
-            $this->Logger_Dbg(__FUNCTION__, "Fenster geöffnet (levelAct: $levelAct, levelNew: $levelNew)");
+            $Hinweis              = 'Kontakt offen';
+            $this->Logger_Dbg(__FUNCTION__, "Kontakt geöffnet (levelAct: $levelAct, levelNew: $levelNew)");
         }
 
         /*        if (($contactOpenLevel < $levelNew) && $isContactOpen && GetValueBoolean(ID_REGEN_UND_WIND)
@@ -360,7 +371,7 @@ class BlindController extends IPSModule
             if ($this->profile['Reversed']) {
                 $level = 1 - $level;
             }
-            $this->MoveBlind((int) ($level * 100), $deactivationTimeAuto);
+            $this->MoveBlind((int) ($level * 100), $deactivationTimeAuto, $Hinweis);
         }
 
         IPS_SemaphoreLeave($this->InstanceID . '- Blind');
@@ -619,16 +630,16 @@ class BlindController extends IPSModule
         }
 
         if ($ret = $this->checkVariableId(
-            'BrightnessIDShadowingBySunPosition', $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0, [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
-            self::STATUS_INST_BRIGTHNESSIDSHADOWINGBYSUNPOSITION_IS_INVALID
+            'BrightnessIDShadowingBySunPosition', $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0,
+            [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT], self::STATUS_INST_BRIGTHNESSIDSHADOWINGBYSUNPOSITION_IS_INVALID
         )) {
             $this->SetStatus($ret);
             return;
         }
 
         if ($ret = $this->checkVariableId(
-            'BrightnessThresholdIDShadowingBySunPosition', $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0, [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
-            self::STATUS_INST_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION_IS_INVALID
+            'BrightnessThresholdIDShadowingBySunPosition', $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0,
+            [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT], self::STATUS_INST_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION_IS_INVALID
         )) {
             $this->SetStatus($ret);
             return;
@@ -793,39 +804,46 @@ class BlindController extends IPSModule
         }
 
 
-        $levelNew            = null;
+        $level               = null;
         $brightness          = GetValue($this->ReadPropertyInteger('BrightnessIDShadowingBySunPosition'));
-        $thresholdBrightness = $this->getBrightnessThreshold($this->ReadPropertyInteger('BrightnessThresholdIDShadowingBySunPosition'), $levelAct, $roomTemperature);
+        $thresholdBrightness =
+            $this->getBrightnessThreshold($this->ReadPropertyInteger('BrightnessThresholdIDShadowingBySunPosition'), $levelAct, $roomTemperature);
 
-        $this->Logger_Dbg(__FUNCTION__, sprintf('Activator value: %d, Brightness: %.1f, Threshold Brightness: %.1f, levelAct: %.2f',
-            (int) GetValue($activatorID), $brightness, $thresholdBrightness, $levelAct));
+        $this->Logger_Dbg(
+            __FUNCTION__, sprintf(
+            'Activator value: %d, Brightness: %.1f, Threshold Brightness: %.1f, levelAct: %.2f', (int) GetValue($activatorID), $brightness,
+            $thresholdBrightness, $levelAct
+        )
+        );
 
         if ($brightness >= $thresholdBrightness) {
 
-            $levelNew = $this->getLevelFromSunPosition(
+            $level = $this->getLevelFromSunPosition(
                 GetValueFloat($this->ReadPropertyInteger('AzimuthID')), GetValueFloat($this->ReadPropertyInteger('AltitudeID'))
             );
-            $this->Logger_Dbg(__FUNCTION__, sprintf('LevelFromSunPosition: %.2f', $levelNew));
+            $this->Logger_Dbg(__FUNCTION__, sprintf('level: %.2f', $level));
 
 
-            if ($levelNew < $this->profile['LevelOpened']) {
+            if ($level < $this->profile['LevelOpened']) {
 
                 //wenn Wärmeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
-                if (($roomTemperature > 27.0) || ((round($levelAct, 2) === round($levelNew, 2) - 0.15) && ($roomTemperature > (27.0 - 0.5)))) {
-                    $levelNew -= 0.15;
-                    $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 27°, levelAct: %.2f, levelNew: %.2f', $levelAct, $levelNew));
+                if (($roomTemperature > 27.0) || ((round($levelAct, 2) === round($level, 2) - 0.15) && ($roomTemperature > (27.0 - 0.5)))) {
+                    $level -= 0.15;
+                    $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 27°, levelAct: %.2f, level: %.2f', $levelAct, $level));
                 }
 
                 //wenn Hitzeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
                 if (($roomTemperature > 30.0) || (($levelAct === 0.1) && ($roomTemperature > (30.0 - 0.5)))) {
-                    $levelNew = 0.1;
-                    $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 30°, levelAct: %.2f, levelNew: %.2f', $levelAct, $levelNew));
+                    $level = 0.1;
+                    $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 30°, levelAct: %.2f, level: %.2f', $levelAct, $level));
                 }
+            } else {
+                $level = null;
             }
 
         }
 
-        return $levelNew;
+        return $level;
 
     }
 
@@ -1002,14 +1020,16 @@ class BlindController extends IPSModule
     }
 
     //-----------------------------------------------
-    public function MoveBlind(int $percentClose, int $deactivationTimeAuto): bool
+    public function MoveBlind(int $percentClose, int $deactivationTimeAuto, string $hint = null): bool
     {
 
         if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
             return false;
         }
 
-        $this->Logger_Dbg(__FUNCTION__, sprintf('- percentClose: %s, deactivationTimeAuto: %s -', $percentClose, $deactivationTimeAuto));
+        $this->Logger_Dbg(
+            __FUNCTION__, sprintf('- percentClose: %s, deactivationTimeAuto: %s, hint: %s -', $percentClose, $deactivationTimeAuto, $hint)
+        );
 
         $objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
 
@@ -1048,7 +1068,7 @@ class BlindController extends IPSModule
                     __FUNCTION__, "$objectName: TimestampAutomatik: " . $this->ReadAttributeInteger('AttrTimeStampAutomatic')
                 );
 
-                $this->WriteInfo($levelNew, $profile['LevelClosed'], $profile['LevelOpened']);
+                $this->WriteInfo($levelNew, $profile['LevelClosed'], $profile['LevelOpened'], $hint);
             } else {
                 $this->Logger_Dbg(
                     __FUNCTION__, 'Fehler beim Setzen der Werte. (id = ' . $levelID . ', Value = ' . $percentClose . ')'
@@ -1062,30 +1082,33 @@ class BlindController extends IPSModule
 
         } else {
             $this->Logger_Dbg(
-                __FUNCTION__, sprintf('DeactivationTimeAuto: %d/%d, LevelDiffPercentage: %.2f', $timediff, $deactivationTimeAuto, $LeveldiffPercentage)
+                __FUNCTION__,
+                sprintf('DeactivationTimeAuto: %d/%d, LevelDiffPercentage: %.2f', $timediff, $deactivationTimeAuto, $LeveldiffPercentage)
             );
         }
 
         return $ret;
     }
 
-    private function WriteInfo($rLevelneu, $blindLevelClosed, $blindLevelOpened): void
+    private function WriteInfo($rLevelneu, $blindLevelClosed, $blindLevelOpened, $hint = null): void
     {
         $objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
 
-        if ($this->ReadPropertyInteger('BrightnessID') > 0) {
-            $brightness = sprintf(' (%s)', GetValueFormatted($this->ReadPropertyInteger('BrightnessID')));
+        if ($rLevelneu === $blindLevelClosed) {
+            $logMessage = sprintf('Der Rollladen %s wurde geschlossen.', $objectName);
+        } else if ($rLevelneu === $blindLevelOpened) {
+            $logMessage = sprintf('Der Rollladen %s wurde geöffnet.', $objectName);
         } else {
-            $brightness = '';
+            $logMessage = sprintf('Der Rollladen %s wurde auf %.0f%% gefahren.', $objectName, 100 * $rLevelneu);
         }
 
-        if ($rLevelneu === $blindLevelClosed) {
-            $this->Logger_Inf("Der Rollladen '" . $objectName . "' wurde geschlossen." . $brightness);
-        } else if ($rLevelneu === $blindLevelOpened) {
-            $this->Logger_Inf("Der Rollladen '" . $objectName . "' wurde geöffnet." . $brightness);
+        if ($hint === null) {
+            $this->Logger_Inf($logMessage);
         } else {
-            $this->Logger_Inf("Der Rollladen '" . $objectName . "' wurde auf " . sprintf('%.0f', 100 * $rLevelneu) . '% gefahren.');
+            $this->Logger_Inf(substr($logMessage, 0, -1) . ' (' . $hint . ')');
         }
+
+
     }
 
     private function checkTimeTable(): int
@@ -1158,16 +1181,22 @@ class BlindController extends IPSModule
 
         //gibt es übersteuernde Zeiten?
         $idWakeUpTime = $this->ReadPropertyInteger('WakeUpTimeID');
-        if ($idWakeUpTime > 0) {
-            $heute_auf   = date('H:i', strtotime(GetValueString($idWakeUpTime)) + $this->ReadPropertyInteger('WakeUpTimeOffset') * 60);
-            $gestern_auf = $heute_auf;
+        if (($idWakeUpTime > 0) && (GetValueString($idWakeUpTime) !== '')) {
+            $heute_auf = date('H:i', strtotime(GetValueString($idWakeUpTime)) + $this->ReadPropertyInteger('WakeUpTimeOffset') * 60);
+            if ($heute_auf === false) {
+                return false;
+            }
+            $gestern_auf = (string) $heute_auf;
             $this->Logger_Dbg(__FUNCTION__, sprintf('WakeUpTime found: %s', $heute_auf));
         }
 
         $idBedTime = $this->ReadPropertyInteger('BedTimeID');
-        if ($idBedTime > 0) {
-            $heute_ab   = date('H:i', strtotime(GetValueString($idBedTime)) + $this->ReadPropertyInteger('BedTimeOffset') * 60);
-            $gestern_ab = $heute_ab;
+        if (($idBedTime > 0) && (GetValueString($idBedTime) !== '')) {
+            $heute_ab = date('H:i', strtotime(GetValueString($idBedTime)) + $this->ReadPropertyInteger('BedTimeOffset') * 60);
+            if ($heute_ab === false) {
+                return false;
+            }
+            $gestern_ab = (string) $heute_ab;
             $this->Logger_Dbg(__FUNCTION__, sprintf('BedTime: %s', $heute_ab));
         }
 
