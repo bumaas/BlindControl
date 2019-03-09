@@ -37,6 +37,7 @@ class BlindController extends IPSModule
     private const STATUS_INST_THRESHOLDIDHIGHBRIGHTNESS_IS_INVALID = 232;
     private const STATUS_INST_THRESHOLDIDLESSRIGHTNESS_IS_INVALID = 233;
 
+    private $objectName;
     private $profile;
 
 
@@ -148,10 +149,13 @@ class BlindController extends IPSModule
             return false;
         }
 
-
         if (!IPS_SemaphoreEnter($this->InstanceID . '- Blind', 9 * 1000)) {
             return false;
         }
+
+        // globale Instanzvariablen setzen
+        $this->objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
+        $this->profile = $this->GetProfileInformation();
 
         // $deactivationTimeAuto: Zeitraum, in dem das automatisch gesetzte Level
         // erhalten bleibt bevor es überschrieben wird.
@@ -184,16 +188,10 @@ class BlindController extends IPSModule
         // Attribut TimestampAutomatik auslesen
         $tsAutomatik = $this->ReadAttributeInteger('AttrTimeStampAutomatic');
 
-        // ...dann prüfen ob neues Level in Aktor geschrieben werden muss.
-
         // Das aktuelle Level im Jalousieaktor auslesen
         $levelAct = (float) GetValue($idLevel);
 
-        // Profil auslesen
-        $this->profile = $this->GetProfileInformation();
-
-        // Das neue Solllevel für den Rollladen festlegen
-        // wurde der Rollladen manuell bewegt?
+        // prüfen, ob der Rollladen manuell bewegt wurde und somit eine Bewegungssperre besteht
         $bNoMove = $this->isMovementLocked(
             $levelAct, $tsBlindLastMovement, $tsAutomatik, $gestern_ab, $heute_auf, $heute_ab, $this->profile['LevelClosed'],
             $this->profile['LevelOpened']
@@ -204,8 +202,7 @@ class BlindController extends IPSModule
         $isDayTimeSchedule = (time() >= strtotime($heute_auf)) && (time() <= strtotime($heute_ab));
 
 
-        // DayIndikator auswerten
-
+        // optionale Tageserkennung auswerten
         $isDayDayDetection = null;
 
         if ($this->ReadPropertyInteger('IsDayIndicatorID') > 0) {
@@ -287,7 +284,6 @@ class BlindController extends IPSModule
 
         // am Tag wird überprüft, ob das Fenster beschattet werden soll
         if ($isDay) {
-
 
             // prüfen, ob Beschattung nach Sonnenstand gewünscht und notwendig
             $levelShadowingBySunPosition = $this->getLevelOfShadowingBySunPosition($levelAct);
@@ -958,7 +954,6 @@ class BlindController extends IPSModule
         }
 
         $deactivationTimeManu = $this->ReadPropertyInteger('DeactivationManualMovement') * 60;
-        $objectName           = IPS_GetObject($this->InstanceID)['ObjectName'];
 
         //Zeitpunkt festhalten, sofern noch nicht geschehen
         if ($tsBlindLastMovement !== $this->ReadAttributeInteger('AttrTimeStampManual')) {
@@ -973,9 +968,9 @@ class BlindController extends IPSModule
             );
 
             if ($levelAct === $blindLevelClosed) {
-                $this->Logger_Inf("Der Rollladen '" . $objectName . "' wurde manuell geschlossen.");
+                $this->Logger_Inf("Der Rollladen '" . $this->objectName . "' wurde manuell geschlossen.");
             } else if ($levelAct === $blindLevelOpened) {
-                $this->Logger_Inf("Der Rollladen '" . $objectName . "' wurde manuell geöffnet.");
+                $this->Logger_Inf("Der Rollladen '" . $this->objectName . "' wurde manuell geöffnet.");
             } else {
                 $this->Logger_Inf(
                     'Der Rollladen wurde manuell auf ' . sprintf('%.0f', 100 * $levelAct) . '% gefahren.'
@@ -1031,25 +1026,24 @@ class BlindController extends IPSModule
             __FUNCTION__, sprintf('- percentClose: %s, deactivationTimeAuto: %s, hint: %s -', $percentClose, $deactivationTimeAuto, $hint)
         );
 
-        $objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
+        // globale Instanzvariablen setzen
+        $this->objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
+        $this->profile = $this->GetProfileInformation();
 
-        $profile = $this->GetProfileInformation();
-        $this->Logger_Dbg(__FUNCTION__, sprintf('Profile: %s', json_encode($profile)));
-
-        if ($profile === false) {
+        if ($this->profile === false) {
             return false;
         }
 
-        $levelNew = $profile['MinValue'] + ($percentClose / 100) * ($profile['MaxValue'] - $profile['MinValue']);
+        $levelNew = $this->profile['MinValue'] + ($percentClose / 100) * ($this->profile['MaxValue'] - $this->profile['MinValue']);
 
-        if ($profile['Reversed']) {
-            $levelNew = $profile['MaxValue'] - $levelNew;
+        if ($this->profile['Reversed']) {
+            $levelNew = $this->profile['MaxValue'] - $levelNew;
         }
 
         $levelID             = $this->ReadPropertyInteger('BlindLevelID');
         $levelAct            = GetValue($levelID); //integer and float are supported
         $tsBlindLastMovement = IPS_GetVariable($levelID)['VariableChanged'];
-        $LeveldiffPercentage = abs($levelNew - $levelAct) / ($profile['MaxValue'] - $profile['MinValue']);
+        $LeveldiffPercentage = abs($levelNew - $levelAct) / ($this->profile['MaxValue'] - $this->profile['MinValue']);
         $timediff            = time() - $tsBlindLastMovement;
 
         $this->Logger_Dbg(__FUNCTION__, sprintf('levelAct: %s, levelNew: %s', $levelAct, $levelNew));
@@ -1065,17 +1059,17 @@ class BlindController extends IPSModule
                 // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
                 $this->WriteAttributeInteger('AttrTimeStampAutomatic', time());
                 $this->Logger_Dbg(
-                    __FUNCTION__, "$objectName: TimestampAutomatik: " . $this->ReadAttributeInteger('AttrTimeStampAutomatic')
+                    __FUNCTION__, "$this->objectName: TimestampAutomatik: " . $this->ReadAttributeInteger('AttrTimeStampAutomatic')
                 );
 
-                $this->WriteInfo($levelNew, $profile['LevelClosed'], $profile['LevelOpened'], $hint);
+                $this->WriteInfo($levelNew, $this->profile['LevelClosed'], $this->profile['LevelOpened'], $hint);
             } else {
                 $this->Logger_Dbg(
                     __FUNCTION__, 'Fehler beim Setzen der Werte. (id = ' . $levelID . ', Value = ' . $percentClose . ')'
                 );
                 $ret = false;
             }
-            $this->Logger_Dbg(__FUNCTION__, $objectName . ': ' . $levelAct . ' to ' . $levelNew);
+            $this->Logger_Dbg(__FUNCTION__, $this->objectName . ': ' . $levelAct . ' to ' . $levelNew);
 
             // kleine Pause, um Kommunikationsstörungen zu vermeiden
             sleep(5);
@@ -1092,14 +1086,12 @@ class BlindController extends IPSModule
 
     private function WriteInfo($rLevelneu, $blindLevelClosed, $blindLevelOpened, $hint = null): void
     {
-        $objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
-
         if ($rLevelneu === $blindLevelClosed) {
-            $logMessage = sprintf('Der Rollladen %s wurde geschlossen.', $objectName);
+            $logMessage = sprintf('Der Rollladen %s wurde geschlossen.', $this->objectName);
         } else if ($rLevelneu === $blindLevelOpened) {
-            $logMessage = sprintf('Der Rollladen %s wurde geöffnet.', $objectName);
+            $logMessage = sprintf('Der Rollladen %s wurde geöffnet.', $this->objectName);
         } else {
-            $logMessage = sprintf('Der Rollladen %s wurde auf %.0f%% gefahren.', $objectName, 100 * $rLevelneu);
+            $logMessage = sprintf('Der Rollladen %s wurde auf %.0f%% gefahren.', $this->objectName, 100 * $rLevelneu);
         }
 
         if ($hint === null) {
@@ -1107,8 +1099,6 @@ class BlindController extends IPSModule
         } else {
             $this->Logger_Inf(substr($logMessage, 0, -1) . ' (' . $hint . ')');
         }
-
-
     }
 
     private function checkTimeTable(): int
