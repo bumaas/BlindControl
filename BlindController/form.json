@@ -52,15 +52,6 @@
       ]
     },
     {
-      "type":  "ExpansionPanel", "caption": "Contacts (optional)",
-      "items": [
-        {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened to the given level if one of the contacts are open (>0)."},
-        {"type": "SelectVariable", "name": "Contact1ID", "caption": "Contact 1 ID"},
-        {"type": "SelectVariable", "name": "Contact2ID", "caption": "Contact 2 ID"},
-        {"type": "NumberSpinner", "name": "ContactOpenLevel", "caption": "Level when Contact is open", "digits": "2"}
-      ]
-    },
-    {
       "type":  "ExpansionPanel", "caption": "Shadowing According to Sun Position (optional)",
       "items": [
         {"type": "SelectVariable", "name": "ActivatorIDShadowingBySunPosition", "caption": "Activator ID"},
@@ -97,6 +88,15 @@
         {"type": "NumberSpinner", "name": "LevelLessBrightnessShadowingBrightness", "caption": "Level at less brightness", "digits": "2"},
         {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "caption": "Threshold high brightness ID"},
         {"type": "NumberSpinner", "name": "LevelHighBrightnessShadowingBrightness", "caption": "Level at high brightness", "digits": "2"}
+      ]
+    },
+    {
+      "type":  "ExpansionPanel", "caption": "Contacts (optional)",
+      "items": [
+        {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened immediately to the given level if one of the contacts are open (>0)."},
+        {"type": "SelectVariable", "name": "Contact1ID", "caption": "Contact 1 ID"},
+        {"type": "SelectVariable", "name": "Contact2ID", "caption": "Contact 2 ID"},
+        {"type": "NumberSpinner", "name": "ContactOpenLevel", "caption": "Level when Contact is open", "digits": "2"}
       ]
     },
     {

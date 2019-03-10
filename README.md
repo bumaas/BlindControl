@@ -108,6 +108,22 @@ Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen He
 ![image](docs/LUX Messwert.jpg)
 
 ![image](docs/Helligkeitsschwellwert.jpg)
+
+### Beschattung nach Sonnenstand
+Es sind die Variablen anzugeben, aus denen der Sonnenstand (Azimuth = Sonnenrichtung, Altitude = Sonnenhöhe) geholt werden soll. Hier bieten sich gleichnamigen Variablen des Location Moduls an.
+
+Des weiteren ist der Bereich (Azimuth von/bis) der Sonnenrichtung anzugeben, in dem die Beschattung stattfinden soll.
+Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen Helligkeitswert beinhaltet (z.B. von einem Helligkeitssensor) sowie eine Variable, die den Schwellwert beinhaltet.
+
+Zusätzlich kann eine Temperaturvariable angegeben werden, um bei erhöhten Außentemperaturen eine höhere Beschattung zu erreichen, d.h., der Rollladen wird bei höheren Temperaturen weiter heruntergefahren.
+Dies erfolgt in zwei Stufen: Wenn die Temperatur 27°C übersteigt, wird der Rollladen um weitere 15% heruntergefahren, wenn die Temperatur 30°C übersteigt, dann wird der Rollladen auf eine Höhe von 10% heruntergefahren)
+
+Um den richtige Behanghöhe bei unterschiedlichen Sonnenhöhen zu finden, sind die gewünschten Behanghöhen bei zwei (möglichst extremen) Sonnenhöhen anzugeben. Aus diesen beiden Positionen wird dann die 
+Behanghöhe in Abhängigkeit von der Sonnenhöhe errechnet. Die Werte sind am besten durch Aufzeichnungen in der Mittagszeit/Abendzeit oder im Hochsommer/Winter zu ermitteln.
+
+Durch eine korrekte Einmessung wird erreicht, dass der Schatten des Rollladens immer gleich weit im Raum steht und somit eine gleichmäßige Beschattung stattfindet.
+
+ 
 ### Blind Controller
 
 | Eigenschaft | Typ     | Standardwert            | Funktion                                  |
