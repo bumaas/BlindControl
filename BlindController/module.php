@@ -59,10 +59,6 @@ class BlindController extends IPSModule
         //Never delete this line!
         parent::ApplyChanges();
 
-        if (function_exists('IPSLogger_Inf')) {
-            IPSLogger_Inf(__FILE__, __FUNCTION__);
-        }
-
         $this->RegisterReferences();
         $this->RegisterMessages();
         $this->RegisterVariables();
@@ -502,6 +498,7 @@ class BlindController extends IPSModule
     {
         $this->RegisterAttributeInteger('AttrTimeStampAutomatic', 0);
         $this->RegisterAttributeInteger('AttrTimeStampManual', 0);
+        $this->RegisterAttributeString('lastBlindMove', '');
     }
 
     private function RegisterVariables(): void
@@ -1021,7 +1018,7 @@ class BlindController extends IPSModule
     }
 
     //-----------------------------------------------
-    public function MoveBlind(int $percentClose, int $deactivationTimeAuto, string $hint = null): bool
+    public function MoveBlind(int $percentClose, int $deactivationTimeAuto, string $hint): bool
     {
 
         if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
@@ -1031,6 +1028,19 @@ class BlindController extends IPSModule
         $this->Logger_Dbg(
             __FUNCTION__, sprintf('=- percentClose: %s, deactivationTimeAuto: %s, hint: %s -=', $percentClose, $deactivationTimeAuto, $hint)
         );
+
+        $lastBlindMove = $this->ReadAttributeString('lastBlindMove');
+        if ($lastBlindMove !== '') {
+            $lastBlindMove = json_decode($lastBlindMove, true);
+            if (($lastBlindMove['movement']['percentClose'] === $percentClose) && ($lastBlindMove['movement']['percentClose'] === $percentClose) && ((time() - $lastBlindMove['timeStamp']) < 30)){
+                //die selbe Bewegung in den letzten 30 Sekunden
+                $this->Logger_Dbg(
+                    __FUNCTION__, sprintf('Move ignored! Same movement just %s s before', (time() - $lastBlindMove['timeStamp']))
+                );
+                return false;
+            }
+
+        }
 
         // globale Instanzvariablen setzen
         $this->objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
@@ -1051,7 +1061,7 @@ class BlindController extends IPSModule
         $LeveldiffPercentage = abs($levelNew - $levelAct) / ($this->profile['MaxValue'] - $this->profile['MinValue']);
         $timeDiffAuto        = time() - $this->ReadAttributeInteger('AttrTimeStampAutomatic');
 
-        $this->Logger_Dbg(__FUNCTION__, sprintf('levelAct: %s, levelNew: %s', $levelAct, $levelNew));
+        $this->Logger_Dbg(__FUNCTION__, sprintf('levelAct: %s, levelNew: %s, timeDiffAuto: %s/%s', $levelAct, $levelNew, $timeDiffAuto, $deactivationTimeAuto ));
 
         $ret = true;
 
@@ -1063,12 +1073,13 @@ class BlindController extends IPSModule
             if (@RequestAction($levelID, $levelNew)) {
                 // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
                 $this->WriteAttributeInteger('AttrTimeStampAutomatic', time());
+                $this->WriteAttributeString('lastBlindMove', json_encode(['timeStamp' => time(), 'movement' => ['percentClose' => $percentClose, 'hint' => $hint]]));
                 $this->Logger_Dbg(
                     __FUNCTION__,
                     "$this->objectName: TimestampAutomatik: " . $this->FormatTimeStamp($this->ReadAttributeInteger('AttrTimeStampAutomatic'))
                 );
 
-                $this->WriteInfo($levelNew, $this->profile['LevelClosed'], $this->profile['LevelOpened'], $hint);
+                $this->WriteInfo($levelNew, (float) $this->profile['LevelClosed'], (float) $this->profile['LevelOpened'], $hint);
             } else {
                 $this->Logger_Dbg(
                     __FUNCTION__, 'Fehler beim Setzen der Werte. (id = ' . $levelID . ', Value = ' . $percentClose . ')'
@@ -1090,7 +1101,7 @@ class BlindController extends IPSModule
         return $ret;
     }
 
-    private function WriteInfo($rLevelneu, $blindLevelClosed, $blindLevelOpened, $hint = null): void
+    private function WriteInfo(float $rLevelneu, float $blindLevelClosed, float $blindLevelOpened, string $hint): void
     {
         if ($rLevelneu === $blindLevelClosed) {
             $logMessage = sprintf('Der Rollladen %s wurde geschlossen.', $this->objectName);
@@ -1100,7 +1111,7 @@ class BlindController extends IPSModule
             $logMessage = sprintf('Der Rollladen %s wurde auf %.0f%% gefahren.', $this->objectName, 100 * $rLevelneu);
         }
 
-        if ($hint === null) {
+        if ($hint === '') {
             $this->Logger_Inf($logMessage);
         } else {
             $this->Logger_Inf(substr($logMessage, 0, -1) . ' (' . $hint . ')');

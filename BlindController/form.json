@@ -93,10 +93,10 @@
     {
       "type":  "ExpansionPanel", "caption": "Contacts (optional)",
       "items": [
-        {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened immediately to the given level if one of the contacts are open (>0)."},
+        {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened immediately to the given minimum height if one of the contacts are open (>0)."},
         {"type": "SelectVariable", "name": "Contact1ID", "caption": "Contact 1 ID"},
         {"type": "SelectVariable", "name": "Contact2ID", "caption": "Contact 2 ID"},
-        {"type": "NumberSpinner", "name": "ContactOpenLevel", "caption": "Level when Contact is open", "digits": "2"}
+        {"type": "NumberSpinner", "name": "ContactOpenLevel", "caption": "Minimum height when a contact is open", "digits": "2"}
       ]
     },
     {
@@ -113,8 +113,8 @@
   ],
   "actions":  [
     {"type": "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id, false); echo 'Finished!';"},
-    {"type": "Button", "caption": "Open Blind", "onClick": "BLC_MoveBlind($id, 0, 0); echo 'Finished!';"},
-    {"type": "Button", "caption": "Close Blind", "onClick": "BLC_MoveBlind($id, 100, 0); echo 'Finished!';"},
+    {"type": "Button", "caption": "Open Blind", "onClick": "BLC_MoveBlind($id, 0, 0, ''); echo 'Finished!';"},
+    {"type": "Button", "caption": "Close Blind", "onClick": "BLC_MoveBlind($id, 100, 0, ''); echo 'Finished!';"},
     {"type": "Button", "caption": "Show Configuration", "onClick": "echo IPS_GetObject($id)['ObjectName'] . ' (#' . $id . ')' . PHP_EOL . PHP_EOL; print_r(json_decode(IPS_GetConfiguration ($id), true));"}
   ],
   "status":   [

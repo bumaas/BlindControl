@@ -141,8 +141,8 @@ Durch eine korrekte Einmessung wird erreicht, dass der Schatten des Rollladens i
 | BrightnessThresholdID      | integer | 0 | Indikatorvariable, die den Schwellwert zur Tag/Nacht Bestimmung zur Verfügung stellt |
 | DayStartID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesanfangszeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und kleiner als '12:00' sein|
 | DayEndID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein|
-| Contact1ID, Contact2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Position gefahren
-| ContactOpenLevel           | float   | 0 | Position, auf die der Rollladen mindestens gefahren wird, wenn ein Kontakt offen ist.
+| Contact1ID, Contact2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Mindesthöhe gefahren
+| ContactOpenLevel           | float   | 0 | Höhe, auf die der Rollladen mindestens gefahren wird, wenn ein Kontakt offen ist.
 | ActivatorIDShadowingBySunPosition | integer   | 0 | 
 | AzimuthID| integer   | 0 | 
 | AltitudeID      | integer   | 0 | 
