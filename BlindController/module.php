@@ -971,13 +971,11 @@ class BlindController extends IPSModule
             );
 
             if ($levelAct === $blindLevelClosed) {
-                $this->Logger_Inf("Der Rollladen '" . $this->objectName . "' wurde manuell geschlossen.");
+                $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell geschlossen.', $this->objectName));
             } else if ($levelAct === $blindLevelOpened) {
-                $this->Logger_Inf("Der Rollladen '" . $this->objectName . "' wurde manuell geöffnet.");
+                $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell geöffnet.', $this->objectName));
             } else {
-                $this->Logger_Inf(
-                    'Der Rollladen wurde manuell auf ' . sprintf('%.0f', 100 * $levelAct) . '% gefahren.'
-                );
+                $this->Logger_Inf(sprintf('Der Rollladen \'%s\'wurde manuell auf %.0f%% gefahren.', $this->objectName,100 * $levelAct));
             }
 
         }
@@ -1104,11 +1102,11 @@ class BlindController extends IPSModule
     private function WriteInfo(float $rLevelneu, float $blindLevelClosed, float $blindLevelOpened, string $hint): void
     {
         if ($rLevelneu === $blindLevelClosed) {
-            $logMessage = sprintf('Der Rollladen %s wurde geschlossen.', $this->objectName);
+            $logMessage = sprintf('Der Rollladen \'%s\' wurde geschlossen.', $this->objectName);
         } else if ($rLevelneu === $blindLevelOpened) {
-            $logMessage = sprintf('Der Rollladen %s wurde geöffnet.', $this->objectName);
+            $logMessage = sprintf('Der Rollladen \'%s\' wurde geöffnet.', $this->objectName);
         } else {
-            $logMessage = sprintf('Der Rollladen %s wurde auf %.0f%% gefahren.', $this->objectName, 100 * $rLevelneu);
+            $logMessage = sprintf('Der Rollladen \'%s\' wurde auf %.0f%% gefahren.', $this->objectName, 100 * $rLevelneu);
         }
 
         if ($hint === '') {
@@ -1324,7 +1322,7 @@ class BlindController extends IPSModule
         if (($tsAutomaticVariable > $tsBlindLevelChanged) && ($tsAutomaticAttribute !== $tsBlindLevelChanged) && $this->GetValue('ACTIVATED')) {
             // .. dann Timestamp Automatik mit Timestamp des Rollladens gleichsetzen
             $this->WriteAttributeInteger('AttrTimeStampAutomatic', $tsBlindLevelChanged);
-            $this->Logger_Inf('Rollladenautomatik wurde eingestellt');
+            $this->Logger_Inf('Der Rollladen \'%s\' bewegt sich nun wieder automatisch.', $this->objectName);
         }
         return $tsBlindLevelChanged;
     }
