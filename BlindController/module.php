@@ -168,12 +168,12 @@ class BlindController extends IPSModule
 
         // optionale Tageserkennung auswerten
         $brightness = null;
-        $isDayDayDetection = $this->getIsDayByDayDetection($brightness);
+        $isDayByDayDetection = $this->getIsDayByDayDetection($brightness);
 
-        if ($isDayDayDetection === null) {
+        if ($isDayByDayDetection === null) {
             $isDay = $isDayByTimeSchedule;
         } else {
-            $isDay = $isDayByTimeSchedule && $isDayDayDetection;
+            $isDay = $isDayByTimeSchedule && $isDayByDayDetection;
         }
 
         // übersteuernde Tageszeiten auswerten
@@ -225,13 +225,13 @@ class BlindController extends IPSModule
         } else if ($isDay) {
             $levelNew = $this->profile['LevelOpened'];
             $Hinweis  = 'Tagesanfang';
-            if (isset($isDayDayDetection, $brightness)) {
+            if (isset($isDayByDayDetection, $brightness)) {
                 $Hinweis .= ', ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
             }
         } else {
             $levelNew = $this->profile['LevelClosed'];
             $Hinweis  = 'Tagesende';
-            if (isset($isDayDayDetection, $brightness)) {
+            if (isset($isDayByDayDetection, $brightness)) {
                 $Hinweis .= ', ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
             }
         }
@@ -241,9 +241,9 @@ class BlindController extends IPSModule
 
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'tsAutomatik: %s, tsBlind: %s, levelAct: %s, bNoMove: %s, isDay (TimeSchedule): %s, isDay (DayDetection): %s, dayStart: %s, dayEnd: %s, considerDeactivationTimeAuto: %s',
+                            'tsAutomatik: %s, tsBlind: %s, levelAct: %s, bNoMove: %s, isDay: %s, isDayByTimeSchedule: %s, isDayByDayDetection: %s, dayStart: %s, dayEnd: %s, considerDeactivationTimeAuto: %s',
                             $this->FormatTimeStamp($tsAutomatik), $this->FormatTimeStamp($tsBlindLastMovement),
-                            $levelAct, (int) $bNoMove, (int) $isDayByTimeSchedule, (isset($isDayDayDetection) ? (int) $isDayDayDetection : 'null'),
+                            $levelAct, (int) $bNoMove, (int) $isDay, (int) $isDayByTimeSchedule, (isset($isDayByDayDetection) ? (int) $isDayByDayDetection : 'null'),
                             $dayStart ?? 'null', $dayEnd ?? 'null', (int) $considerDeactivationTimeAuto
                         )
         );
@@ -1154,7 +1154,7 @@ class BlindController extends IPSModule
         $isDayDayDetection = null;
 
         if (($this->ReadPropertyInteger('IsDayIndicatorID') === 0)
-            && (($this->ReadPropertyInteger('BrightnessID') === 0) || $this->ReadPropertyInteger('BrightnessThresholdID'))) {
+            && (($this->ReadPropertyInteger('BrightnessID') === 0) || $this->ReadPropertyInteger('BrightnessThresholdID') === 0)) {
             return null;
         }
 
