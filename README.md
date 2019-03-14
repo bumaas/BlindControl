@@ -109,7 +109,11 @@ Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen He
 
 ![image](docs/Helligkeitsschwellwert.jpg)
 
-### Beschattung nach Sonnenstand
+### Übersteuernde Tageswechselzeiten (optional)
+Als zusätzliche Option kann auch eine übersteuernde feste Tagesanfangszeit und/oder Tagesendezeit angegeben werden. Dazu ist auf eine Variable zu verweisen, die die entsprechende Zeit im Format 'HH:MM' beinhaltet.
+ 
+
+### Beschattung nach Sonnenstand (optional)
 Es sind die Variablen anzugeben, aus denen der Sonnenstand (Azimuth = Sonnenrichtung, Altitude = Sonnenhöhe) geholt werden soll. Hier bieten sich gleichnamigen Variablen des Location Moduls an.
 
 Des weiteren ist der Bereich (Azimuth von/bis) der Sonnenrichtung anzugeben, in dem die Beschattung stattfinden soll.

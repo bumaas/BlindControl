@@ -117,7 +117,7 @@ class BlindController extends IPSModule
         if ($this->GetValue('ACTIVATED')) {
             // controlBlind mit Prüfung, ob der Rollladen sofort bewegt werden soll
             $this->ControlBlind(
-                in_array(
+                !in_array(
                     $SenderID, [
                     $this->ReadPropertyInteger('Contact1ID'),
                     $this->ReadPropertyInteger('Contact2ID'),
@@ -132,11 +132,11 @@ class BlindController extends IPSModule
      * Die folgenden Funktionen stehen automatisch zur Verfügung, wenn das Modul über die "Module Control" eingefügt wurden.
      * Die Funktionen werden, mit dem selbst eingerichteten Prefix, in PHP und JSON-RPC zur Verfügung gestellt:
      *
-     * @param bool $considerDeactivationTimes
+     * @param bool $considerDeactivationTimeAuto
      *
      * @return bool
      */
-    public function ControlBlind(bool $considerDeactivationTimes): bool
+    public function ControlBlind(bool $considerDeactivationTimeAuto): bool
     {
 
         if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
@@ -154,67 +154,26 @@ class BlindController extends IPSModule
         // $deactivationTimeAuto: Zeitraum, in dem das automatisch gesetzte Level
         // erhalten bleibt bevor es überschrieben wird.
 
-        if ($considerDeactivationTimes) {
+        if ($considerDeactivationTimeAuto) {
             $deactivationTimeAuto = $this->ReadPropertyInteger('DeactivationAutomaticMovement') * 60;
         } else {
             $deactivationTimeAuto = 0;
         }
 
-        $Hinweis = null;
-
-        //Ermitteln, welche Zeiten heute und gestern gelten
-
-        $heute_auf   = '';
-        $heute_ab    = '';
-        $gestern_auf = '';
-        $gestern_ab  = '';
-
-        if (!$this->getUpAndDownPoints($heute_auf, $heute_ab, $gestern_auf, $gestern_ab)) {
-            return false;
-        }
-
-        //Level ID ermitteln
-        $idLevel = $this->ReadPropertyInteger('BlindLevelID');
-
-        //Zeitpunkt der letzten Rollladenbewegung
-        $tsBlindLastMovement = $this->GetBlindLastTimeStampAndCheckAutomatic($idLevel);
-
-        // Attribut TimestampAutomatik auslesen
-        $tsAutomatik = $this->ReadAttributeInteger('AttrTimeStampAutomatic');
-
-        // Das aktuelle Level im Jalousieaktor auslesen
-        $levelAct = (float) GetValue($idLevel);
-
-        // prüfen, ob der Rollladen manuell bewegt wurde und somit eine Bewegungssperre besteht
-        $bNoMove = $this->isMovementLocked(
-            $levelAct, $tsBlindLastMovement, $tsAutomatik, $gestern_ab, $heute_auf, $heute_ab, $this->profile['LevelClosed'],
-            $this->profile['LevelOpened']
-        );
+        $Hinweis = '';
 
 
         // 'tagsüber' nach Wochenplan ermitteln
-        $isDayTimeSchedule = (time() >= strtotime($heute_auf)) && (time() <= strtotime($heute_ab));
-
+        $isDayByTimeSchedule = $this->getIsDayByTimeSchedule();
 
         // optionale Tageserkennung auswerten
-        $isDayDayDetection = null;
+        $brightness = null;
+        $isDayDayDetection = $this->getIsDayByDayDetection($brightness);
 
-        if ($this->ReadPropertyInteger('IsDayIndicatorID') > 0) {
-            $isDayDayDetection = $isDayTimeSchedule && GetValueBoolean($this->ReadPropertyInteger('IsDayIndicatorID'));
+        if ($isDayDayDetection === null) {
+            $isDay = $isDayByTimeSchedule;
         } else {
-            //optional Values
-            $brightnessID = $this->ReadPropertyInteger('BrightnessID');
-            if ($brightnessID) {
-                $brightness = GetValue($brightnessID);
-            }
-
-            $brightnessThresholdID = $this->ReadPropertyInteger('BrightnessThresholdID');
-            if ($brightnessThresholdID) {
-                $brightnessThreshold = GetValue($brightnessThresholdID);
-            }
-            if (isset($brightness, $brightnessThreshold)) {
-                $isDayDayDetection = ($brightness > $brightnessThreshold);
-            }
+            $isDay = $isDayByTimeSchedule && $isDayDayDetection;
         }
 
         // übersteuernde Tageszeiten auswerten
@@ -229,20 +188,37 @@ class BlindController extends IPSModule
             $dayEnd = GetValueString($this->ReadPropertyInteger('DayEndID'));
         }
 
-        if (($dayStart !== null) && ($dayEnd !== null)) {
-            $isDayDayDetection = (time() > strtotime($dayStart)) && (time() < strtotime($dayEnd));
-        } elseif (($dayStart !== null) && (time() < strtotime('12:00'))) {
-            $isDayDayDetection = time() > strtotime($dayStart);
-        } elseif (($dayEnd !== null) && (time() > strtotime('12:00'))) {
-            $isDayDayDetection = time() < strtotime($dayEnd);
+        if (isset($dayStart, $dayEnd)) {
+            $isDay = (time() > strtotime($dayStart)) && (time() < strtotime($dayEnd));
+        } elseif (isset($dayStart) && (time() < strtotime('12:00'))) {
+            $isDay = time() > strtotime($dayStart);
+        } elseif (isset($dayEnd) && (time() > strtotime('12:00'))) {
+            $isDay = time() < strtotime($dayEnd);
         }
 
 
-        if ($isDayDayDetection === null) {
-            $isDay = $isDayTimeSchedule;
+        //Level ID ermitteln
+        $idLevel = $this->ReadPropertyInteger('BlindLevelID');
+
+        //Zeitpunkt der letzten Rollladenbewegung
+        $tsBlindLastMovement = $this->GetBlindLastTimeStampAndCheckAutomatic($idLevel);
+
+        // Attribut TimestampAutomatik auslesen
+        $tsAutomatik = $this->ReadAttributeInteger('AttrTimeStampAutomatic');
+
+        if ($this->checkIsDayChange($isDay)) {
+            $deactivationTimeAuto = 0;
+            $bNoMove              = false;
         } else {
-            $isDay = $isDayTimeSchedule && $isDayDayDetection;
+            // prüfen, ob der Rollladen manuell bewegt wurde und somit eine Bewegungssperre besteht
+            $bNoMove = $this->isMovementLocked(
+                $idLevel, $tsBlindLastMovement, $isDay, $this->ReadAttributeInteger('AttrTimeStampIsDayChange'), $tsAutomatik,
+                $this->profile['LevelClosed'], $this->profile['LevelOpened']
+            );
         }
+
+        // Das aktuelle Level im Jalousieaktor auslesen
+        $levelAct = (float) GetValue($idLevel);
 
         if ($bNoMove) {
             $levelNew = $levelAct;
@@ -265,11 +241,10 @@ class BlindController extends IPSModule
 
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'gestern_ab: %s, heute_auf: %s, heute_ab: %s, tsAutomatik: %s, tsBlind: %s, levelAct: %s, bNoMove: %s, isDay (TimeSchedule): %s, isDay (DayDetection): %s, dayStart: %s, dayEnd: %s, considerDeactivationTimes: %s, brightness: %s, brightnessThreshold: %s',
-                            $gestern_ab, $heute_auf, $heute_ab, $this->FormatTimeStamp($tsAutomatik), $this->FormatTimeStamp($tsBlindLastMovement),
-                            $levelAct, (int) $bNoMove, (int) $isDayTimeSchedule, (isset($isDayDayDetection) ? (int) $isDayDayDetection : 'null'),
-                            $dayStart ?? 'null', $dayEnd ?? 'null', (int) $considerDeactivationTimes, $brightness ?? 'null',
-                            $brightnessThreshold ?? 'null'
+                            'tsAutomatik: %s, tsBlind: %s, levelAct: %s, bNoMove: %s, isDay (TimeSchedule): %s, isDay (DayDetection): %s, dayStart: %s, dayEnd: %s, considerDeactivationTimeAuto: %s',
+                            $this->FormatTimeStamp($tsAutomatik), $this->FormatTimeStamp($tsBlindLastMovement),
+                            $levelAct, (int) $bNoMove, (int) $isDayByTimeSchedule, (isset($isDayDayDetection) ? (int) $isDayDayDetection : 'null'),
+                            $dayStart ?? 'null', $dayEnd ?? 'null', (int) $considerDeactivationTimeAuto
                         )
         );
 
@@ -375,6 +350,8 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('IsDayIndicatorID', 0);
         $this->RegisterPropertyInteger('BrightnessID', 0);
         $this->RegisterPropertyInteger('BrightnessThresholdID', 0);
+
+        //overruling day times
         $this->RegisterPropertyInteger('DayStartID', 0);
         $this->RegisterPropertyInteger('DayEndID', 0);
 
@@ -498,6 +475,8 @@ class BlindController extends IPSModule
     {
         $this->RegisterAttributeInteger('AttrTimeStampAutomatic', 0);
         $this->RegisterAttributeInteger('AttrTimeStampManual', 0);
+        $this->RegisterAttributeInteger('AttrTimeStampIsDayChange', 0);
+        $this->RegisterAttributeBoolean('AttrIsDay', false);
         $this->RegisterAttributeString('lastBlindMove', '');
     }
 
@@ -756,10 +735,21 @@ class BlindController extends IPSModule
         return 0;
     }
 
+    private function checkIsDayChange(bool $isDay): bool
+    {
+        if ($this->ReadAttributeBoolean('AttrIsDay') !== $isDay) {
+            $this->WriteAttributeBoolean('AttrIsDay', $isDay);
+            $this->WriteAttributeInteger('AttrTimeStampIsDayChange', time());
+            $this->Logger_Dbg(__FUNCTION__, 'DayChange!');
+            return true;
+        }
+
+        return false;
+    }
+
     private function getLevelContactOpen(): ?float
     {
         $contacts         = [];
-        $contactOpenLevel = $this->ReadPropertyFloat('ContactOpenLevel');
 
         if ($this->ReadPropertyInteger('Contact1ID') !== 0) {
             $contacts[] = $this->ReadPropertyInteger('Contact1ID');
@@ -770,16 +760,15 @@ class BlindController extends IPSModule
 
         // alle Kontakte prüfen ...
         $contactOpen = null;
-        foreach ($contacts as $contact) {
-            $contactOpen = $contactOpen || GetValue($contact) > 0;
-        }
-
-        if (count($contacts)) {
-            $this->Logger_Dbg(__FUNCTION__, sprintf('contactOpen: %s, ContactOpenLevel: %s', $contactOpen, $contactOpenLevel));
+        foreach ($contacts as $contactId) {
+            if (GetValue($contactId)){
+                $contactOpen = true;
+                $this->Logger_Dbg(__FUNCTION__, sprintf('contact is open: #%s, value: %s', $contactId, GetValueFormatted($contactId)));
+            }
         }
 
         if ($contactOpen) {
-            return $contactOpenLevel;
+            return $this->ReadPropertyFloat('ContactOpenLevel');
         }
 
         return null;
@@ -795,24 +784,23 @@ class BlindController extends IPSModule
             return null;
         }
 
-        $roomTemperatureID = $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition');
-        if ($roomTemperatureID === 0) {
-            $roomTemperature = null;
+        $temperatureID = $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition');
+        if ($temperatureID === 0) {
+            $temperature = null;
         } else {
-            $roomTemperature = (float) GetValue($roomTemperatureID);
+            $temperature = (float) GetValue($temperatureID);
         }
 
 
         $level               = null;
         $brightness          = GetValue($this->ReadPropertyInteger('BrightnessIDShadowingBySunPosition'));
         $thresholdBrightness =
-            $this->getBrightnessThreshold($this->ReadPropertyInteger('BrightnessThresholdIDShadowingBySunPosition'), $levelAct, $roomTemperature);
+            $this->getBrightnessThreshold($this->ReadPropertyInteger('BrightnessThresholdIDShadowingBySunPosition'), $levelAct, $temperature);
 
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'Active: %d, Brightness: %.1f, Threshold Brightness: %.1f, levelAct: %.2f', (int) GetValue($activatorID), $brightness,
-                            $thresholdBrightness, $levelAct
-                        )
+                            'active: %d, brightness: %.1f/%.1f, levelAct: %.2f, temperature: %s', (int) GetValue($activatorID), $brightness,
+                            $thresholdBrightness, $levelAct, $temperature??'null')
         );
 
         if ($brightness >= $thresholdBrightness) {
@@ -826,13 +814,13 @@ class BlindController extends IPSModule
             if ($level < $this->profile['LevelOpened']) {
 
                 //wenn Wärmeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
-                if (($roomTemperature > 27.0) || ((round($levelAct, 2) === round($level, 2) - 0.15) && ($roomTemperature > (27.0 - 0.5)))) {
+                if (($temperature > 27.0) || ((round($levelAct, 2) === round($level, 2) - 0.15) && ($temperature > (27.0 - 0.5)))) {
                     $level -= 0.15;
                     $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 27°, levelAct: %.2f, level: %.2f', $levelAct, $level));
                 }
 
                 //wenn Hitzeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
-                if (($roomTemperature > 30.0) || (($levelAct === 0.1) && ($roomTemperature > (30.0 - 0.5)))) {
+                if (($temperature > 30.0) || (($levelAct === 0.1) && ($temperature > (30.0 - 0.5)))) {
                     $level = 0.1;
                     $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 30°, levelAct: %.2f, level: %.2f', $levelAct, $level));
                 }
@@ -948,8 +936,8 @@ class BlindController extends IPSModule
         return null;
     }
 
-    private function isMovementLocked(float $levelAct, int $tsBlindLastMovement, int $tsAutomatik, string $gestern_ab, string $heute_auf,
-                                      string $heute_ab, float $blindLevelClosed, float $blindLevelOpened): bool
+    private function isMovementLocked(int $idLevel, int $tsBlindLastMovement, bool $isDay, int $tsIsDayChanged, int $tsAutomatik,
+                                      float $blindLevelClosed, float $blindLevelOpened): bool
     {
         //zuerst prüfen, ob der Rollladen nach der letzten aut. Bewegung (+60sec) manuell bewegt wurde
         if ($tsBlindLastMovement <= strtotime('+1 minute', $tsAutomatik)) {
@@ -958,16 +946,19 @@ class BlindController extends IPSModule
 
         $deactivationTimeManu = $this->ReadPropertyInteger('DeactivationManualMovement') * 60;
 
+        // Das aktuelle Level im Jalousieaktor auslesen
+        $levelAct = (float) GetValue($idLevel);
+
         //Zeitpunkt festhalten, sofern noch nicht geschehen
         if ($tsBlindLastMovement !== $this->ReadAttributeInteger('AttrTimeStampManual')) {
             $this->WriteAttributeInteger('AttrTimeStampManual', $tsBlindLastMovement);
 
             $this->Logger_Dbg(
-                __FUNCTION__, 'Rollladenlevel wurde manuell gesetzt - Value: ' . $levelAct . ', tsBlindLastMovement: ' . $this->FormatTimeStamp(
-                                $tsBlindLastMovement
-                            ) . ', TimestampManual: ' . $this->FormatTimeStamp(
-                                $this->ReadAttributeInteger('AttrTimeStampManual')
-                            ) . ', deactivationTimeManu: ' . (time() - $tsBlindLastMovement) . '/' . $deactivationTimeManu
+                __FUNCTION__, sprintf(
+                'Rollladenlevel wurde manuell gesetzt: %s (%.2f), tsBlindLastMovement: %s, TimestampAutomatic: %s, TimestampManual: %s, deactivationTimeManu: %s/%s',
+                GetValueFormatted($idLevel), $levelAct, $this->FormatTimeStamp($tsBlindLastMovement), $this->FormatTimeStamp($tsAutomatik), $this->FormatTimeStamp($this->ReadAttributeInteger('AttrTimeStampManual')),
+                time() - $tsBlindLastMovement, $deactivationTimeManu
+            )
             );
 
             if ($levelAct === $blindLevelClosed) {
@@ -975,7 +966,7 @@ class BlindController extends IPSModule
             } else if ($levelAct === $blindLevelOpened) {
                 $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell geöffnet.', $this->objectName));
             } else {
-                $this->Logger_Inf(sprintf('Der Rollladen \'%s\'wurde manuell auf %.0f%% gefahren.', $this->objectName,100 * $levelAct));
+                $this->Logger_Inf(sprintf('Der Rollladen \'%s\'wurde manuell auf %.0f%% gefahren.', $this->objectName, 100 * $levelAct));
             }
 
         }
@@ -983,7 +974,7 @@ class BlindController extends IPSModule
         $bNoMove          = false;
         $tsManualMovement = $this->ReadAttributeInteger('AttrTimeStampManual');
 
-        if (($tsManualMovement > strtotime($heute_auf)) && ($tsManualMovement < strtotime($heute_ab))) {
+        if ($isDay && ($tsManualMovement > $tsIsDayChanged)) {
             //tagsüber gilt:
 
             // der Rollladen ist nicht bereits manuell geschlossen worden
@@ -1002,9 +993,7 @@ class BlindController extends IPSModule
                 );
             }
 
-        } elseif (($tsManualMovement > strtotime($heute_ab))
-                  || (($tsManualMovement < strtotime($heute_auf))
-                      && ($tsManualMovement > strtotime('-1 day', strtotime($gestern_ab))))) {
+        } elseif (!$isDay && ($tsManualMovement > $tsIsDayChanged)) {
             //nachts gilt:
             //wenn die Bewegung nachts passiert ist
             $bNoMove = true;
@@ -1024,21 +1013,8 @@ class BlindController extends IPSModule
         }
 
         $this->Logger_Dbg(
-            __FUNCTION__, sprintf('=- percentClose: %s, deactivationTimeAuto: %s, hint: %s -=', $percentClose, $deactivationTimeAuto, $hint)
+            __FUNCTION__, sprintf('percentClose: %s, deactivationTimeAuto: %s, hint: %s', $percentClose, $deactivationTimeAuto, $hint)
         );
-
-        $lastBlindMove = $this->ReadAttributeString('lastBlindMove');
-        if ($lastBlindMove !== '') {
-            $lastBlindMove = json_decode($lastBlindMove, true);
-            if (($lastBlindMove['movement']['percentClose'] === $percentClose) && ($lastBlindMove['movement']['percentClose'] === $percentClose) && ((time() - $lastBlindMove['timeStamp']) < 30)){
-                //die selbe Bewegung in den letzten 30 Sekunden
-                $this->Logger_Dbg(
-                    __FUNCTION__, sprintf('Move ignored! Same movement just %s s before', (time() - $lastBlindMove['timeStamp']))
-                );
-                return false;
-            }
-
-        }
 
         // globale Instanzvariablen setzen
         $this->objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
@@ -1046,6 +1022,21 @@ class BlindController extends IPSModule
 
         if ($this->profile === false) {
             return false;
+        }
+
+
+        $lastBlindMove = $this->ReadAttributeString('lastBlindMove');
+        if ($lastBlindMove !== '') {
+            $lastBlindMove = json_decode($lastBlindMove, true);
+            if (($lastBlindMove['movement']['percentClose'] === $percentClose) && ($lastBlindMove['movement']['percentClose'] === $percentClose)
+                && ((time() - $lastBlindMove['timeStamp']) < 30)) {
+                //dieselbe Bewegung in den letzten 30 Sekunden
+                $this->Logger_Dbg(
+                    __FUNCTION__, sprintf('Move ignored! Same movement just %s s before', time() - $lastBlindMove['timeStamp'])
+                );
+                return false;
+            }
+
         }
 
         $levelNew = $this->profile['MinValue'] + ($percentClose / 100) * ($this->profile['MaxValue'] - $this->profile['MinValue']);
@@ -1056,22 +1047,26 @@ class BlindController extends IPSModule
 
         $levelID             = $this->ReadPropertyInteger('BlindLevelID');
         $levelAct            = GetValue($levelID); //integer and float are supported
-        $LeveldiffPercentage = abs($levelNew - $levelAct) / ($this->profile['MaxValue'] - $this->profile['MinValue']);
+        $levelDiffPercentage = abs($levelNew - $levelAct) / ($this->profile['MaxValue'] - $this->profile['MinValue']);
         $timeDiffAuto        = time() - $this->ReadAttributeInteger('AttrTimeStampAutomatic');
 
-        $this->Logger_Dbg(__FUNCTION__, sprintf('levelAct: %s, levelNew: %s, timeDiffAuto: %s/%s', $levelAct, $levelNew, $timeDiffAuto, $deactivationTimeAuto ));
+        $this->Logger_Dbg(
+            __FUNCTION__, sprintf('levelAct: %s, levelNew: %s, levelDiffPercentage: %.2f/0,05, timeDiffAuto: %s/%s', $levelAct, $levelNew, $levelDiffPercentage, $timeDiffAuto, $deactivationTimeAuto)
+        );
 
         $ret = true;
 
         // Wenn sich das aktuelle Level um mehr als 5% von neuem Level unterscheidet
-        if (($LeveldiffPercentage > 0.05) && ($timeDiffAuto >= $deactivationTimeAuto)) {
+        if (($levelDiffPercentage > 0.05) && ($timeDiffAuto >= $deactivationTimeAuto)) {
 
             // Level setzen
             //Wert übertragen
             if (@RequestAction($levelID, $levelNew)) {
                 // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
                 $this->WriteAttributeInteger('AttrTimeStampAutomatic', time());
-                $this->WriteAttributeString('lastBlindMove', json_encode(['timeStamp' => time(), 'movement' => ['percentClose' => $percentClose, 'hint' => $hint]]));
+                $this->WriteAttributeString(
+                    'lastBlindMove', json_encode(['timeStamp' => time(), 'movement' => ['percentClose' => $percentClose, 'hint' => $hint]])
+                );
                 $this->Logger_Dbg(
                     __FUNCTION__,
                     "$this->objectName: TimestampAutomatik: " . $this->FormatTimeStamp($this->ReadAttributeInteger('AttrTimeStampAutomatic'))
@@ -1089,11 +1084,6 @@ class BlindController extends IPSModule
             // kleine Pause, um Kommunikationsstörungen zu vermeiden
             sleep(5);
 
-        } else {
-            $this->Logger_Dbg(
-                __FUNCTION__,
-                sprintf('DeactivationTimeAuto: %d/%d, LevelDiffPercentage: %.2f', $timeDiffAuto, $deactivationTimeAuto, $LeveldiffPercentage)
-            );
         }
 
         return $ret;
@@ -1148,7 +1138,7 @@ class BlindController extends IPSModule
 
     }
 
-    Private function CountNumberOfPointsWithActionId(array $points, int $actionID): int
+    private function CountNumberOfPointsWithActionId(array $points, int $actionID): int
     {
         $count = 0;
         foreach ($points as $point) {
@@ -1159,8 +1149,60 @@ class BlindController extends IPSModule
         return $count;
     }
 
+    private function getIsDayByDayDetection(&$brightness): ?bool
+    {
+        $isDayDayDetection = null;
+
+        if (($this->ReadPropertyInteger('IsDayIndicatorID') === 0)
+            && (($this->ReadPropertyInteger('BrightnessID') === 0) || $this->ReadPropertyInteger('BrightnessThresholdID'))) {
+            return null;
+        }
+
+        $isDayIndicatorID = $this->ReadPropertyInteger('IsDayIndicatorID');
+        if ($isDayIndicatorID > 0) {
+            $isDayIndicator = GetValueBoolean($isDayIndicatorID);
+            $this->Logger_Dbg(__FUNCTION__, sprintf('DayIndicator (#%s): %d', $isDayIndicatorID, $isDayIndicator));
+            return $isDayIndicator;
+        }
+
+        //optional Values
+        $brightnessID = $this->ReadPropertyInteger('BrightnessID');
+        if ($brightnessID) {
+            $brightness = GetValue($brightnessID);
+        }
+
+        $brightnessThresholdID = $this->ReadPropertyInteger('BrightnessThresholdID');
+        if ($brightnessThresholdID) {
+            $brightnessThreshold = GetValue($brightnessThresholdID);
+        }
+
+        if (isset($brightness, $brightnessThreshold)) {
+            $this->Logger_Dbg(__FUNCTION__, sprintf('Brightness: %.1f, Threshold: %.1f', $brightness, $brightnessThreshold));
+            return $brightness > $brightnessThreshold;
+        }
+
+        return null;
+
+    }
+    private function getIsDayByTimeSchedule(): ?bool
+    {
+        //Ermitteln, welche Zeiten heute und gestern gelten
+
+        $heute_auf   = '';
+        $heute_ab    = '';
+
+        if (!$this->getUpAndDownPoints($heute_auf, $heute_ab)) {
+            return null;
+        }
+
+        $this->Logger_Dbg(__FUNCTION__, sprintf('heute_auf: %s, heute_ab: %s', $heute_auf, $heute_ab));
+
+        return (time() >= strtotime($heute_auf)) && (time() <= strtotime($heute_ab));
+
+    }
+
     //-------------------------------------
-    private function getUpAndDownPoints(?string &$heute_auf, ?string &$heute_ab, ?string &$gestern_auf, ?string &$gestern_ab): bool
+    private function getUpAndDownPoints(?string &$heute_auf, ?string &$heute_ab): bool
     {
 
         // An Feiertagen und Urlaubstagen können abweichende Tage gelten
@@ -1179,11 +1221,6 @@ class BlindController extends IPSModule
             return false;
         }
 
-        //Ermitteln, welche Zeiten gestern laut Wochenplan galten
-        if (!$this->getUpDownTime((int) date('N', strtotime('-1 day')), $gestern_auf, $gestern_ab)) {
-            return false;
-        }
-
         //gibt es übersteuernde Zeiten?
         $idWakeUpTime = $this->ReadPropertyInteger('WakeUpTimeID');
         if (($idWakeUpTime > 0) && (GetValueString($idWakeUpTime) !== '')) {
@@ -1191,7 +1228,6 @@ class BlindController extends IPSModule
             if ($heute_auf === false) {
                 return false;
             }
-            $gestern_auf = (string) $heute_auf;
             $this->Logger_Dbg(__FUNCTION__, sprintf('WakeUpTime found: %s', $heute_auf));
         }
 
@@ -1201,7 +1237,6 @@ class BlindController extends IPSModule
             if ($heute_ab === false) {
                 return false;
             }
-            $gestern_ab = (string) $heute_ab;
             $this->Logger_Dbg(__FUNCTION__, sprintf('BedTime: %s', $heute_ab));
         }
 
@@ -1319,10 +1354,15 @@ class BlindController extends IPSModule
         //prüfen, ob Automatik nach der letzten Rollladenbewegung eingestellt wurde.
         $tsAutomaticVariable  = IPS_GetVariable(IPS_GetObjectIDByIdent('ACTIVATED', $this->InstanceID))['VariableChanged'];
         $tsAutomaticAttribute = $this->ReadAttributeInteger('AttrTimeStampAutomatic');
+        if ($tsAutomaticAttribute === 0) {
+            $tsAutomaticAttribute = $tsBlindLevelChanged;
+            $this->WriteAttributeInteger('AttrTimeStampAutomatic', $tsAutomaticAttribute);
+        }
+
         if (($tsAutomaticVariable > $tsBlindLevelChanged) && ($tsAutomaticAttribute !== $tsBlindLevelChanged) && $this->GetValue('ACTIVATED')) {
             // .. dann Timestamp Automatik mit Timestamp des Rollladens gleichsetzen
             $this->WriteAttributeInteger('AttrTimeStampAutomatic', $tsBlindLevelChanged);
-            $this->Logger_Inf('Der Rollladen \'%s\' bewegt sich nun wieder automatisch.', $this->objectName);
+            $this->Logger_Inf(sprintf('Der Rollladen \'%s\' bewegt sich nun wieder automatisch.', $this->objectName));
         }
         return $tsBlindLevelChanged;
     }

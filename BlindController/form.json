@@ -40,17 +40,18 @@
         {"type": "SelectVariable", "name": "IsDayIndicatorID", "caption": "Is Day Indicator ID"},
         {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day is determined by the brightness"},
         {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
-        {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"},
+        {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
+
+      ]
+    },
         {
           "type":  "ExpansionPanel", "caption": "Overruling Day Times (optional)",
           "items": [
             {"type": "SelectVariable", "name": "DayStartID", "caption": "Start of the day ID"},
             {"type": "SelectVariable", "name": "DayEndID", "caption": "End of the day ID"}
           ]
-        }
+        },
 
-      ]
-    },
     {
       "type":  "ExpansionPanel", "caption": "Shadowing According to Sun Position (optional)",
       "items": [
@@ -112,7 +113,7 @@
     }
   ],
   "actions":  [
-    {"type": "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id, false); echo 'Finished!';"},
+    {"type": "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id, true); echo 'Finished!';"},
     {"type": "Button", "caption": "Open Blind", "onClick": "BLC_MoveBlind($id, 0, 0, ''); echo 'Finished!';"},
     {"type": "Button", "caption": "Close Blind", "onClick": "BLC_MoveBlind($id, 100, 0, ''); echo 'Finished!';"},
     {"type": "Button", "caption": "Show Configuration", "onClick": "echo IPS_GetObject($id)['ObjectName'] . ' (#' . $id . ')' . PHP_EOL . PHP_EOL; print_r(json_decode(IPS_GetConfiguration ($id), true));"}
