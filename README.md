@@ -76,7 +76,6 @@ Zeigt das Icon den falschen Zustand an, dann ist dem Profil im Namen ein '.Rever
 
 
 
-
 ### Einrichtung des Wochenplans
 Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstellungen:
  
@@ -127,6 +126,13 @@ Behanghöhe in Abhängigkeit von der Sonnenhöhe errechnet. Die Werte sind am be
 
 Durch eine korrekte Einmessung wird erreicht, dass der Schatten des Rollladens immer gleich weit im Raum steht und somit eine gleichmäßige Beschattung stattfindet.
 
+### Erkennung von Kontakten (optional)
+Um auf offene Fenster/Türen oder auch Regen/Sturm reagieren zu können, können bis zu vier Kontakte angegeben werden.
+Je zwei Kontakte dienen dem Öffnen (Fenster/Tür) sowie dem Schließen (Regen/Wind) eines Rollladens.
+Je Kontakt ist anzugeben, in welche Position mindestens gefahren werden soll.   
+Wird ein Kontakt als offen erkannt, dann wird sofort auf die gewünschte Position gefahren. Nach dem Schließen des Kontaktes wird die dann gültige Höhe neu ermittelt.
+
+Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des Rollladens erkannt (z.B. die Tür ist offen und es regnet), dann erhalten die Kontakte zum Öffnen Vorrang. 
  
 ### Blind Controller
 
@@ -145,8 +151,8 @@ Durch eine korrekte Einmessung wird erreicht, dass der Schatten des Rollladens i
 | BrightnessThresholdID      | integer | 0 | Indikatorvariable, die den Schwellwert zur Tag/Nacht Bestimmung zur Verfügung stellt |
 | DayStartID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesanfangszeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und kleiner als '12:00' sein|
 | DayEndID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein|
-| Contact1ID, Contact2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Mindesthöhe gefahren
-| ContactOpenLevel           | float   | 0 | Höhe, auf die der Rollladen mindestens gefahren wird, wenn ein Kontakt offen ist.
+| ContactOpen1ID, ContactOpen2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Mindesthöhe gefahren
+| ContactOpenLevel1, ContactOpenLevel2           | float   | 0 | Höhe, auf die der Rollladen mindestens gefahren wird, wenn der zugehörige Kontakt offen ist.
 | ActivatorIDShadowingBySunPosition | integer   | 0 | 
 | AzimuthID| integer   | 0 | 
 | AltitudeID      | integer   | 0 | 

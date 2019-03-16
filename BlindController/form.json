@@ -41,17 +41,15 @@
         {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day is determined by the brightness"},
         {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
         {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
-
       ]
     },
-        {
-          "type":  "ExpansionPanel", "caption": "Overruling Day Times (optional)",
-          "items": [
-            {"type": "SelectVariable", "name": "DayStartID", "caption": "Start of the day ID"},
-            {"type": "SelectVariable", "name": "DayEndID", "caption": "End of the day ID"}
-          ]
-        },
-
+    {
+      "type":  "ExpansionPanel", "caption": "Overruling Day Times (optional)",
+      "items": [
+        {"type": "SelectVariable", "name": "DayStartID", "caption": "Start of the day ID"},
+        {"type": "SelectVariable", "name": "DayEndID", "caption": "End of the day ID"}
+      ]
+    },
     {
       "type":  "ExpansionPanel", "caption": "Shadowing According to Sun Position (optional)",
       "items": [
@@ -94,10 +92,26 @@
     {
       "type":  "ExpansionPanel", "caption": "Contacts (optional)",
       "items": [
-        {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened immediately to the given minimum height if one of the contacts are open (>0)."},
-        {"type": "SelectVariable", "name": "Contact1ID", "caption": "Contact 1 ID"},
-        {"type": "SelectVariable", "name": "Contact2ID", "caption": "Contact 2 ID"},
-        {"type": "NumberSpinner", "name": "ContactOpenLevel", "caption": "Minimum height when a contact is open", "digits": "2"}
+        {
+          "type":  "ExpansionPanel", "caption": "Contacts to Close the Blind (optional)",
+          "items": [
+            {"type": "Label", "caption": "Define up to two contacts/variables. The blind is closed immediately to the given maximum height if one of the contacts are open (>0)."},
+            {"type": "SelectVariable", "name": "ContactClose1ID", "caption": "Contact 1 ID"},
+            {"type": "NumberSpinner", "name": "ContactCloseLevel1", "caption": "Maximum height when the contact is open", "digits": "2"},
+            {"type": "SelectVariable", "name": "ContactClose2ID", "caption": "Contact 2 ID"},
+            {"type": "NumberSpinner", "name": "ContactCloseLevel2", "caption": "Maximum height when the contact is open", "digits": "2"}
+          ]
+        },
+        {
+          "type":  "ExpansionPanel", "caption": "Contacts to Open the Blind (optional)",
+          "items": [
+            {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened immediately to the given minimum height if one of the contacts are open (>0)."},
+            {"type": "SelectVariable", "name": "ContactOpen1ID", "caption": "Contact 1 ID"},
+            {"type": "NumberSpinner", "name": "ContactOpenLevel1", "caption": "Minimum height when the contact is open", "digits": "2"},
+            {"type": "SelectVariable", "name": "ContactOpen2ID", "caption": "Contact 2 ID"},
+            {"type": "NumberSpinner", "name": "ContactOpenLevel2", "caption": "Minimum height when the contact is open", "digits": "2"}
+          ]
+        }
       ]
     },
     {
