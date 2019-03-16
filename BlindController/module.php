@@ -278,14 +278,6 @@ class BlindController extends IPSModule
                 }
             }
 
-            /*
-            $contactOpenLevel = $this->ReadPropertyFloat('ContactOpenLevel');
-
-            if ($levelAct === $contactOpenLevel) {
-                // wenn die Rolladenposition noch auf Lüftungsposition steht
-                $deactivationTimeAuto = 0;
-            }
-            */
         } else {
             // nachts gilt keine deactivation Time
             $deactivationTimeAuto = 0;
@@ -894,24 +886,29 @@ class BlindController extends IPSModule
             $level = $this->getLevelFromSunPosition(
                 GetValueFloat($this->ReadPropertyInteger('AzimuthID')), GetValueFloat($this->ReadPropertyInteger('AltitudeID'))
             );
+            if ($level === null){
+                return null;
+            }
             $this->Logger_Dbg(__FUNCTION__, sprintf('level: %.2f', $level));
 
 
-            if ($level < $this->profile['LevelOpened']) {
+            //wenn Wärmeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
+            $levelCorrectionHeat = round (0.15 * ($this->profile['LevelOpened'] - $this->profile['LevelClosed']),2);
 
-                //wenn Wärmeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
-                if (($temperature > 27.0) || ((round($levelAct, 2) === round($level, 2) - 0.15) && ($temperature > (27.0 - 0.5)))) {
-                    $level -= 0.15;
-                    $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 27°, levelAct: %.2f, level: %.2f', $levelAct, $level));
-                }
+            if (($temperature > 27.0) || ((round($levelAct, 2) === round($level, 2) + $levelCorrectionHeat) && ($temperature > (27.0 - 0.5)))) {
+                $level += $levelCorrectionHeat;
+                $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 27°, levelAct: %.2f, level: %.2f', $levelAct, $level));
+            }
 
-                //wenn Hitzeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
-                if (($temperature > 30.0) || (($levelAct === 0.1) && ($temperature > (30.0 - 0.5)))) {
-                    $level = 0.1;
-                    $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 30°, levelAct: %.2f, level: %.2f', $levelAct, $level));
-                }
+            //wenn Hitzeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
+            if ($this->profile['Reversed']){
+                $levelPositionHeat = round (0.10 * ($this->profile['LevelOpened'] - $this->profile['LevelClosed']),2);
             } else {
-                $level = null;
+                $levelPositionHeat = round (0.90 * ($this->profile['LevelOpened'] - $this->profile['LevelClosed']),2);
+            }
+            if (($temperature > 30.0) || (($levelAct === $levelPositionHeat) && ($temperature > (30.0 - 0.5)))) {
+                $level = $levelPositionHeat;
+                $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 30°, levelAct: %.2f, level: %.2f', $levelAct, $level));
             }
 
         }
@@ -939,7 +936,13 @@ class BlindController extends IPSModule
 
         //Hysterese berücksichtigen
         //der Rollladen ist (teilweise) herabgefahren
-        if ($levelAct < $this->profile['LevelOpened']) {
+        if ($this->profile['Reversed']){
+            if ($levelAct < $this->profile['LevelOpened']) {
+                $thresholdBrightness -= $iBrightnessHysteresis;
+            } else {
+                $thresholdBrightness += $iBrightnessHysteresis;
+            }
+        } elseif ($levelAct > $this->profile['LevelOpened']) {
             $thresholdBrightness -= $iBrightnessHysteresis;
         } else {
             $thresholdBrightness += $iBrightnessHysteresis;
@@ -948,11 +951,10 @@ class BlindController extends IPSModule
         return $thresholdBrightness;
     }
 
-    private function getLevelFromSunPosition(float $rSunAzimuth, float $rSunAltitude): float
+    private function getLevelFromSunPosition(float $rSunAzimuth, float $rSunAltitude): ?float
     {
 
-
-        $rLevelSunPosition = $this->profile['LevelOpened'];
+        $rLevelSunPosition = null;
         if (($rSunAzimuth >= $this->ReadPropertyFloat('AzimuthFrom')) && ($rSunAzimuth <= $this->ReadPropertyFloat('AzimuthTo'))) {
             $AltitudeLow      = $this->ReadPropertyFloat('LowSunPositionAltitude');
             $AltitudeHigh     = $this->ReadPropertyFloat('HighSunPositionAltitude');
@@ -966,8 +968,13 @@ class BlindController extends IPSModule
             $rLevelSunPosition =
                 $blindLevelLow + ($blindLevelHigh - $blindLevelLow) * ($rAltitudeTanAct - $rAltitudeTanLow) / ($rAltitudeTanHigh - $rAltitudeTanLow);
 
-            $rLevelSunPosition = min($rLevelSunPosition, $this->profile['LevelOpened']);
-            $rLevelSunPosition = max($rLevelSunPosition, $this->profile['LevelClosed']);
+            if ($this->profile['Reversed']){
+                $rLevelSunPosition = min($rLevelSunPosition, $this->profile['LevelOpened']);
+                $rLevelSunPosition = max($rLevelSunPosition, $this->profile['LevelClosed']);
+            } else {
+                $rLevelSunPosition = max($rLevelSunPosition, $this->profile['LevelOpened']);
+                $rLevelSunPosition = min($rLevelSunPosition, $this->profile['LevelClosed']);
+            }
         }
 
         return $rLevelSunPosition;

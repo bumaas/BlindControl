@@ -38,7 +38,7 @@
       "type":  "ExpansionPanel", "caption": "Is Day Detection (optional)",
       "items": [
         {"type": "SelectVariable", "name": "IsDayIndicatorID", "caption": "Is Day Indicator ID"},
-        {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day is determined by the brightness"},
+        {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day is determined by the brightness:"},
         {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
         {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
       ]
@@ -54,16 +54,16 @@
       "type":  "ExpansionPanel", "caption": "Shadowing According to Sun Position (optional)",
       "items": [
         {"type": "SelectVariable", "name": "ActivatorIDShadowingBySunPosition", "caption": "Activator ID"},
-        {"type": "Label", "caption": "Define the sun positions indicators and the range of azimuth for shadowing"},
+        {"type": "Label", "caption": "Define the sun position indicators"},
         {"type": "SelectVariable", "name": "AzimuthID", "caption": "Azimuth ID"},
         {"type": "SelectVariable", "name": "AltitudeID", "caption": "Altitude ID"},
-        {"type": "Label", "caption": "Define the range of azimuth for shadowing"},
+        {"type": "Label", "caption": "Define the range of azimuth for shadowing:"},
         {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1"},
         {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1"},
-        {"type": "Label", "caption": "Define the brightness indicator"},
+        {"type": "Label", "caption": "Define the brightness indicator:"},
         {"type": "SelectVariable", "name": "BrightnessIDShadowingBySunPosition", "caption": "Brightness ID"},
-        {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "caption": "Threshold brightness ID"},
-        {"type": "Label", "caption": "Define an additional temperature sensor when the room temperature should be considered"},
+        {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "caption": "Brightness Threshold ID"},
+        {"type": "Label", "caption": "Define an additional temperature sensor when the outdoor temperature should be considered"},
         {"type": "SelectVariable", "name": "TemperatureIDShadowingBySunPosition", "caption": "Temperature ID"},
         {
           "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing",
@@ -120,9 +120,9 @@
         {"type": "NumberSpinner", "name": "UpdateInterval", "caption": "Update Interval", "suffix": "Minutes"},
         {"type": "NumberSpinner", "name": "DeactivationAutomaticMovement", "caption": "Deactivation Time after automatic Movement", "suffix": "Minutes"},
         {"type": "NumberSpinner", "name": "DeactivationManualMovement", "caption": "Deactivation Time after manual Movement", "suffix": "Minutes"},
-        {"type": "CheckBox", "name": "WriteLogInformationToIPSLogger", "caption": "Log and Error Information are written to IPSLogger of IPSLibrary instead of standard logfile"},
+        {"type": "CheckBox", "name": "WriteLogInformationToIPSLogger", "caption": "Log and Error Information are written to the logfile of IPSLibrary instead of standard logfile"},
         {"type": "CheckBox", "name": "WriteDebugInformationToLogfile", "caption": "Debug information are written additionally to standard logfile"},
-        {"type": "CheckBox", "name": "WriteDebugInformationToIPSLogger", "caption": "Debug information are written additionally to IPSLogger of IPSLibrary"}
+        {"type": "CheckBox", "name": "WriteDebugInformationToIPSLogger", "caption": "Debug information are written additionally to the logfile of IPSLibrary"}
       ]
     }
   ],
