@@ -20,7 +20,23 @@ Steuert einen Rollladen nach vorgegebenen Einstellungen.
 
 Das Blind Control Modul dient der Steuerung von Rollläden oder anderweitigen Abdunkelungseinrichtungen.
 
+Aktuelle Features:
 
+- Hoch-/Runterfahren zu vorgegeben Zeiten
+- Urlaubs- und Feiertagsberücksichtigung
+- Berücksichtigung Sonnenauf- und untergang
+- Sonnenschutz inclusive Nachführen nach Sonnenstand
+- Unterstützung von Kontakten (Fenster-/Tür, Regen, Alarm etc)
+- Deaktivierungsmöglichkeit
+- Berücksichtigung der Helligkeit
+- Hitzeschutz
+- Erkennung von manueller Bedienung
+- Aktivierung/Deaktivierung über Statusvariable
+- herstellerunabhängig
+
+Noch nicht unterstützt wird:
+- Lamellenstellung bei Stores
+- Zufallsfunktion bei Tagesanfang/Tagesende
 
 
 ## 2. Voraussetzungen
