@@ -64,18 +64,12 @@ class BlindController extends IPSModule
         $this->RegisterMessages();
         $this->RegisterVariables();
 
-        $this->SetInstanceStatus();
+        $this->SetInstanceStatusAndTimerEvent();
     }
 
     public function RequestAction($Ident, $Value): bool
     {
-        if (strtoupper($Ident) === 'ACTIVATED') {
-            if ($Value) {
-                $this->SetTimerInterval('Update', $this->ReadPropertyInteger('UpdateInterval') * 60 * 1000);
-            } else {
-                $this->SetTimerInterval('Update', 0);
-            }
-        } else {
+        if (strtoupper($Ident) !== 'ACTIVATED') {
             trigger_error('Unknown Ident: ' . $Ident);
             return false;
         }
@@ -85,7 +79,7 @@ class BlindController extends IPSModule
             $this->Logger_Dbg(__FUNCTION__, sprintf('Ident: %s, Value: %s', $Ident, $Value));
         }
         if ($this->SetValue($Ident, $Value)) {
-            $this->SetInstanceStatus();
+            $this->SetInstanceStatusAndTimerEvent();
             return true;
         }
 
@@ -113,7 +107,7 @@ class BlindController extends IPSModule
                         )
         );
 
-        $this->SetInstanceStatus();
+        $this->SetInstanceStatusAndTimerEvent();
 
         if ($this->GetValue('ACTIVATED')) {
             // controlBlind mit Prüfung, ob der Rollladen sofort bewegt werden soll
@@ -515,7 +509,7 @@ class BlindController extends IPSModule
         $this->EnableAction('ACTIVATED');
     }
 
-    private function SetInstanceStatus(): void
+    private function SetInstanceStatusAndTimerEvent(): void
     {
 
         if ($ret =
