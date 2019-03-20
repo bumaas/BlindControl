@@ -124,8 +124,9 @@ Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen He
 
 ![image](docs/Helligkeitsschwellwert.jpg)
 
-### Übersteuernde Tageswechselzeiten (optional)
+#### Übersteuernde Tagesanfang- und Endezeiten (optional)
 Als zusätzliche Option kann auch eine übersteuernde feste Tagesanfangszeit und/oder Tagesendezeit angegeben werden. Dazu ist auf eine Variable zu verweisen, die die entsprechende Zeit im Format 'HH:MM' beinhaltet.
+Die Zeiten übersteuern die in der Tagerkennung ermittelten Zeiten.
  
 
 ### Beschattung nach Sonnenstand (optional)

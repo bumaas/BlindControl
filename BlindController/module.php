@@ -317,7 +317,7 @@ class BlindController extends IPSModule
             $this->Logger_Dbg(__FUNCTION__, "Kontakt geöffnet (levelAct: $levelAct, levelNew: $levelNew)");
 
         } elseif ($this->ReadAttributeBoolean('AttrContactOpen')) {
-            // wenn die Rolladenposition noch auf Kontakt offen Position steht
+            // wenn die Rollladenposition noch auf Kontakt offen Position steht
             $deactivationTimeAuto = 0;
             $this->WriteAttributeBoolean('AttrContactOpen', false);
         }

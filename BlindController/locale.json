@@ -26,7 +26,7 @@
       "If no 'Is Day' indicator is set, the day is determined by the brightness:":"Wenn kein 'Ist es Tag' Indikator angegeben ist, wird der Tag anhand der Helligkeit bestimmt:",
       "Brightness ID":"Helligkeit ID",
       "Brightness Threshold ID":"Grenzwert Helligkeit ID",
-      "Overruling Day Times (optional)": "Übersteuernde Tageszeiten (optional)",
+      "Overruling Day Start and End Times (optional)": "Übersteuernde Tagesanfang und -ende Zeiten (optional)",
       "Start of the day ID": "Tagesanfangszeit (hh:mm) ID",
       "End of the day ID": "Tagesendezeit (hh:mm) ID",
       "Shadowing According to Sun Position (optional)": "Beschattung nach Sonnenstand (optional)",
@@ -54,7 +54,8 @@
       "Threshold high brightness ID": "Helligkeitsschwellwert höhere Helligkeit ID",
       "Level at high brightness": "Rollladenposition bei höherer Helligkeit",
       "Contacts (optional)": "Kontakte (optional)",
-      "Contacts to Close the Blind (optional)": "Kontakte, bei denen der Rolladen geschlossen wird",
+      "Contacts to Open the Blind (optional)": "Kontakte, bei denen der Rollladen geöffnet wird",
+      "Contacts to Close the Blind (optional)": "Kontakte, bei denen der Rollladen geschlossen wird",
       "Define up to two contacts/variables. The blind is closed immediately to the given maximum height if one of the contacts are open (>0).":
       "Angabe von bis zu zwei Kontakten. Der Rollladen wird sofort geschlossen und auf die gewünschte Maximalhöhe gefahren wenn einer der Kontakte offen ist (>0).",
       "Contact 1 ID": "Kontakt 1 ID",

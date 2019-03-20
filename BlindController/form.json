@@ -40,14 +40,14 @@
         {"type": "SelectVariable", "name": "IsDayIndicatorID", "caption": "Is Day Indicator ID"},
         {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day is determined by the brightness:"},
         {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
-        {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
-      ]
-    },
-    {
-      "type":  "ExpansionPanel", "caption": "Overruling Day Times (optional)",
-      "items": [
-        {"type": "SelectVariable", "name": "DayStartID", "caption": "Start of the day ID"},
-        {"type": "SelectVariable", "name": "DayEndID", "caption": "End of the day ID"}
+        {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"},
+        {
+          "type":  "ExpansionPanel", "caption": "Overruling Day Start and End Times (optional)",
+          "items": [
+            {"type": "SelectVariable", "name": "DayStartID", "caption": "Start of the day ID"},
+            {"type": "SelectVariable", "name": "DayEndID", "caption": "End of the day ID"}
+          ]
+        }
       ]
     },
     {
