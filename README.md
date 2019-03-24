@@ -45,7 +45,7 @@ Noch nicht unterstützt wird:
  
  - Es werden alle Aktoren unterstützt, die über eine Statusvariable verfügen und sich über RequestAction steuern lassen.
 Die Statusvariable muss vom Typ Integer oder Float sein und ein Profil mit einem korrekten Minimal- und Maximalwert besitzen. Bei einem Rollladen, der beim Minimalwert 
-geschlossen und beim Maximalwert geöffnet ist, ist ein Profil mit der Namensendung ".Reversed" zu verwenden.  
+geschlossen und beim Maximalwert geöffnet ist (z.B. typischerweise bei Homematic), ist ein Profil mit der Namensendung ".Reversed" zu verwenden.  
 
 ## 3. Installation
 
@@ -142,6 +142,15 @@ Um den richtige Behanghöhe bei unterschiedlichen Sonnenhöhen zu finden, sind d
 Behanghöhe in Abhängigkeit von der Sonnenhöhe errechnet. Die Werte sind am besten durch Aufzeichnungen in der Mittagszeit/Abendzeit oder im Hochsommer/Winter zu ermitteln.
 
 Durch eine korrekte Einmessung wird erreicht, dass der Schatten des Rollladens immer gleich weit im Raum steht und somit eine gleichmäßige Beschattung stattfindet.
+
+### Beschattung nach Helligkeit (optional)
+Es sind die Variablen anzugeben, die zur Helligkeitsbestimmung herangezogen werden sollen. Wenn der Helligkeitswert überschritten wird, dann wird der Rollladen auf die vorgegebene Position gefahren. Es stehen zwei Paare an Helligkeitsschwellwert und Rollladenposition zur Verfügung.
+Die Beschattung nach Helligkeit übersteuert die Beschattung nach Sonnenstand.
+
+Die Regel wird über eine Aktivierungsvariable aktiviert/deaktiviert.
+
+Praktisches Beispielszenario:
+Im Normalfall wird nach Sonnenstand beschattet. Wenn jedoch der Fernseher eingeschaltet wird, dann soll je nach Helligkeit stärker oder schwächer abgedunkelt werden.
 
 ### Erkennung von Kontakten (optional)
 Um auf offene Fenster/Türen oder auch Regen/Sturm reagieren zu können, können bis zu vier Kontakte angegeben werden.

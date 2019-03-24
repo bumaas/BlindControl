@@ -128,8 +128,8 @@
   ],
   "actions":  [
     {"type": "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id, true); echo 'Finished!';"},
-    {"type": "Button", "caption": "Open Blind", "onClick": "BLC_MoveBlind($id, 0, 0, ''); echo 'Finished!';"},
-    {"type": "Button", "caption": "Close Blind", "onClick": "BLC_MoveBlind($id, 100, 0, ''); echo 'Finished!';"},
+    {"type": "Button", "caption": "Open Blind", "onClick": "if (BLC_MoveBlind($id, 0, 0, '')){echo 'Finished!';} else {echo 'Error!';}"},
+    {"type": "Button", "caption": "Close Blind", "onClick": "if (BLC_MoveBlind($id, 100, 0, '')){echo 'Finished!';} else {echo 'Error!';}"},
     {"type": "Button", "caption": "Show Configuration", "onClick": "echo IPS_GetObject($id)['ObjectName'] . ' (#' . $id . ')' . PHP_EOL . PHP_EOL; print_r(json_decode(IPS_GetConfiguration ($id), true));"}
   ],
   "status":   [

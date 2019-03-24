@@ -518,6 +518,10 @@ class BlindController extends IPSModule
             return;
         }
 
+        if (!$this->checkBlindLevelId()){
+            $this->SetStatus(self::STATUS_INST_BLIND_LEVEL_ID_IS_INVALID);
+            return;
+        }
         if ($ret = $this->checkEventId('WeeklyTimeTableEventID', false, EVENTTYPE_SCHEDULE, self::STATUS_INST_TIMETABLE_ID_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
@@ -715,6 +719,13 @@ class BlindController extends IPSModule
         }
 
         return 0;
+
+    }
+    private function checkBlindLevelId(): bool
+    {
+        $var = IPS_GetVariable($this->ReadPropertyInteger('BlindLevelID'));
+
+        return !(!$var['VariableAction'] && !$var['VariableCustomAction']) || (!$var['VariableCustomProfile'] && !$var['VariableProfile']);
 
     }
 
@@ -1161,8 +1172,8 @@ class BlindController extends IPSModule
 
                 $this->WriteInfo($levelNew, (float) $this->profile['LevelClosed'], (float) $this->profile['LevelOpened'], $hint);
             } else {
-                $this->Logger_Dbg(
-                    __FUNCTION__, 'Fehler beim Setzen der Werte. (id = ' . $levelID . ', Value = ' . $percentClose . ')'
+                $this->Logger_Err(
+                    'Fehler beim Setzen der Werte. (id = ' . $levelID . ', Value = ' . $percentClose . ')'
                 );
                 $ret = false;
             }
@@ -1465,9 +1476,9 @@ class BlindController extends IPSModule
         $this->SendDebug('LOG_ERR', $message, 0);
         if (function_exists('IPSLogger_Err') && $this->ReadPropertyBoolean('WriteLogInformationToIPSLogger')) {
             IPSLogger_Err(__CLASS__, $message);
-        } else {
-            $this->LogMessage($message, KL_ERROR);
         }
+
+        $this->LogMessage($message, KL_ERROR);
 
         $this->SetValue('LAST_MESSAGE', $message);
     }
