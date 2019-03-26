@@ -64,6 +64,10 @@
       "Minimum height when the contact is open": "Minimalhöhe wenn Kontakt offen ist",
       "Define up to two contacts/variables. The blind is opened immediately to the given minimum height if one of the contacts are open (>0).":
       "Angabe von bis zu zwei Kontakten. Der Rollladen wird sofort geöffnet und auf die gewünschte Minimalhöhe gefahren wenn einer der Kontakte offen ist (>0).",
+      "Emergency Contact (optional)": "Notfall Kontakt (optional)",
+      "Emergency contact ID": "Notfall Kontakt ID",
+      "Define an emergency contact. The blind is opened immediately if the contact is open. Additionally the automatic is deactivated.":
+      "Angabe eines Notfall Kontakts. Der Rollladen wird sofort geöffnet wenn der Kontakt offen ist (>0). Zugleich wird die Automatik außer Betrieb genommen.",
       "Expert Parameters": "Experten Einstellungen",
       "Update Interval": "Steuerungsintervall",
       "Deactivation Time after automatic Movement": "Zeit der Deaktivierung nach automatischer Fahrt",

@@ -32,6 +32,7 @@ Aktuelle Features:
 - Hitzeschutz
 - Erkennung von manueller Bedienung
 - Aktivierung/Deaktivierung über Statusvariable
+- Notfall Sensor
 - herstellerunabhängig
 
 Noch nicht unterstützt wird:
@@ -51,9 +52,7 @@ geschlossen und beim Maximalwert geöffnet ist (z.B. typischerweise bei Homemati
 
 ### a. Laden des Moduls
 
-In Symcon unter Kerninstanzen über `Modules -> Hinzufügen` das Modul ergänzen mit der URL:
-	
-    `https://github.com/bumaas/BlindControl/`  
+Das Modul wird über den Modul Store installiert.
 
 ### b. Anlegen einer Instanz
 
@@ -179,6 +178,7 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | DayEndID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein|
 | ContactOpen1ID, ContactOpen2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Mindesthöhe gefahren
 | ContactOpenLevel1, ContactOpenLevel2           | float   | 0 | Höhe, auf die der Rollladen mindestens gefahren wird, wenn der zugehörige Kontakt offen ist.
+| EmergencyContactID        | integer   | 0 | Notfall Indikator: wenn der Kontakt ungleich 0 ist, wird der Rollladen sofort geöffnet. Gleichzeitig wird die Automatik außer Betrieb genommen.
 | ActivatorIDShadowingBySunPosition | integer   | 0 | 
 | AzimuthID| integer   | 0 | 
 | AltitudeID      | integer   | 0 | 
