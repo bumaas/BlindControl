@@ -221,13 +221,13 @@ class BlindController extends IPSModule
             $levelNew = $levelAct;
         } else if ($isDay) {
             $levelNew = $this->profile['LevelOpened'];
-            $Hinweis  = 'Tagesanfang';
+            $Hinweis  = 'Tag';
             if (isset($isDayByDayDetection, $brightness)) {
                 $Hinweis .= ', ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
             }
         } else {
             $levelNew = $this->profile['LevelClosed'];
-            $Hinweis  = 'Tagesende';
+            $Hinweis  = 'Nacht';
             if (isset($isDayByDayDetection, $brightness)) {
                 $Hinweis .= ', ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
             }

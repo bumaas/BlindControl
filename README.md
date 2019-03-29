@@ -207,8 +207,8 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 Folgende Statusvariablen werden angelegt:
 
 #####ACTIVATED
-Über die Statusvariable kann die automatische Steuerung aktiviert und deaktiviert werden.
-
+Über die Statusvariable kann die automatische Steuerung aktiviert und deaktiviert werden. Beim Einschalten der automatischen Steuerung werden vorher erkannte manuelle Eingriffe verworfen.
+ 
 #####LAST_MESSAGE
 Die Statusvariable beinhaltet einen Hinweis über die letzte Bewegung.
 
