@@ -236,7 +236,7 @@ class BlindController extends IPSModule
 
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'tsAutomatik: %s, tsBlind: %s, levelAct: %s, bNoMove: %s, isDay: %s, isDayByTimeSchedule: %s, isDayByDayDetection: %s, dayStart: %s, dayEnd: %s, considerDeactivationTimeAuto: %s',
+                            'tsAutomatik: %s, tsBlind: %s, levelAct: %s, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s, dayStart: %s, dayEnd: %s), considerDeactivationTimeAuto: %s',
                             $this->FormatTimeStamp($tsAutomatik), $this->FormatTimeStamp($tsBlindLastMovement), $levelAct, (int) $bNoMove,
                             (int) $isDay, (int) $isDayByTimeSchedule, (isset($isDayByDayDetection) ? (int) $isDayByDayDetection : 'null'),
                             $dayStart ?? 'null', $dayEnd ?? 'null', (int) $considerDeactivationTimeAuto
@@ -1385,14 +1385,14 @@ class BlindController extends IPSModule
     {
         //Ermitteln, welche Zeiten heute und gestern gelten
 
-        $heute_auf = '';
-        $heute_ab  = '';
+        $heute_auf = null;
+        $heute_ab  = null;
 
         if (!$this->getUpAndDownPoints($heute_auf, $heute_ab)) {
             return null;
         }
 
-        $this->Logger_Dbg(__FUNCTION__, sprintf('heute_auf: %s, heute_ab: %s', $heute_auf, $heute_ab));
+        $this->Logger_Dbg(__FUNCTION__, sprintf('heute_auf: %s, heute_ab: %s', $heute_auf, $heute_ab ?? 'null'));
 
         return (time() >= strtotime($heute_auf)) && ($heute_ab === null || (time() <= strtotime($heute_ab)));
 

@@ -109,9 +109,7 @@
             {"type": "SelectVariable", "name": "ContactOpen1ID", "caption": "Contact 1 ID"},
             {"type": "NumberSpinner", "name": "ContactOpenLevel1", "caption": "Minimum height when the contact is open", "digits": "2"},
             {"type": "SelectVariable", "name": "ContactOpen2ID", "caption": "Contact 2 ID"},
-            {"type": "NumberSpinner", "name": "ContactOpenLevel2", "caption": "Minimum height when the contact is open", "digits": "2"},
-            {"type": "Label", "caption": "Define an emergency contact. The blind is opened immediately if the contact is open. Additionally the automatic is deactivated."},
-            {"type": "SelectVariable", "name": "EmergencyContactID", "caption": "Emergency contact ID"}
+            {"type": "NumberSpinner", "name": "ContactOpenLevel2", "caption": "Minimum height when the contact is open", "digits": "2"}
           ]
         }
       ]
