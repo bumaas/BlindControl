@@ -1155,7 +1155,9 @@ class BlindController extends IPSModule
             } else if ($levelAct === $blindLevelOpened) {
                 $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell geöffnet.', $this->objectName));
             } else {
-                $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell auf %.0f%% gefahren.', $this->objectName, 100 * $levelAct));
+                $levelPercent = ($levelAct - $this->profile['MinValue'])/($this->profile['MaxValue'] - $this->profile['MinValue']);
+
+                $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent));
             }
 
         }
@@ -1264,7 +1266,7 @@ class BlindController extends IPSModule
                     "$this->objectName: TimestampAutomatik: " . $this->FormatTimeStamp($this->ReadAttributeInteger('AttrTimeStampAutomatic'))
                 );
 
-                $this->WriteInfo($levelNew, (float) $this->profile['LevelClosed'], (float) $this->profile['LevelOpened'], $hint);
+                $this->WriteInfo($levelNew, $hint);
             } else {
                 $this->Logger_Err(
                     'Fehler beim Setzen der Werte. (id = ' . $levelID . ', Value = ' . $percentClose . ')'
@@ -1281,14 +1283,15 @@ class BlindController extends IPSModule
         return $ret;
     }
 
-    private function WriteInfo(float $rLevelneu, float $blindLevelClosed, float $blindLevelOpened, string $hint): void
+    private function WriteInfo(float $rLevelneu, string $hint): void
     {
-        if ($rLevelneu === $blindLevelClosed) {
+        if ($rLevelneu === (float) $this->profile['LevelClosed']) {
             $logMessage = sprintf('Der Rollladen \'%s\' wurde geschlossen.', $this->objectName);
-        } else if ($rLevelneu === $blindLevelOpened) {
+        } else if ($rLevelneu === (float) $this->profile['LevelOpened']) {
             $logMessage = sprintf('Der Rollladen \'%s\' wurde geöffnet.', $this->objectName);
         } else {
-            $logMessage = sprintf('Der Rollladen \'%s\' wurde auf %.0f%% gefahren.', $this->objectName, 100 * $rLevelneu);
+            $levelPercent = ($rLevelneu - $this->profile['MinValue'])/($this->profile['MaxValue'] - $this->profile['MinValue']);
+            $logMessage = sprintf('Der Rollladen \'%s\' wurde auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent);
         }
 
         if ($hint === '') {
