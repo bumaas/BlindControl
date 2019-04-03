@@ -290,7 +290,7 @@ class BlindController extends IPSModule
             $deactivationTimeAuto = 0;
             $bNoMove              = false;
             $levelNew             = $levelContactEmergency;
-            $Hinweis              = 'Kontakt offen';
+            $Hinweis              = 'Notfallkontakt offen';
 
             //im Notfall wird die Automatik deaktiviert
             $bEmergency = true;
@@ -341,17 +341,6 @@ class BlindController extends IPSModule
             $this->WriteAttributeBoolean('AttrContactOpen', false);
         }
 
-        /*        if (($contactOpenLevel < $levelNew) && $isContactOpen && GetValueBoolean(ID_REGEN_UND_WIND)
-                    && ((time() - GetTimeStampVariableChanged(
-                                ID_REGEN_UND_WIND
-                            )) >= 180)) {
-                    $levelNew = $contactOpenLevel;
-                    $Hinweis   = 'Regen';
-                    $bNoMove   = false;
-                    //Bewegung erzwingen
-                    $deactivationTimeAuto = 0;
-                }*/
-
         if (!$bNoMove) {
             $level = $levelNew / ($this->profile['MaxValue'] - $this->profile['MinValue']);
             if ($this->profile['Reversed']) {
@@ -394,14 +383,14 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('DayStartID', 0);
         $this->RegisterPropertyInteger('DayEndID', 0);
 
-        //contacts
+        //contacts open
         $this->RegisterPropertyInteger('ContactOpen1ID', 0);
         $this->RegisterPropertyInteger('ContactOpen2ID', 0);
         $this->RegisterPropertyFloat('ContactOpenLevel1', 0);
         $this->RegisterPropertyFloat('ContactOpenLevel2', 0);
         $this->RegisterPropertyInteger('EmergencyContactID', 0);
 
-        //contacts
+        //contacts close
         $this->RegisterPropertyInteger('ContactClose1ID', 0);
         $this->RegisterPropertyInteger('ContactClose2ID', 0);
         $this->RegisterPropertyFloat('ContactCloseLevel1', 0);
@@ -440,30 +429,38 @@ class BlindController extends IPSModule
     private function RegisterReferences(): void
     {
         $objectIDs = [
-            $this->ReadPropertyInteger('WeeklyTimeTableEventID'),
             $this->ReadPropertyInteger('BlindLevelID'),
+            $this->ReadPropertyInteger('WeeklyTimeTableEventID'),
+            $this->ReadPropertyInteger('HolidayIndicatorID'),
             $this->ReadPropertyInteger('HolidayIndicatorID'),
             $this->ReadPropertyInteger('WakeUpTimeID'),
             $this->ReadPropertyInteger('BedTimeID'),
-            $this->ReadPropertyInteger('HolidayIndicatorID'),
-            $this->ReadPropertyInteger('BrightnessID'),
-            $this->ReadPropertyInteger('DayStartID'),
-            $this->ReadPropertyInteger('DayStartID'),
-            $this->ReadPropertyInteger('BrightnessThresholdID'),
+
             $this->ReadPropertyInteger('IsDayIndicatorID'),
+            $this->ReadPropertyInteger('BrightnessID'),
+            $this->ReadPropertyInteger('BrightnessThresholdID'),
+
+            $this->ReadPropertyInteger('DayStartID'),
+            $this->ReadPropertyInteger('DayStartID'),
+
             $this->ReadPropertyInteger('ContactOpen1ID'),
             $this->ReadPropertyInteger('ContactOpen2ID'),
             $this->ReadPropertyInteger('EmergencyContactID'),
+
+            $this->ReadPropertyInteger('ContactClose1ID'),
+            $this->ReadPropertyInteger('ContactClose2ID'),
+
             $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition'),
             $this->ReadPropertyInteger('AzimuthID'),
             $this->ReadPropertyInteger('AltitudeID'),
             $this->ReadPropertyInteger('BrightnessIDShadowingBySunPosition'),
             $this->ReadPropertyInteger('BrightnessThresholdIDShadowingBySunPosition'),
             $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition'),
+
             $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
             $this->ReadPropertyInteger('BrightnessIDShadowingBrightness'),
-            $this->ReadPropertyInteger('ThresholdIDHighBrightness'),
-            $this->ReadPropertyInteger('ThresholdIDLessBrightness'),];
+            $this->ReadPropertyInteger('ThresholdIDLessBrightness'),
+            $this->ReadPropertyInteger('ThresholdIDHighBrightness')];
 
         foreach ($this->GetReferenceList() as $ref) {
             $this->UnregisterReference($ref);
@@ -892,10 +889,9 @@ class BlindController extends IPSModule
                 } else {
                     $level = $contact['level'];
                 }
+
                 $this->Logger_Dbg(
-                    __FUNCTION__, sprintf(
-                                    'contact is open: #%s, value: %s, level: %s', $contact['id'], GetValueFormatted($contact['id']), $contact['level']
-                                )
+                    __FUNCTION__, sprintf('contact is open: #%s, value: %s, level: %s', $contact['id'], $this->GetFormattedValue($contact['id']), $contact['level'])
                 );
             }
         }
@@ -935,7 +931,7 @@ class BlindController extends IPSModule
 
                 $this->Logger_Dbg(
                     __FUNCTION__, sprintf(
-                                    'emergency contact is open: #%s, value: %s, level: %s', $contact['id'], GetValueFormatted($contact['id']),
+                                    'emergency contact is open: #%s, value: %s, level: %s', $contact['id'], $this->GetFormattedValue($contact['id']),
                                     $contact['level']
                                 )
                 );
@@ -1569,6 +1565,35 @@ class BlindController extends IPSModule
         return date('Y-m-d H:i:s', $ts);
     }
 
+    private function GetFormattedValue($variableID): string
+    {
+        if ((IPS_GetVariable($variableID)['VariableCustomProfile'] !== '') || (IPS_GetVariable($variableID)['VariableProfile'] !== '')) {
+            return GetValueFormatted($variableID);
+        }
+
+        $val = GetValue($variableID);
+        $ret = '';
+
+        if (is_string($val)) {
+            $ret = $val;
+        } else if (is_bool($val)) {
+            if ($val) {
+                $ret = 'true';
+            } else {
+                $ret = 'false';
+            }
+        } else if (is_float($val) || is_int($val)) {
+            $ret = (string) $val;
+        } else if (is_array($val)) {
+            $ret = json_encode($val);
+        } else if (is_object($val) || is_scalar($val)) {
+            $ret = serialize($val);
+        } else if ($val === null) {
+            $ret = 'null';
+        }
+
+        return $ret;
+    }
 
     private function Logger_Err(string $message): void
     {
