@@ -71,7 +71,7 @@ class BlindController extends IPSModule
     public function RequestAction($Ident, $Value): bool
     {
         if (strtoupper($Ident) !== 'ACTIVATED') {
-            trigger_error('Unknown Ident: ' . $Ident);
+            trigger_error(sprintf('Instance %s: Unknown Ident %s', $this->InstanceID, $Ident));
             return false;
         }
         if (is_bool($Value)) {
@@ -476,24 +476,24 @@ class BlindController extends IPSModule
     private function RegisterMessages(): void
     {
         $objectIDs = [
-            $this->ReadPropertyInteger('WeeklyTimeTableEventID'),
-            $this->ReadPropertyInteger('HolidayIndicatorID'),
-            $this->ReadPropertyInteger('BrightnessID'),
-            $this->ReadPropertyInteger('BrightnessThresholdID'),
-            $this->ReadPropertyInteger('IsDayIndicatorID'),
-            $this->ReadPropertyInteger('ContactOpen1ID'),
-            $this->ReadPropertyInteger('ContactOpen2ID'),
-            $this->ReadPropertyInteger('EmergencyContactID'),
-            $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition'),
-            $this->ReadPropertyInteger('AzimuthID'),
-            $this->ReadPropertyInteger('AltitudeID'),
-            $this->ReadPropertyInteger('BrightnessIDShadowingBySunPosition'),
-            $this->ReadPropertyInteger('BrightnessThresholdIDShadowingBySunPosition'),
-            $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition'),
-            $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
-            $this->ReadPropertyInteger('BrightnessIDShadowingBrightness'),
-            $this->ReadPropertyInteger('ThresholdIDHighBrightness'),
-            $this->ReadPropertyInteger('ThresholdIDLessBrightness'),];
+            'WeeklyTimeTableEventID'                      => $this->ReadPropertyInteger('WeeklyTimeTableEventID'),
+            'HolidayIndicatorID'                          => $this->ReadPropertyInteger('HolidayIndicatorID'),
+            'BrightnessID'                                => $this->ReadPropertyInteger('BrightnessID'),
+            'BrightnessThresholdID'                       => $this->ReadPropertyInteger('BrightnessThresholdID'),
+            'IsDayIndicatorID'                            => $this->ReadPropertyInteger('IsDayIndicatorID'),
+            'ContactOpen1ID'                              => $this->ReadPropertyInteger('ContactOpen1ID'),
+            'ContactOpen2ID'                              => $this->ReadPropertyInteger('ContactOpen2ID'),
+            'EmergencyContactID'                          => $this->ReadPropertyInteger('EmergencyContactID'),
+            'ActivatorIDShadowingBySunPosition'           => $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition'),
+            'AzimuthID'                                   => $this->ReadPropertyInteger('AzimuthID'),
+            'AltitudeID'                                  => $this->ReadPropertyInteger('AltitudeID'),
+            'BrightnessIDShadowingBySunPosition'          => $this->ReadPropertyInteger('BrightnessIDShadowingBySunPosition'),
+            'BrightnessThresholdIDShadowingBySunPosition' => $this->ReadPropertyInteger('BrightnessThresholdIDShadowingBySunPosition'),
+            'TemperatureIDShadowingBySunPosition'         => $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition'),
+            'ActivatorIDShadowingBrightness'              => $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
+            'BrightnessIDShadowingBrightness'             => $this->ReadPropertyInteger('BrightnessIDShadowingBrightness'),
+            'ThresholdIDHighBrightness'                   => $this->ReadPropertyInteger('ThresholdIDHighBrightness'),
+            'ThresholdIDLessBrightness'                   => $this->ReadPropertyInteger('ThresholdIDLessBrightness'),];
 
         foreach ($this->GetMessageList() as $senderId => $msgs) {
             foreach ($msgs as $msg) {
@@ -501,9 +501,10 @@ class BlindController extends IPSModule
             }
         }
 
-        foreach ($objectIDs as $id) {
+        foreach ($objectIDs as $propertyName => $id) {
             if ($id !== 0) {
-                switch (IPS_GetObject($id)['ObjectType']) {
+                $objectType = IPS_GetObject($id)['ObjectType'];
+                switch ($objectType) {
                     case OBJECTTYPE_EVENT:
                         $this->RegisterMessage($id, EM_UPDATE);
                         break;
@@ -511,7 +512,7 @@ class BlindController extends IPSModule
                         $this->RegisterMessage($id, VM_UPDATE);
                         break;
                     default:
-                        trigger_error(sprintf('Unknown ObjectType %s of id %s', IPS_GetObject($id)['ObjectType'], $id));
+                        trigger_error(sprintf('Instance %s, Property %s: unknown ObjectType %s of id %s', $this->InstanceID, $propertyName, $objectType, $id));
                 }
             }
         }
@@ -1089,14 +1090,14 @@ class BlindController extends IPSModule
 
         $brightnessID = $this->ReadPropertyInteger('BrightnessIDShadowingBrightness');
         if ($brightnessID === 0) {
-            trigger_error('BrightnessIDShadowingBrightness === 0');
+            trigger_error(sprintf('Instance %s: BrightnessIDShadowingBrightness === 0', $this->InstanceID));
             return null;
         }
 
         $thresholdIDHighBrightness = $this->ReadPropertyInteger('ThresholdIDHighBrightness');
         $thresholdIDLessBrightness = $this->ReadPropertyInteger('ThresholdIDLessBrightness');
         if ($thresholdIDHighBrightness === 0 && $thresholdIDLessBrightness === 0) {
-            trigger_error('ThresholdIDHighBrightness === 0 and ThresholdIDLowBrightness === 0');
+            trigger_error(sprintf('Instance %s: ThresholdIDHighBrightness === 0 and ThresholdIDLowBrightness === 0', $this->InstanceID));
             return null;
         }
 
@@ -1445,12 +1446,12 @@ class BlindController extends IPSModule
     {
         $weeklyTimeTableEventId = $this->ReadPropertyInteger('WeeklyTimeTableEventID');
         if (!$event = @IPS_GetEvent($weeklyTimeTableEventId)) {
-            trigger_error(sprintf('falsche Event ID #%s', $weeklyTimeTableEventId));
+            trigger_error(sprintf('Instance %s: wrong Event ID #%s', $this->InstanceID, $weeklyTimeTableEventId));
             return false;
         }
 
         if ($event['EventType'] !== EVENTTYPE_SCHEDULE) {
-            trigger_error('falscher Eventtype');
+            trigger_error(sprintf('Instance %s: wrong Eventtype %s', $this->InstanceID, $event['EventType']));
             return false;
         }
 
