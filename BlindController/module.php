@@ -89,7 +89,7 @@ class BlindController extends IPSModule
 
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
     {
-        if (json_decode($this->GetBuffer('LastMessage')) === [$SenderID, $Message, $Data]) {
+        if (json_decode($this->GetBuffer('LastMessage'), true) === [$SenderID, $Message, $Data]) {
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
                                 'Duplicate Message: Timestamp: %s, SenderID: %s, Message: %s, Data: %s', $TimeStamp, $SenderID, $Message,
@@ -377,6 +377,7 @@ class BlindController extends IPSModule
         //day detection
         $this->RegisterPropertyInteger('IsDayIndicatorID', 0);
         $this->RegisterPropertyInteger('BrightnessID', 0);
+        $this->RegisterPropertyInteger('BrightnessAvgMinutes', 0);
         $this->RegisterPropertyInteger('BrightnessThresholdID', 0);
 
         //overruling day times
@@ -403,6 +404,7 @@ class BlindController extends IPSModule
         $this->RegisterPropertyFloat('AzimuthFrom', 0);
         $this->RegisterPropertyFloat('AzimuthTo', 0);
         $this->RegisterPropertyInteger('BrightnessIDShadowingBySunPosition', 0);
+        $this->RegisterPropertyInteger('BrightnessAvgMinutesShadowingBySunPosition', 0);
         $this->RegisterPropertyInteger('BrightnessThresholdIDShadowingBySunPosition', 0);
         $this->RegisterPropertyInteger('TemperatureIDShadowingBySunPosition', 0);
         $this->RegisterPropertyFloat('LowSunPositionAltitude', 0);
@@ -413,6 +415,7 @@ class BlindController extends IPSModule
         //shadowing according to brightness
         $this->RegisterPropertyInteger('ActivatorIDShadowingBrightness', 0);
         $this->RegisterPropertyInteger('BrightnessIDShadowingBrightness', 0);
+        $this->RegisterPropertyInteger('BrightnessAvgMinutesShadowingBrightness', 0);
         $this->RegisterPropertyInteger('ThresholdIDLessBrightness', 0);
         $this->RegisterPropertyFloat('LevelLessBrightnessShadowingBrightness', 0);
         $this->RegisterPropertyInteger('ThresholdIDHighBrightness', 0);
@@ -512,7 +515,9 @@ class BlindController extends IPSModule
                         $this->RegisterMessage($id, VM_UPDATE);
                         break;
                     default:
-                        trigger_error(sprintf('Instance %s, Property %s: unknown ObjectType %s of id %s', $this->InstanceID, $propertyName, $objectType, $id));
+                        trigger_error(
+                            sprintf('Instance %s, Property %s: unknown ObjectType %s of id %s', $this->InstanceID, $propertyName, $objectType, $id)
+                        );
                 }
             }
         }
@@ -892,7 +897,8 @@ class BlindController extends IPSModule
                 }
 
                 $this->Logger_Dbg(
-                    __FUNCTION__, sprintf('contact is open: #%s, value: %s, level: %s', $contact['id'], $this->GetFormattedValue($contact['id']), $contact['level'])
+                    __FUNCTION__,
+                    sprintf('contact is open: #%s, value: %s, level: %s', $contact['id'], $this->GetFormattedValue($contact['id']), $contact['level'])
                 );
             }
         }
@@ -966,7 +972,7 @@ class BlindController extends IPSModule
 
 
         $level               = null;
-        $brightness          = GetValue($this->ReadPropertyInteger('BrightnessIDShadowingBySunPosition'));
+        $brightness          = $this->GetBrightness('BrightnessIDShadowingBySunPosition', 'BrightnessAvgMinutesShadowingBySunPosition');
         $thresholdBrightness =
             $this->getBrightnessThreshold($this->ReadPropertyInteger('BrightnessThresholdIDShadowingBySunPosition'), $levelAct, $temperature);
 
@@ -1011,6 +1017,26 @@ class BlindController extends IPSModule
 
         return $level;
 
+    }
+
+    private function GetBrightness(string $propBrightnessID, string $propBrightnessAvgMinutes): float
+    {
+        $brightnessID         = $this->ReadPropertyInteger($propBrightnessID);
+        $brightnessAvgMinutes = $this->ReadPropertyInteger($propBrightnessAvgMinutes);
+
+        if ($brightnessAvgMinutes > 0) {
+            $archiveId = IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}')[0];
+            if (AC_GetLoggingStatus($archiveId, $brightnessID)) {
+                $werte = AC_GetAggregatedValues($archiveId, $brightnessID, 6, strtotime('-' . $brightnessAvgMinutes . ' minutes'), time(), 0);
+                $sum   = 0;
+                foreach ($werte as $wert) {
+                    $sum += $wert['Avg'];
+                }
+                return round($sum / count($werte), 2);
+            }
+        }
+
+        return (float) GetValue($brightnessID);
     }
 
     private function getBrightnessThreshold(int $thresholdIDBrightness, float $levelAct, float $temperature = null): float
@@ -1102,7 +1128,7 @@ class BlindController extends IPSModule
         }
 
 
-        $brightness = GetValue($brightnessID);
+        $brightness = $this->GetBrightness('BrightnessIDShadowingBrightness', 'BrightnessAvgMinutesShadowingBrightness');
 
         $thresholdBrightness = GetValue($thresholdIDHighBrightness);
         if (($thresholdIDHighBrightness > 0) && ($brightness > $thresholdBrightness)) {
@@ -1156,7 +1182,7 @@ class BlindController extends IPSModule
             } else if ($levelAct === $blindLevelOpened) {
                 $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell geöffnet.', $this->objectName));
             } else {
-                $levelPercent = ($levelAct - $this->profile['MinValue'])/($this->profile['MaxValue'] - $this->profile['MinValue']);
+                $levelPercent = ($levelAct - $this->profile['MinValue']) / ($this->profile['MaxValue'] - $this->profile['MinValue']);
 
                 $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent));
             }
@@ -1291,8 +1317,8 @@ class BlindController extends IPSModule
         } else if ($rLevelneu === (float) $this->profile['LevelOpened']) {
             $logMessage = sprintf('Der Rollladen \'%s\' wurde geöffnet.', $this->objectName);
         } else {
-            $levelPercent = ($rLevelneu - $this->profile['MinValue'])/($this->profile['MaxValue'] - $this->profile['MinValue']);
-            $logMessage = sprintf('Der Rollladen \'%s\' wurde auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent);
+            $levelPercent = ($rLevelneu - $this->profile['MinValue']) / ($this->profile['MaxValue'] - $this->profile['MinValue']);
+            $logMessage   = sprintf('Der Rollladen \'%s\' wurde auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent);
         }
 
         if ($hint === '') {
@@ -1362,9 +1388,8 @@ class BlindController extends IPSModule
         }
 
         //optional Values
-        $brightnessID = $this->ReadPropertyInteger('BrightnessID');
-        if ($brightnessID) {
-            $brightness = GetValue($brightnessID);
+        if ($this->ReadPropertyInteger('BrightnessID')) {
+            $brightness = $this->GetBrightness('BrightnessID', 'BrightnessAvgMinutes');
         }
 
         $brightnessThresholdID = $this->ReadPropertyInteger('BrightnessThresholdID');

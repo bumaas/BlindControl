@@ -101,7 +101,9 @@
       "Shadowing according to brightness: Activator ID is not valid":                 "Beschattung nach Helligkeit: Aktivierung ID ist ungültig",
       "Shadowing according to brightness: Brightness ID is not valid":                "Beschattung nach Helligkeit: Helligkeit ID ist ungültig",
       "Shadowing according to brightness: Threshold high brightness ID is not valid": "Beschattung nach Helligkeit: Helligkeitsschwellwert höhere Helligkeit ID ist ungültig",
-      "Shadowing according to brightness: Threshold low brightness ID is not valid":  "Beschattung nach Helligkeit: Helligkeitsschwellwert geringere Helligkeit ID ist ungültig"
+      "Shadowing according to brightness: Threshold low brightness ID is not valid":  "Beschattung nach Helligkeit: Helligkeitsschwellwert geringere Helligkeit ID ist ungültig",
+      "Finished!": "Fertig!",
+      "Error!": "Fehler!"
     }
   }
 }

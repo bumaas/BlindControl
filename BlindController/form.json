@@ -39,8 +39,13 @@
       "items": [
         {"type": "SelectVariable", "name": "IsDayIndicatorID", "caption": "Is Day Indicator ID"},
         {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day is determined by the brightness:"},
-        {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
-        {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"},
+        {
+          "type": "RowLayout", "items": [
+          {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
+          {"type": "NumberSpinner", "name": "BrightnessAvgMinutes", "caption": "Average of the last minutes ", "suffix": "Minutes"},
+          {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
+        ]
+        },
         {
           "type":  "ExpansionPanel", "caption": "Overruling Day Start and End Times (optional)",
           "items": [
@@ -61,8 +66,13 @@
         {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1"},
         {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1"},
         {"type": "Label", "caption": "Define the brightness indicator:"},
-        {"type": "SelectVariable", "name": "BrightnessIDShadowingBySunPosition", "caption": "Brightness ID"},
-        {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "caption": "Brightness Threshold ID"},
+        {
+          "type": "RowLayout", "items": [
+          {"type": "SelectVariable", "name": "BrightnessIDShadowingBySunPosition", "caption": "Brightness ID"},
+          {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBySunPosition", "caption": "Average of the last minutes ", "suffix": "Minutes"},
+          {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "caption": "Brightness Threshold ID"}
+        ]
+        },
         {"type": "Label", "caption": "Define an additional temperature sensor when the outdoor temperature should be considered"},
         {"type": "SelectVariable", "name": "TemperatureIDShadowingBySunPosition", "caption": "Temperature ID"},
         {
@@ -82,8 +92,13 @@
       "items": [
         {"type": "SelectVariable", "name": "ActivatorIDShadowingBrightness", "caption": "Activator ID"},
         {"type": "Label", "caption": "Define the brightness indicator and up to two different levels"},
-        {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "caption": "Brightness ID"},
-        {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "caption": "Threshold less brightness ID"},
+        {
+          "type": "RowLayout", "items": [
+          {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "caption": "Brightness ID"},
+          {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBrightness", "caption": "Average of the last minutes ", "suffix": "Minutes"},
+          {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "caption": "Threshold less brightness ID"}
+        ]
+        },
         {"type": "NumberSpinner", "name": "LevelLessBrightnessShadowingBrightness", "caption": "Level at less brightness", "digits": "2"},
         {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "caption": "Threshold high brightness ID"},
         {"type": "NumberSpinner", "name": "LevelHighBrightnessShadowingBrightness", "caption": "Level at high brightness", "digits": "2"}
@@ -135,9 +150,9 @@
   ],
   "actions":  [
     {"type": "TestCenter"},
-    {"type": "Button", "caption": "Control Blind", "onClick": "BLC_ControlBlind($id, true); echo 'Finished!';"},
-    {"type": "Button", "caption": "Open Blind", "onClick": "if (BLC_MoveBlind($id, 0, 0, '')){echo 'Finished!';} else {echo 'Error!';}"},
-    {"type": "Button", "caption": "Close Blind", "onClick": "if (BLC_MoveBlind($id, 100, 0, '')){echo 'Finished!';} else {echo 'Error!';}"},
+    {"type": "Button", "caption": "Control Blind", "onClick": "$module = new IPSModule($id);BLC_ControlBlind($id, true); echo $module->Translate('Finished!');"},
+    {"type": "Button", "caption": "Open Blind", "onClick": "$module = new IPSModule($id);if (BLC_MoveBlind($id, 0, 0, '')){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"},
+    {"type": "Button", "caption": "Close Blind", "onClick": "$module = new IPSModule($id);if (BLC_MoveBlind($id, 100, 0, '')){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"},
     {"type": "Button", "caption": "Show Configuration", "onClick": "echo IPS_GetObject($id)['ObjectName'] . ' (#' . $id . ')' . PHP_EOL . PHP_EOL; print_r(json_decode(IPS_GetConfiguration ($id), true));"}
   ],
   "status":   [

@@ -1,11 +1,11 @@
 {
-  "id": "{538F6461-5410-4F4C-91D3-B39122152D56}",
-  "name": "Blind Controller",
+  "id": "{1ACD8A0D-5385-6D05-9537-F24C9014FD02}",
+  "name": "Blind Control Group Master",
   "type": 3,
   "vendor": "",
   "aliases": [],
   "parentRequirements": [],
   "childRequirements": [],
   "implemented": [],
-  "prefix": "BLC"
+  "prefix": "BLCGM"
 }

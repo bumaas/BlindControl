@@ -54,10 +54,17 @@ geschlossen und beim Maximalwert geöffnet ist (z.B. typischerweise bei Homemati
 
 Das Modul wird über den Modul Store installiert.
 
-### b. Anlegen einer Instanz
+### b. Anlegen einer Rollladen Instanz
 
-In Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Blind Controller` auswählen.
-	
+In Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Blind Controller` auswählen. Es wird eine Rollladeninstanz angelegt, in der die Eigenschaften zur Steuerung eines einzelnen Rollladens gesetzt werden.
+
+### c. Anlegen eines Gruppen Masters
+
+In Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Blind Control Group Master` auswählen. Es wird ein Gruppen Master angelegt, in dem Rollläden zu Bearbeitungszwecken (nicht zu Steuerungszwecken!) zusammengefasst werden können.
+Hierüber wird es ermöglicht, eine Eigenschaft für mehrere Rollläden in einem Schritt auszulesen oder zu setzen.
+
+Der Gruppen Master dient zur leichteren Bearbeitung der definierten Rollladen Instanzen. 
+ 	
 
 ## 4. Funktionsreferenz
 
@@ -73,6 +80,26 @@ Fährt den Rollladen auf den gewünschten Schließungsgrad.
 $percentClose: 0 - 100
 Angabe des Schließungsgrades (0=geöffnet, 100 = geschlossen)
 $deactivationTimeAuto: Anzahl der Sekunden, die mindestens seit der letzten automatischen Bewegung vergangen sein müssen. Sonst wird der Rollladen nicht bewegt.
+
+```php
+BLCGM_GetBlinds(int $InstanceID): array
+```
+Liefert eine Liste der im Gruppenmaster gelisteten Rollläden. Es werden nur die als ausgewählt markierten Einträge geliefert.
+
+```php
+BLCGM_GetPropertyOfBlinds(int $InstanceID, $Property): array
+```
+Liefert in einer Liste die gewählte Eigenschaft von allen als ausgewählt markierten Rollläden.
+
+```php
+BLCGM_SetPropertyOfBlinds(int $InstanceID, string $Property, $Value): bool
+```
+Setzt die angegebene Eigenschaft $Property auf den gegebenen Wert $Value bei allen Rollläden, die als ausgewählt markiert sind.
+
+```php
+BLCGM_SetBlindsActive(int $InstanceID, bool $active)
+```
+Setzt die Statusvariable 'Activated' auf den gegebenen Wert $active bei allen Rollläden, die als ausgewählt markiert sind.
 
 
 ## 5. Konfiguration
@@ -117,7 +144,9 @@ Er soll aber nur dann hochgefahren werden, wenn es Tag ist und nur dann herunter
 Hierzu kann die Tagerkennung zusätzlich eingerichtet werden. Dann ist der Rollladen nur dann hochgefahren, wenn beide Bedingungen (Öffnungszeit laut Wochenplan und "es ist Tag") erfüllt sind.
 
 Damit der Tag erkannt wird, kann entweder auf eine bereits bestehenden Variable verwiesen werden (hier bietet sich die 'IsDay' Variable des Location Moduls an) oder durch einen Helligkeitsvergleich erfolgen.
-Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen Helligkeitswert beinhaltet (z.B. von einem Helligkeitssensor) sowie eine Variable, die den Schwellwert beinhaltet.
+Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen Helligkeitswert beinhaltet (z.B. von einem Helligkeitssensor) sowie eine Variable, die den Schwellwert beinhaltet. Soll als Helligkeitswert ein Durchschnittswert der letzten Minuten genommen werden,
+dann ist die Anzahl der Minuten anzugeben, über die der Durchschnitt gebildet werden soll. Der Durchschnitt wird aus den archivierten Daten gewonnen. Dazu ist es notwendig, dass für die Variable die Archivierung aktiviert ist.
+ 
  
 ![image](docs/LUX Messwert.jpg)
 
@@ -132,7 +161,8 @@ Die Zeiten übersteuern die in der Tagerkennung ermittelten Zeiten.
 Es sind die Variablen anzugeben, aus denen der Sonnenstand (Azimuth = Sonnenrichtung, Altitude = Sonnenhöhe) geholt werden soll. Hier bieten sich gleichnamigen Variablen des Location Moduls an.
 
 Des weiteren ist der Bereich (Azimuth von/bis) der Sonnenrichtung anzugeben, in dem die Beschattung stattfinden soll.
-Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen Helligkeitswert beinhaltet (z.B. von einem Helligkeitssensor) sowie eine Variable, die den Schwellwert beinhaltet.
+Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen Helligkeitswert beinhaltet (z.B. von einem Helligkeitssensor) sowie eine Variable, die den Schwellwert beinhaltet. Soll als Helligkeitswert ein Durchschnittswert der letzten Minuten genommen werden,
+dann ist die Anzahl der Minuten anzugeben, über die der Durchschnitt gebildet werden soll. Der Durchschnitt wird aus den archivierten Daten gewonnen. Dazu ist es notwendig, dass für die Variable die Archivierung aktiviert ist.
 
 Zusätzlich kann eine Temperaturvariable angegeben werden, um bei erhöhten Außentemperaturen eine höhere Beschattung zu erreichen, d.h., der Rollladen wird bei höheren Temperaturen weiter heruntergefahren.
 Dies erfolgt in zwei Stufen: Wenn die Temperatur 27°C übersteigt, wird der Rollladen um weitere 15% heruntergefahren, wenn die Temperatur 30°C übersteigt, dann wird der Rollladen auf eine Höhe von 10% heruntergefahren)
@@ -173,6 +203,7 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | DayUsedWhenHoliday         | integer | 0 | legt fest, welcher Wochentag des Wochenplans im Fall eines Urlaubs-/Feiertages herangezogen werden soll|
 | IsDayIndicatorID           | integer | 0 | Indikatorvariable, die anzeigt, ob es Tag oder Nacht ist. Es kann z.B. die ISDAY Statusvariable des Location Controls genutzt werden.
 | BrightnessID               | integer | 0 | Indikatorvariable, die die Helligkeit zur Tag/Nacht Bestimmung abbildet.  |
+| BrightnessAvgMinutes         integer | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll  |
 | BrightnessThresholdID      | integer | 0 | Indikatorvariable, die den Schwellwert zur Tag/Nacht Bestimmung zur Verfügung stellt |
 | DayStartID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesanfangszeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und kleiner als '12:00' sein|
 | DayEndID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein|
@@ -185,6 +216,7 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | AzimuthFrom      | integer   | 0 | 
 | AzimuthTo      | integer   | 0 | 
 | BrightnessIDShadowingBySunPosition      | integer   | 0 | 
+| BrightnessAvgMinutesShadowingBySunPosition      | integer   | 0 | 
 | BrightnessThresholdIDShadowingBySunPosition      | integer   | 0 | 
 | TemperatureIDShadowingBySunPosition      | integer   | 0 | 
 | LowSunPositionAltitude      | integer   | 0 | 
@@ -193,6 +225,7 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | HighSunPositionBlindLevel      | integer   | 0 | 
 | ActivatorIDShadowingBrightness | integer   | 0 | 
 | BrightnessIDShadowingBrightness| integer   | 0 | 
+| BrightnessAvgMinutesShadowingBrightness| integer   | 0 | 
 | ThresholdIDHighBrightness      | integer   | 0 | 
 | ThresholdIDLessBrightness      | integer   | 0 | 
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
