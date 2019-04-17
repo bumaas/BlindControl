@@ -99,7 +99,7 @@ class BlindControlGroupMaster extends IPSModule
             [
                 'type'  => 'RowLayout',
                 'items' => [
-                    ['type' => 'Select', 'name' => 'Property1', 'caption' => 'Property', 'options' => $properties, 'value' => -1],
+                    ['type' => 'Select', 'name' => 'Property1', 'caption' => 'Property', 'options' => $properties],
                     [
                         'type'    => 'Button',
                         'caption' => 'GetProperty',
@@ -117,7 +117,7 @@ class BlindControlGroupMaster extends IPSModule
             [
                 'type'  => 'RowLayout',
                 'items' => [
-                    ['type' => 'Select', 'name' => 'Property2', 'caption' => 'Property', 'options' => $properties, 'value' => -1],
+                    ['type' => 'Select', 'name' => 'Property2', 'caption' => 'Property', 'options' => $properties],
                     ['type' => 'ValidationTextBox', 'name' => 'Value', 'caption' => 'Value'],
                     ['type'    => 'Button',
                      'caption' => 'SetProperty',
@@ -209,8 +209,16 @@ class BlindControlGroupMaster extends IPSModule
             );
 
             try{
-                IPS_SetProperty($ID, $Property, $Value);
-                IPS_ApplyChanges($ID);
+                if (!settype($Value, gettype(IPS_GetProperty($ID, $Property)))){
+                    return false;
+                }
+
+                if (IPS_SetProperty($ID, $Property, $Value)){
+                    return  IPS_ApplyChanges($ID);
+                }
+
+                return false;
+
             } catch (Exception $e){
                 return false;
             }

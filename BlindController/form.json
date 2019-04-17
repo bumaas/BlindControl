@@ -42,7 +42,7 @@
         {
           "type": "RowLayout", "items": [
           {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
-          {"type": "NumberSpinner", "name": "BrightnessAvgMinutes", "caption": "Average of the last minutes ", "suffix": "Minutes"},
+          {"type": "NumberSpinner", "name": "BrightnessAvgMinutes", "caption": "Average of the last minutes", "suffix": "Minutes"},
           {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
         ]
         },
@@ -69,7 +69,7 @@
         {
           "type": "RowLayout", "items": [
           {"type": "SelectVariable", "name": "BrightnessIDShadowingBySunPosition", "caption": "Brightness ID"},
-          {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBySunPosition", "caption": "Average of the last minutes ", "suffix": "Minutes"},
+          {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBySunPosition", "caption": "Average of the last minutes", "suffix": "Minutes"},
           {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "caption": "Brightness Threshold ID"}
         ]
         },
@@ -95,13 +95,21 @@
         {
           "type": "RowLayout", "items": [
           {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "caption": "Brightness ID"},
-          {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBrightness", "caption": "Average of the last minutes ", "suffix": "Minutes"},
-          {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "caption": "Threshold less brightness ID"}
+          {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBrightness", "caption": "Average of the last minutes", "suffix": "Minutes"}
         ]
         },
-        {"type": "NumberSpinner", "name": "LevelLessBrightnessShadowingBrightness", "caption": "Level at less brightness", "digits": "2"},
-        {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "caption": "Threshold high brightness ID"},
-        {"type": "NumberSpinner", "name": "LevelHighBrightnessShadowingBrightness", "caption": "Level at high brightness", "digits": "2"}
+        {
+          "type": "RowLayout", "items": [
+          {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "caption": "Threshold less brightness ID"},
+          {"type": "NumberSpinner", "name": "LevelLessBrightnessShadowingBrightness", "caption": "Level at less brightness", "digits": "2"}
+        ]
+        },
+        {
+          "type": "RowLayout", "items": [
+          {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "caption": "Threshold high brightness ID"},
+          {"type": "NumberSpinner", "name": "LevelHighBrightnessShadowingBrightness", "caption": "Level at high brightness", "digits": "2"}
+        ]
+        }
       ]
     },
     {
@@ -111,20 +119,36 @@
           "type":  "ExpansionPanel", "caption": "Contacts to Close the Blind (optional)",
           "items": [
             {"type": "Label", "caption": "Define up to two contacts/variables. The blind is closed immediately to the given maximum height if one of the contacts are open (>0)."},
-            {"type": "SelectVariable", "name": "ContactClose1ID", "caption": "Contact 1 ID"},
-            {"type": "NumberSpinner", "name": "ContactCloseLevel1", "caption": "Maximum height when the contact is open", "digits": "2"},
-            {"type": "SelectVariable", "name": "ContactClose2ID", "caption": "Contact 2 ID"},
-            {"type": "NumberSpinner", "name": "ContactCloseLevel2", "caption": "Maximum height when the contact is open", "digits": "2"}
+            {
+              "type": "RowLayout", "items": [
+              {"type": "SelectVariable", "name": "ContactClose1ID", "caption": "Contact 1 ID"},
+              {"type": "NumberSpinner", "name": "ContactCloseLevel1", "caption": "Maximum height when the contact is open", "digits": "2"}
+            ]
+            },
+            {
+              "type": "RowLayout", "items": [
+              {"type": "SelectVariable", "name": "ContactClose2ID", "caption": "Contact 2 ID"},
+              {"type": "NumberSpinner", "name": "ContactCloseLevel2", "caption": "Maximum height when the contact is open", "digits": "2"}
+            ]
+            }
           ]
         },
         {
           "type":  "ExpansionPanel", "caption": "Contacts to Open the Blind (optional)",
           "items": [
             {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened immediately to the given minimum height if one of the contacts are open (>0)."},
-            {"type": "SelectVariable", "name": "ContactOpen1ID", "caption": "Contact 1 ID"},
-            {"type": "NumberSpinner", "name": "ContactOpenLevel1", "caption": "Minimum height when the contact is open", "digits": "2"},
-            {"type": "SelectVariable", "name": "ContactOpen2ID", "caption": "Contact 2 ID"},
-            {"type": "NumberSpinner", "name": "ContactOpenLevel2", "caption": "Minimum height when the contact is open", "digits": "2"}
+            {
+              "type": "RowLayout", "items": [
+              {"type": "SelectVariable", "name": "ContactOpen1ID", "caption": "Contact 1 ID"},
+              {"type": "NumberSpinner", "name": "ContactOpenLevel1", "caption": "Minimum height when the contact is open", "digits": "2"}
+            ]
+            },
+            {
+              "type": "RowLayout", "items": [
+              {"type": "SelectVariable", "name": "ContactOpen2ID", "caption": "Contact 2 ID"},
+              {"type": "NumberSpinner", "name": "ContactOpenLevel2", "caption": "Minimum height when the contact is open", "digits": "2"}
+            ]
+            }
           ]
         }
       ]

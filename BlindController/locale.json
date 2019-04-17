@@ -25,6 +25,7 @@
       "Is Day Indicator ID":"'Ist es Tag' Indikator ID",
       "If no 'Is Day' indicator is set, the day is determined by the brightness:":"Wenn kein 'Ist es Tag' Indikator angegeben ist, wird der Tag anhand der Helligkeit bestimmt:",
       "Brightness ID":"Helligkeit ID",
+      "Average of the last minutes": "Durchschnitt der letzten Minuten nehmen",
       "Brightness Threshold ID":"Grenzwert Helligkeit ID",
       "Overruling Day Start and End Times (optional)": "Übersteuernde Tagesanfang und -ende Zeiten (optional)",
       "Start of the day ID": "Tagesanfangszeit (hh:mm) ID",

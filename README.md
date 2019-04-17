@@ -185,7 +185,7 @@ Im Normalfall wird nach Sonnenstand beschattet. Wenn jedoch der Fernseher einges
 Um auf offene Fenster/Türen oder auch Regen/Sturm reagieren zu können, können bis zu vier Kontakte angegeben werden.
 Je zwei Kontakte dienen dem Öffnen (Fenster/Tür) sowie dem Schließen (Regen/Wind) eines Rollladens.
 Je Kontakt ist anzugeben, in welche Position mindestens gefahren werden soll.   
-Wird ein Kontakt als offen erkannt, dann wird sofort auf die gewünschte Position gefahren. Nach dem Schließen des Kontaktes wird die dann gültige Höhe neu ermittelt.
+Wird ein Kontakt als offen erkannt, dann wird sofort auf die gewünschte Position gefahren. Nach dem Schließen des Kontaktes wird die dann gültige Höhe neu ermittelt und sofort angefahren.
 
 Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des Rollladens erkannt (z.B. die Tür ist offen und es regnet), dann erhalten die Kontakte zum Öffnen Vorrang. 
  
@@ -203,31 +203,30 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | DayUsedWhenHoliday         | integer | 0 | legt fest, welcher Wochentag des Wochenplans im Fall eines Urlaubs-/Feiertages herangezogen werden soll|
 | IsDayIndicatorID           | integer | 0 | Indikatorvariable, die anzeigt, ob es Tag oder Nacht ist. Es kann z.B. die ISDAY Statusvariable des Location Controls genutzt werden.
 | BrightnessID               | integer | 0 | Indikatorvariable, die die Helligkeit zur Tag/Nacht Bestimmung abbildet.  |
-| BrightnessAvgMinutes         integer | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll  |
+| BrightnessAvgMinutes       | integer | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll  |
 | BrightnessThresholdID      | integer | 0 | Indikatorvariable, die den Schwellwert zur Tag/Nacht Bestimmung zur Verfügung stellt |
 | DayStartID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesanfangszeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und kleiner als '12:00' sein|
 | DayEndID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein|
 | ContactOpen1ID, ContactOpen2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Mindesthöhe gefahren
 | ContactOpenLevel1, ContactOpenLevel2           | float   | 0 | Höhe, auf die der Rollladen mindestens gefahren wird, wenn der zugehörige Kontakt offen ist.
 | EmergencyContactID        | integer   | 0 | Notfall Indikator: wenn der Kontakt ungleich 0 ist, wird der Rollladen sofort geöffnet. Gleichzeitig wird die Automatik außer Betrieb genommen.
-| ActivatorIDShadowingBySunPosition | integer   | 0 | 
-| AzimuthID| integer   | 0 | 
-| AltitudeID      | integer   | 0 | 
-| AzimuthFrom      | integer   | 0 | 
-| AzimuthTo      | integer   | 0 | 
-| BrightnessIDShadowingBySunPosition      | integer   | 0 | 
-| BrightnessAvgMinutesShadowingBySunPosition      | integer   | 0 | 
-| BrightnessThresholdIDShadowingBySunPosition      | integer   | 0 | 
-| TemperatureIDShadowingBySunPosition      | integer   | 0 | 
-| LowSunPositionAltitude      | integer   | 0 | 
-| HighSunPositionAltitude      | integer   | 0 | 
-| LowSunPositionBlindLevel      | integer   | 0 | 
-| HighSunPositionBlindLevel      | integer   | 0 | 
-| ActivatorIDShadowingBrightness | integer   | 0 | 
-| BrightnessIDShadowingBrightness| integer   | 0 | 
-| BrightnessAvgMinutesShadowingBrightness| integer   | 0 | 
-| ThresholdIDHighBrightness      | integer   | 0 | 
-| ThresholdIDLessBrightness      | integer   | 0 | 
+| ActivatorIDShadowingBySunPosition | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Sonnenstand aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
+| AzimuthID| integer   | 0 | Indikatorvariable, die den aktuellen Sonnenstand (Richtung) wiedergibt.  
+| AltitudeID      | integer   | 0 | Indikatorvariable, die den aktuellen Sonnenstand (Höhe) wiedergibt.
+| AzimuthFrom      | integer   | 0 | Angabe, ab welcher Sonnenrichtung die Beschattungssteuerung aktiv sein soll
+| AzimuthTo      | integer   | 0 | Angabe, bis zu welcher Sonnenrichtung die Beschattungssteuerung aktiv sein soll
+| BrightnessIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable, die die Helligkeit zur Beschattung nach Sonnenposition angibt
+| BrightnessAvgMinutesShadowingBySunPosition      | integer   | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll 
+| BrightnessThresholdIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable, die den Schwellwert zur Beschattung nach Sonnenposition zur Verfügung stellt
+| TemperatureIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable die einen Temperatursensor (Außentemperatur) wiedergibt. 
+| LowSunPositionAltitude<br>HighSunPositionAltitude<br>LowSunPositionBlindLevel<br>HighSunPositionBlindLevel | integer   | 0 | Aus diesen möglichst weit auseinanderliegenden Wertepaaren wird die Behanghöhe in Abhängigkeit von der Sonnenhöhe errechnet  
+| ActivatorIDShadowingBrightness | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Helligkeit aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
+| BrightnessIDShadowingBrightness| integer   | 0 | Indikatorvariable, die die Helligkeit zur Beschattung nach Helligkeit angibt
+| BrightnessAvgMinutesShadowingBrightness| integer   | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt bei der Beschattung nach Helligkeit gebildet werden soll
+| ThresholdIDHighBrightness      | integer   | 0 | Indikatorvariable, die den hohen Helligkeitsschwellwert Zur Steuerung nach Helligkeit zur Verfügung stellt
+| LevelHighBrightnessShadowingBrightness      | integer   | 0 | Level, der bei erreichen der hohen Helligkeit angefahren werden soll
+| ThresholdIDLessBrightness      | integer   | 0 | Indikatorvariable, die den niedrigen Helligkeitsschwellwert Zur Steuerung nach Helligkeit zur Verfügung stellt
+| LevelLessBrightnessShadowingBrightness      | integer   | 0 | Level, der bei erreichen der niedrigeren Helligkeit angefahren werden soll
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
 | DeactivationAutomaticMovement | integer | 20| legt fest, wie lange nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird. Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|
 | DeactivationManualMovement | integer | 120  | legt fest, wie lange nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll. Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|
@@ -240,22 +239,26 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 Folgende Statusvariablen werden angelegt:
 
 #####ACTIVATED
-Über die Statusvariable kann die automatische Steuerung aktiviert und deaktiviert werden. Beim Einschalten der automatischen Steuerung werden vorher erkannte manuelle Eingriffe verworfen.
+Über die Statusvariable kann die automatische Steuerung aktiviert und deaktiviert werden. Beim (Wieder-)Einschalten der automatischen Steuerung werden vorher erkannte manuelle Eingriffe verworfen.
  
 #####LAST_MESSAGE
-Die Statusvariable beinhaltet einen Hinweis über die letzte Bewegung.
+Die Statusvariable beinhaltet einen Hinweis über die letzte Bewegung. Um die Bewegungen eines Rollladens zu kontrollieren, bietet es sich an, die Archivierung für diese Variable einzuschalten. 
+Dann werden im Webfront die Bewegungen in Form eines Logfiles dargestellt.  
 
 ## 7. Anhang
 
 ###  GUIDs und Datenaustausch
 
-#### Blind Control Modul
+#### Blind Control (Modul)
 
 GUID: `{7995E8C8-BD15-46A1-8AB6-2B795C33C0C5}` 
 
-#### Blind Controller
+#### Blind Controller (Instanz)
 
 GUID: `{538F6461-5410-4F4C-91D3-B39122152D56}` 
 
+#### Blind Control Group Master (Instanz)
+
+GUID: `{1ACD8A0D-5385-6D05-9537-F24C9014FD02}` 
 
 
