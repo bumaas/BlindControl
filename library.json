@@ -1,13 +1,13 @@
 {
-  "id": "{7995E8C8-BD15-46A1-8AB6-2B795C33C0C5}",
-  "author": "bumaas",
-  "name": "Blind Control",
-  "url": "",
+  "id":            "{7995E8C8-BD15-46A1-8AB6-2B795C33C0C5}",
+  "author":        "bumaas",
+  "name":          "Blind Control",
+  "url":           "",
   "compatibility": {
     "version": "5.1",
-    "date": 1518562800
+    "date":    1518562800
   },
-  "version": "1.20",
-  "build": 3,
-  "date": 1555604364
+  "version":       "1.20",
+  "build":         4,
+  "date":          1555683298
 }

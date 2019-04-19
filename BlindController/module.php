@@ -236,7 +236,7 @@ class BlindController extends IPSModule
 
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'tsAutomatik: %s, tsBlind: %s, levelAct: %s, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s, dayStart: %s, dayEnd: %s), considerDeactivationTimeAuto: %s',
+                            'tsAutomatik: %s, tsBlind: %s, levelAct: %.2f, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s, dayStart: %s, dayEnd: %s), considerDeactivationTimeAuto: %s',
                             $this->FormatTimeStamp($tsAutomatik), $this->FormatTimeStamp($tsBlindLastMovement), $levelAct, (int) $bNoMove,
                             (int) $isDay, (int) $isDayByTimeSchedule, (isset($isDayByDayDetection) ? (int) $isDayByDayDetection : 'null'),
                             $dayStart ?? 'null', $dayEnd ?? 'null', (int) $considerDeactivationTimeAuto
@@ -976,22 +976,21 @@ class BlindController extends IPSModule
         $thresholdBrightness =
             $this->getBrightnessThreshold($this->ReadPropertyInteger('BrightnessThresholdIDShadowingBySunPosition'), $levelAct, $temperature);
 
+        /** @noinspection ProperNullCoalescingOperatorUsageInspection */
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'active: %d, brightness: %.1f/%.1f, levelAct: %.2f, temperature: %s', (int) GetValue($activatorID), $brightness,
-                            $thresholdBrightness, $levelAct, $temperature ?? 'null'
+                            'active: %d, brightness: %.1f/%.1f, temperature: %s', (int) GetValue($activatorID), $brightness, $thresholdBrightness,
+                            $temperature ?? 'null'
                         )
         );
 
         if ($brightness >= $thresholdBrightness) {
 
-            $level = $this->getLevelFromSunPosition(
-                GetValueFloat($this->ReadPropertyInteger('AzimuthID')), GetValueFloat($this->ReadPropertyInteger('AltitudeID'))
-            );
+            $level = $this->getLevelFromSunPosition();
             if ($level === null) {
                 return null;
             }
-            $this->Logger_Dbg(__FUNCTION__, sprintf('level: %.2f', $level));
+            $this->Logger_Dbg(__FUNCTION__, sprintf('levelFromSunPosition: %.2f', $level));
 
 
             //wenn Wärmeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
@@ -1073,10 +1072,14 @@ class BlindController extends IPSModule
         return $thresholdBrightness;
     }
 
-    private function getLevelFromSunPosition(float $rSunAzimuth, float $rSunAltitude): ?float
+    private function getLevelFromSunPosition(): ?float
     {
 
         $rLevelSunPosition = null;
+
+        $rSunAzimuth  = GetValueFloat($this->ReadPropertyInteger('AzimuthID'));
+        $rSunAltitude = GetValueFloat($this->ReadPropertyInteger('AltitudeID'));
+
         if (($rSunAzimuth >= $this->ReadPropertyFloat('AzimuthFrom')) && ($rSunAzimuth <= $this->ReadPropertyFloat('AzimuthTo'))) {
             $AltitudeLow      = $this->ReadPropertyFloat('LowSunPositionAltitude');
             $AltitudeHigh     = $this->ReadPropertyFloat('HighSunPositionAltitude');
@@ -1305,6 +1308,13 @@ class BlindController extends IPSModule
             // kleine Pause, um Kommunikationsstörungen zu vermeiden
             sleep(5);
 
+        } else {
+            $this->Logger_Dbg(
+                __FUNCTION__, sprintf(
+                                'No Movement! Movement less than 5 percent (%.2f) or deactivationTimeAuto of %s not reached (%s).',
+                                $levelDiffPercentage, $deactivationTimeAuto, $timeDiffAuto
+                            )
+            );
         }
 
         return $ret;
