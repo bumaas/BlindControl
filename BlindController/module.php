@@ -37,6 +37,7 @@ class BlindController extends IPSModule
     private const STATUS_INST_BRIGHTNESSIDSHADOWINGBRIGHTNESS_IS_INVALID = 231;
     private const STATUS_INST_THRESHOLDIDHIGHBRIGHTNESS_IS_INVALID = 232;
     private const STATUS_INST_THRESHOLDIDLESSRIGHTNESS_IS_INVALID = 233;
+    private const STATUS_INST_LEVEL_IS_OUT_OF_RANGE = 234;
 
     private $objectName;
 
@@ -705,7 +706,25 @@ class BlindController extends IPSModule
             $this->SetStatus($ret);
             return;
         }
-
+        $this->profile = $this->GetProfileInformation();
+        if ($this->profile !== null) {
+            foreach ([
+                'ContactOpenLevel1',
+                'ContactOpenLevel2',
+                'ContactCloseLevel1',
+                'ContactCloseLevel2',
+                'LowSunPositionBlindLevel',
+                'HighSunPositionBlindLevel',
+                'LevelLessBrightnessShadowingBrightness',
+                'LevelHighBrightnessShadowingBrightness'] as $propertyLevel) {
+                if ($ret = $this->checkRangeFloat(
+                    $propertyLevel, $this->profile['MinValue'], $this->profile['MaxValue'], self::STATUS_INST_LEVEL_IS_OUT_OF_RANGE
+                )) {
+                    $this->SetStatus($ret);
+                    return;
+                }
+            }
+        }
 
         if ($ret = $this->checkRangeInteger('DeactivationManualMovement', 0, 100000, self::STATUS_INST_DEACTIVATION_TIME_MANUAL_IS_INVALID)) {
             $this->SetStatus($ret);
@@ -733,6 +752,7 @@ class BlindController extends IPSModule
         $this->SetStatus(IS_ACTIVE);
 
     }
+
 
     private function checkVariableId(string $propName, bool $optional, array $variableTypes, int $errStatus): int
     {
@@ -802,6 +822,22 @@ class BlindController extends IPSModule
 
         if ($value < $min || $value > $max) {
             $this->Logger_Err(sprintf('%s: Wert nicht im gültigen Bereich (%s - %s)', $propName, $min, $max));
+            return $errStatus;
+        }
+
+        return 0;
+    }
+
+    private function checkRangeFloat(string $propName, float $min, float $max, int $errStatus): int
+    {
+        $value = $this->ReadPropertyFloat($propName);
+
+        if ($value === 0){
+            return 0;
+        }
+
+        if ($value < $min || $value > $max) {
+            $this->Logger_Err(sprintf('%s: Wert (%.2f) nicht im gültigen Bereich (%.2f - %.2f)', $propName, $value, $min, $max));
             return $errStatus;
         }
 

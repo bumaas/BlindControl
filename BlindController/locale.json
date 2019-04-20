@@ -103,6 +103,7 @@
       "Shadowing according to brightness: Brightness ID is not valid":                "Beschattung nach Helligkeit: Helligkeit ID ist ungültig",
       "Shadowing according to brightness: Threshold high brightness ID is not valid": "Beschattung nach Helligkeit: Helligkeitsschwellwert höhere Helligkeit ID ist ungültig",
       "Shadowing according to brightness: Threshold low brightness ID is not valid":  "Beschattung nach Helligkeit: Helligkeitsschwellwert geringere Helligkeit ID ist ungültig",
+      "A given Level is out of range":                                                "Ein angegebenes Level ist außerhalb des gültigen Bereichs",
       "Finished!": "Fertig!",
       "Error!": "Fehler!"
     }
