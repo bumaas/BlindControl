@@ -1273,6 +1273,10 @@ class BlindController extends IPSModule
             __FUNCTION__, sprintf('percentClose: %s, deactivationTimeAuto: %s, hint: %s', $percentClose, $deactivationTimeAuto, $hint)
         );
 
+        if (($percentClose < 0) || ($percentClose > 100)){
+            return false;
+        }
+
         // globale Instanzvariablen setzen
         $this->objectName = IPS_GetObject($this->InstanceID)['ObjectName'];
         $this->profile    = $this->GetProfileInformation();
