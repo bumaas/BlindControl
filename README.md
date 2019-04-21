@@ -202,6 +202,7 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | BedTimeOffset               | integer | 0 | Offset zur BedTime in Minuten|
 | HolidayIndicatorID         | integer | 0 | Indikatorvariable, die anzeigt, ob ein Urlaubs-/Feiertag anliegt|
 | DayUsedWhenHoliday         | integer | 0 | legt fest, welcher Wochentag des Wochenplans im Fall eines Urlaubs-/Feiertages herangezogen werden soll|
+| NightLevel           | float   | 0 | Höhe, auf die der Rollladen in der Nacht gefahren wird, wenn er geschlossen werden soll
 | IsDayIndicatorID           | integer | 0 | Indikatorvariable, die anzeigt, ob es Tag oder Nacht ist. Es kann z.B. die ISDAY Statusvariable des Location Controls genutzt werden.
 | BrightnessID               | integer | 0 | Indikatorvariable, die die Helligkeit zur Tag/Nacht Bestimmung abbildet.  |
 | BrightnessAvgMinutes       | integer | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll  |

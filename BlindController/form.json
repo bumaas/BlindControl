@@ -31,7 +31,9 @@
             {"type": "SelectVariable", "name": "BedTimeID", "caption": "Bedtime ID"},
             {"type": "NumberSpinner", "name": "BedTimeOffset", "caption": "Bedtime Offset", "suffix": "Minutes"}
           ]
-        }
+        },
+        {"type": "Label", "caption": "If the blind is not to be completely closed, a night position (>0) can be specified."},
+        {"type": "NumberSpinner", "name": "NightLevel", "caption": "Night Level", "digits": "2"}
       ]
     },
     {
@@ -79,10 +81,14 @@
           "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing",
           "items": [
             {"type": "Label", "caption": "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate roller shutter height is calculated to the current altitude."},
-            {"type": "NumberSpinner", "name": "LowSunPositionAltitude", "caption": "Low Sun Position (Altitude)", "digits": "1"},
-            {"type": "NumberSpinner", "name": "HighSunPositionAltitude", "caption": "High Sun Position (Altitude)", "digits": "1"},
-            {"type": "NumberSpinner", "name": "LowSunPositionBlindLevel", "caption": "Low Sun Position (Blind Level)", "digits": "2"},
-            {"type": "NumberSpinner", "name": "HighSunPositionBlindLevel", "caption": "High Sun Position (Blind Level)", "digits": "2"}
+            {"type": "RowLayout", "items": [
+              {"type": "NumberSpinner", "name": "LowSunPositionAltitude", "caption": "Low Sun Position (Altitude)", "digits": "1"},
+              {"type": "NumberSpinner", "name": "LowSunPositionBlindLevel", "caption": "Low Sun Position (Blind Level)", "digits": "2"}
+            ]},
+            {"type": "RowLayout", "items": [
+              {"type": "NumberSpinner", "name": "HighSunPositionAltitude", "caption": "High Sun Position (Altitude)", "digits": "1"},
+              {"type": "NumberSpinner", "name": "HighSunPositionBlindLevel", "caption": "High Sun Position (Blind Level)", "digits": "2"}
+            ]}
           ]
         }
       ]

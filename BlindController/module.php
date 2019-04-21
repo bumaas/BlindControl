@@ -227,8 +227,14 @@ class BlindController extends IPSModule
                 $Hinweis .= ', ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
             }
         } else {
-            $levelNew = $this->profile['LevelClosed'];
-            $Hinweis  = 'Nacht';
+            $nightLevel = $this->ReadPropertyFloat('NightLevel');
+            if ($nightLevel > 0){
+                $levelNew = $nightLevel;
+                $Hinweis  = 'Nachtposition';
+            } else {
+                $levelNew = $this->profile['LevelClosed'];
+                $Hinweis  = 'Nacht';
+            }
             if (isset($isDayByDayDetection, $brightness)) {
                 $Hinweis .= ', ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
             }
@@ -367,6 +373,8 @@ class BlindController extends IPSModule
     private function RegisterProperties(): void
     {
         $this->RegisterPropertyInteger('BlindLevelID', 0);
+
+        //week plan
         $this->RegisterPropertyInteger('WeeklyTimeTableEventID', 0);
         $this->RegisterPropertyInteger('HolidayIndicatorID', 0);
         $this->RegisterPropertyInteger('DayUsedWhenHoliday', 0);
@@ -374,6 +382,7 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('WakeUpTimeOffset', 0);
         $this->RegisterPropertyInteger('BedTimeID', 0);
         $this->RegisterPropertyInteger('BedTimeOffset', 0);
+        $this->RegisterPropertyFloat('NightLevel', 0);
 
         //day detection
         $this->RegisterPropertyInteger('IsDayIndicatorID', 0);
@@ -709,6 +718,7 @@ class BlindController extends IPSModule
         $this->profile = $this->GetProfileInformation();
         if ($this->profile !== null) {
             foreach ([
+                'NightLevel',
                 'ContactOpenLevel1',
                 'ContactOpenLevel2',
                 'ContactCloseLevel1',

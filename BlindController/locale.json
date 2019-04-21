@@ -20,6 +20,8 @@
       "Wake-Up Time Offset":"Aufstehzeit Versatz",
       "Bedtime ID":"Schlafenszeit ID",
       "Bedtime Offset":"Schlafenszeit Versatz",
+      "If the blind is not to be completely closed, a night position (>0) can be specified.": "Wenn der Rollladen nicht vollständig geschlossen werden soll, kann ein Nachtposition (> 0) angegeben werden.",
+      "Night Level": "Nachtposition",
       "Minutes":"Minuten",
       "Is Day Detection (optional)":"'Ist es Tag' - Erkennung (optional)",
       "Is Day Indicator ID":"'Ist es Tag' Indikator ID",
@@ -103,7 +105,7 @@
       "Shadowing according to brightness: Brightness ID is not valid":                "Beschattung nach Helligkeit: Helligkeit ID ist ungültig",
       "Shadowing according to brightness: Threshold high brightness ID is not valid": "Beschattung nach Helligkeit: Helligkeitsschwellwert höhere Helligkeit ID ist ungültig",
       "Shadowing according to brightness: Threshold low brightness ID is not valid":  "Beschattung nach Helligkeit: Helligkeitsschwellwert geringere Helligkeit ID ist ungültig",
-      "A given Level is out of range":                                                "Ein angegebenes Level ist außerhalb des gültigen Bereichs",
+      "A given Level is out of range":                                                "Eine angegebene Rollladenposition ist außerhalb des gültigen Bereichs",
       "Finished!": "Fertig!",
       "Error!": "Fehler!"
     }
