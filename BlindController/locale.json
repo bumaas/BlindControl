@@ -1,6 +1,8 @@
 {
   "translations": {
     "de": {
+      "In this instance, all parameters for controlling a single blind are stored. The description of the individual parameters can be found in the documentation.": "In dieser Instanz werden alle Parameter zur Steuerung eines einzelnen Rollladens hinterlegt. Die Beschreibung der einzelnen Parameter ist in der Dokumentation zu finden.",
+      "Show Documentation": "Öffne Dokumentation",
       "Blind Level ID":"Rollladen Level ID",
       "Time Schedule":"Wochenplan",
       "Weekly Timetable Event ID":"Wochenplan Ereignis ID",
@@ -20,7 +22,7 @@
       "Wake-Up Time Offset":"Aufstehzeit Versatz",
       "Bedtime ID":"Schlafenszeit ID",
       "Bedtime Offset":"Schlafenszeit Versatz",
-      "If the blind is not to be completely closed, a night position (>0) can be specified.": "Wenn der Rollladen nicht vollständig geschlossen werden soll, kann ein Nachtposition (> 0) angegeben werden.",
+      "If the blind is not to be completely closed, a night position (>0) can be specified.": "Wenn der Rollladen nicht vollständig geschlossen werden soll, kann eine Nachtposition (> 0) angegeben werden.",
       "Night Level": "Nachtposition",
       "Minutes":"Minuten",
       "Is Day Detection (optional)":"'Ist es Tag' - Erkennung (optional)",

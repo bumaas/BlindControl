@@ -1,5 +1,11 @@
 {
   "elements": [
+    {
+      "type": "RowLayout", "items": [
+      {"type": "Label", "caption": "In this instance, all parameters for controlling a single blind are stored. The description of the individual parameters can be found in the documentation."},
+      {"type": "Button", "caption": "Show Documentation", "onClick": "echo 'https://github.com/bumaas/BlindControl/blob/master/README.md';", "link": true}
+    ]
+    },
     {"type": "SelectVariable", "name": "BlindLevelID", "caption": "Blind Level ID"},
     {
       "type":  "ExpansionPanel", "caption": "Time Schedule",
@@ -65,8 +71,12 @@
         {"type": "SelectVariable", "name": "AzimuthID", "caption": "Azimuth ID"},
         {"type": "SelectVariable", "name": "AltitudeID", "caption": "Altitude ID"},
         {"type": "Label", "caption": "Define the range of azimuth for shadowing:"},
-        {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1"},
-        {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1"},
+        {
+          "type": "RowLayout", "items": [
+          {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1"},
+          {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1"}
+        ]
+        },
         {"type": "Label", "caption": "Define the brightness indicator:"},
         {
           "type": "RowLayout", "items": [
@@ -81,14 +91,18 @@
           "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing",
           "items": [
             {"type": "Label", "caption": "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate roller shutter height is calculated to the current altitude."},
-            {"type": "RowLayout", "items": [
+            {
+              "type": "RowLayout", "items": [
               {"type": "NumberSpinner", "name": "LowSunPositionAltitude", "caption": "Low Sun Position (Altitude)", "digits": "1"},
               {"type": "NumberSpinner", "name": "LowSunPositionBlindLevel", "caption": "Low Sun Position (Blind Level)", "digits": "2"}
-            ]},
-            {"type": "RowLayout", "items": [
+            ]
+            },
+            {
+              "type": "RowLayout", "items": [
               {"type": "NumberSpinner", "name": "HighSunPositionAltitude", "caption": "High Sun Position (Altitude)", "digits": "1"},
               {"type": "NumberSpinner", "name": "HighSunPositionBlindLevel", "caption": "High Sun Position (Blind Level)", "digits": "2"}
-            ]}
+            ]
+            }
           ]
         }
       ]
@@ -179,12 +193,15 @@
     }
   ],
   "actions":  [
+    {"type": "Button", "caption": "Show Documentation", "onClick": "echo 'https://github.com/bumaas/BlindControl/blob/master/README.md';", "link": true},
     {"type": "TestCenter"},
-    {"type":  "RowLayout",
-    "items": [
-      {"type": "Button", "caption": "Move Blind", "onClick": "$module = new IPSModule($id);if (BLC_MoveBlind($id, $MoveBlind, 0, '')){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"},
-      {"type": "NumberSpinner", "name": "MoveBlind", "caption": "Percentage from 0 (open) to 100 (close)"}
-    ]},
+    {
+      "type":  "RowLayout",
+      "items": [
+        {"type": "Button", "caption": "Move Blind", "onClick": "$module = new IPSModule($id);if (BLC_MoveBlind($id, $MoveBlind, 0, '')){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"},
+        {"type": "NumberSpinner", "name": "MoveBlind", "caption": "Percentage from 0 (open) to 100 (close)"}
+      ]
+    },
     {"type": "Button", "caption": "Show Configuration", "onClick": "echo IPS_GetObject($id)['ObjectName'] . ' (#' . $id . ')' . PHP_EOL . PHP_EOL; print_r(json_decode(IPS_GetConfiguration ($id), true));"}
   ],
   "status":   [

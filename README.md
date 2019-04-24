@@ -114,7 +114,8 @@ Nun sollte sich im Webfront folgendes Bild für einen geöffneten bzw. geschloss
 ![image](docs/Rollladen geöffnet.jpg)
 ![image](docs/Rollladen geschlossen.jpg)
 
-Zeigt das Icon den falschen Zustand an, dann ist dem Profil im Namen ein '.Reversed' anzuhängen. Man erreicht dies, indem ein bestehendes Profil kopiert wird und dabei der Name ergänzt wird.
+Zeigt das Icon den falschen Zustand an, dann ist dem Profil im Namen ein '.Reversed' anzuhängen. Man erreicht dies, indem das bislang zugeordnete Profil kopiert wird und dabei dem Namen ein '.Reversed' (Groß-/Kleinschreibung beachten!) angehängt wird.
+Dieses neue Profil ist dann der Variablen zuzuordnen.
 
 Diese Positionsvariable ist im Modul als 'Rollladen Level ID' anzugeben.
 
