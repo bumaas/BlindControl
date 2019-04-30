@@ -74,12 +74,13 @@ BLC_ControlBlind(int $InstanceID, bool $considerDeactvationTimes)
 Prüft die Rollladenposition gemäß der in der Instanz festgelegten Eigenschaften und fährt den Rollladen auf die ermittelte Position. Wenn $considerDeactivationTimes == true, dann wird DeactivationAutomaticMovement berücksichtigt.
 
 ```php
-BLC_MoveBlind(int $InstanceID, int $percentClose, int $deactivationTimeAuto): bool
+BLC_MoveBlind(int $InstanceID, int $percentClose, int $deactivationTimeAuto, string $hint): bool
 ```
 Fährt den Rollladen auf den gewünschten Schließungsgrad.
 $percentClose: 0 - 100
 Angabe des Schließungsgrades (0=geöffnet, 100 = geschlossen)
 $deactivationTimeAuto: Anzahl der Sekunden, die mindestens seit der letzten automatischen Bewegung vergangen sein müssen. Sonst wird der Rollladen nicht bewegt.
+$hint: Hinweis, der in die Statusvariable LAST_MESSAGE geschrieben wird. Ist der Hinweis leer, dann wird er nicht geschrieben.
 
 ```php
 BLCGM_GetBlinds(int $InstanceID): array
@@ -143,7 +144,7 @@ Beispiel:
 Der Rollladen wird gemäß Wochenplan morgens um 8:00 Uhr hochgefahren und abends um 23:00 Uhr wieder herunter.
 Er soll aber nur dann hochgefahren werden, wenn es Tag ist und nur dann heruntergefahren werden, wenn es nicht mehr Tag ist.
 
-Hierzu kann die Tagerkennung zusätzlich eingerichtet werden. Dann ist der Rollladen nur dann hochgefahren, wenn beide Bedingungen (Öffnungszeit laut Wochenplan und "es ist Tag") erfüllt sind.
+Hierzu kann die Tagerkennung zusätzlich eingerichtet werden. Dann wird (und bleibt) der Rollladen nur dann hochgefahren, wenn beide Bedingungen (Öffnungszeit laut Wochenplan und "es ist Tag") erfüllt sind.
 
 Damit der Tag erkannt wird, kann entweder auf eine bereits bestehenden Variable verwiesen werden (hier bietet sich die 'IsDay' Variable des Location Moduls an) oder durch einen Helligkeitsvergleich erfolgen.
 Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen Helligkeitswert beinhaltet (z.B. von einem Helligkeitssensor) sowie eine Variable, die den Schwellwert beinhaltet. Soll als Helligkeitswert ein Durchschnittswert der letzten Minuten genommen werden,

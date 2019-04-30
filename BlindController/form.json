@@ -193,13 +193,12 @@
     }
   ],
   "actions":  [
-    {"type": "Button", "caption": "Show Documentation", "onClick": "echo 'https://github.com/bumaas/BlindControl/blob/master/README.md';", "link": true},
     {"type": "TestCenter"},
     {
       "type":  "RowLayout",
       "items": [
-        {"type": "Button", "caption": "Move Blind", "onClick": "$module = new IPSModule($id);if (BLC_MoveBlind($id, $MoveBlind, 0, '')){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"},
-        {"type": "NumberSpinner", "name": "MoveBlind", "caption": "Percentage from 0 (open) to 100 (close)"}
+        {"type": "NumberSpinner", "name": "MoveBlind", "caption": "Percentage from 0 (open) to 100 (close)"},
+        {"type": "Button", "caption": "Move Blind", "onClick": "$module = new IPSModule($id);if (BLC_MoveBlind($id, $MoveBlind, 0, '')){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"}
       ]
     },
     {"type": "Button", "caption": "Show Configuration", "onClick": "echo IPS_GetObject($id)['ObjectName'] . ' (#' . $id . ')' . PHP_EOL . PHP_EOL; print_r(json_decode(IPS_GetConfiguration ($id), true));"}

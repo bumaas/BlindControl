@@ -1477,9 +1477,7 @@ class BlindController extends IPSModule
             return null;
         }
 
-        $this->Logger_Dbg(__FUNCTION__, sprintf('heute_auf: %s, heute_ab: %s', $heute_auf, $heute_ab ?? 'null'));
-
-        return (time() >= strtotime($heute_auf)) && ($heute_ab === null || (time() <= strtotime($heute_ab)));
+        return ($heute_auf !== null) && (time() >= strtotime($heute_auf)) && ($heute_ab === null || (time() <= strtotime($heute_ab)));
 
     }
 
