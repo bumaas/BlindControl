@@ -39,6 +39,7 @@ Noch nicht unterstützt wird:
 - Lamellenstellung bei Stores
 - Zufallsfunktion bei Tagesanfang/Tagesende
 
+Zusätzlich kann zur leichteren Verwaltung mehrerer Rollläden ein Gruppen Master definiert werden.
 
 ## 2. Voraussetzungen
 

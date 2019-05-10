@@ -51,7 +51,6 @@ class BlindController extends IPSModule
         parent::Create();
 
         $this->RegisterProperties();
-        //$this->Write
         $this->RegisterAttributes();
 
         $this->RegisterTimer('Update', 0, 'BLC_ControlBlind(' . $this->InstanceID . ', true);');
@@ -224,7 +223,7 @@ class BlindController extends IPSModule
             $levelNew = $this->profile['LevelOpened'];
             $Hinweis  = 'Tag';
             if (isset($isDayByDayDetection, $brightness)) {
-                $Hinweis .= ', ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
+                $Hinweis .= ', ' . @GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
             }
         } else {
             $nightLevel = $this->ReadPropertyFloat('NightLevel');
@@ -236,7 +235,7 @@ class BlindController extends IPSModule
                 $Hinweis  = 'Nacht';
             }
             if (isset($isDayByDayDetection, $brightness)) {
-                $Hinweis .= ', ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
+                $Hinweis .= ', ' . @GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
             }
         }
 
@@ -262,7 +261,7 @@ class BlindController extends IPSModule
                 } else {
                     $levelNew = max($levelNew, $levelShadowingBySunPosition);
                 }
-                $Hinweis = 'Beschattung nach Sonnenstand, ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBySunPosition'));
+                $Hinweis = 'Beschattung nach Sonnenstand, ' . @GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBySunPosition'));
             }
 
             // prüfen, ob Beschattung bei Helligkeit gewünscht und notwendig
@@ -273,11 +272,11 @@ class BlindController extends IPSModule
                     if ($levelShadowingBrightness < $levelNew) {
                         $levelNew = $levelShadowingBrightness;
                         $Hinweis  =
-                            'Beschattung nach Helligkeit, ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
+                            'Beschattung nach Helligkeit, ' . @GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
                     }
                 } elseif ($levelShadowingBrightness > $levelNew) {
                     $levelNew = $levelShadowingBrightness;
-                    $Hinweis  = 'Beschattung nach Helligkeit, ' . GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
+                    $Hinweis  = 'Beschattung nach Helligkeit, ' . @GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
                 }
             }
 
@@ -898,7 +897,7 @@ class BlindController extends IPSModule
                 }
                 $this->Logger_Dbg(
                     __FUNCTION__, sprintf(
-                                    'contact is open: #%s, value: %s, level: %s', $contact['id'], GetValueFormatted($contact['id']), $contact['level']
+                                    'contact is open: #%s, value: %s, level: %s', $contact['id'], @GetValueFormatted($contact['id']), $contact['level']
                                 )
                 );
             }
@@ -1220,7 +1219,7 @@ class BlindController extends IPSModule
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
                                 'Rollladenlevel wurde manuell gesetzt: %s (%.2f), tsBlindLastMovement: %s, TimestampAutomatic: %s, TimestampManual: %s, deactivationTimeManu: %s/%s',
-                                GetValueFormatted($idLevel), $levelAct, $this->FormatTimeStamp($tsBlindLastMovement),
+                                @GetValueFormatted($idLevel), $levelAct, $this->FormatTimeStamp($tsBlindLastMovement),
                                 $this->FormatTimeStamp($tsAutomatik), $this->FormatTimeStamp($this->ReadAttributeInteger('AttrTimeStampManual')),
                                 time() - $tsBlindLastMovement, $deactivationTimeManu
                             )

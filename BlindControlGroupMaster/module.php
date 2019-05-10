@@ -68,6 +68,25 @@ class BlindControlGroupMaster extends IPSModule
             $properties[] = ['value' => $property, 'caption' => $property];
         }
 
+        /*        {
+                    "type": "RowLayout", "items": [
+              {"type": "Label", "caption": "In this instance, all parameters for controlling a single blind are stored. The description of the individual parameters can be found in the documentation."},
+              {"type": "Button", "caption": "Show Documentation", "onClick": "echo 'https://github.com/bumaas/BlindControl/blob/master/README.md';", "link": true}
+            ]
+            },
+        */
+        $form['elements'][] = [
+            'type'  => 'RowLayout',
+            'items' => [
+                [
+                    'type'    => 'Label',
+                    'caption' => 'In this instance, the parameters for a group of blinds can be read and changed. The description of the individual parameters can be found in the documentation.'],
+                [
+                    'type'    => 'Button',
+                    'caption' => 'Show Documentation',
+                    'onClick' => "echo 'https://github.com/bumaas/BlindControl/blob/master/README.md';",
+                    'link'    => true]]];
+
         $form['elements'][] = [
             'type'     => 'List',
             'name'     => 'Blinds',
@@ -105,12 +124,15 @@ class BlindControlGroupMaster extends IPSModule
                         'caption' => 'GetProperty',
                         'onClick' => '
                         $prop = BLCGM_GetPropertyOfBlinds($id, $Property1);
-                        if (!empty($prop)) {
-                            echo $Property1 . ": " . PHP_EOL . PHP_EOL;
-                            print_r($prop);
-                        } else {
+                        if ($prop === null){
                             $module = new IPSModule($id); 
                             echo $module->Translate("Please select a property");
+                        } elseif (empty($prop)) {
+                            $module = new IPSModule($id); 
+                            echo $module->Translate("Please select a shutter");
+                        } else {
+                            echo $Property1 . ": " . PHP_EOL . PHP_EOL;
+                            print_r($prop);
                         }        
                         ']]],
             ['type' => 'Label', 'caption' => 'The following function can be used to set a property of the selected blinds to a specified value.'],
@@ -119,9 +141,10 @@ class BlindControlGroupMaster extends IPSModule
                 'items' => [
                     ['type' => 'Select', 'name' => 'Property2', 'caption' => 'Property', 'options' => $properties],
                     ['type' => 'ValidationTextBox', 'name' => 'Value', 'caption' => 'Value'],
-                    ['type'    => 'Button',
-                     'caption' => 'SetProperty',
-                     'onClick' => '
+                    [
+                        'type'    => 'Button',
+                        'caption' => 'SetProperty',
+                        'onClick' => '
                         $ret = BLCGM_SetPropertyOfBlinds($id, $Property2, $Value);
                         $module = new IPSModule($id); 
                         if ($ret) {
@@ -197,20 +220,21 @@ class BlindControlGroupMaster extends IPSModule
             if (!array_key_exists($Property, $conf)) {
                 return false;
             }
+        } else {
+            return false;
         }
 
         foreach ($shutters as $shutter) {
-            $ID = $shutter['instanceID'];
+            $ID        = $shutter['instanceID'];
             $old_value = IPS_GetProperty($ID, $Property);
 
             $this->LogMessage(
-                sprintf('%s: Blind #%s, oldValue: %s, newValue: %s', __CLASS__ . '::' . __FUNCTION__, $ID, $old_value , $Value),
-                KL_DEBUG
+                sprintf('%s: Blind #%s, oldValue: %s, newValue: %s', __CLASS__ . '::' . __FUNCTION__, $ID, $old_value, $Value), KL_DEBUG
             );
 
-            try{
+            try {
                 var_dump($Value);
-                if (!settype($Value, gettype(IPS_GetProperty($ID, $Property)))){
+                if (!settype($Value, gettype(IPS_GetProperty($ID, $Property)))) {
                     return false;
                 }
                 if (IPS_SetProperty($ID, $Property, $Value) && !IPS_ApplyChanges($ID)) {
@@ -218,7 +242,8 @@ class BlindControlGroupMaster extends IPSModule
                 }
 
 
-            } catch (Exception $e){
+            }
+            catch(Exception $e) {
                 return false;
             }
         }

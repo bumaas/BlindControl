@@ -2,6 +2,7 @@
   "translations": {
     "de": {
       "The group master can only be used if at least one blind has been created. Please create a blind.": "Der Gruppenmaster kann erst genutzt werden, wenn mindestens ein Rollladen definiert wurde. Bitte zunächst einen Rollladen anlegen.",
+      "In this instance, the parameters for a group of blinds can be read and changed. The description of the individual parameters can be found in the documentation.": "In dieser Instanz können die Parameter für eine Gruppe von Jalousien gelesen und geändert werden. Die Beschreibung der einzelnen Parameter finden Sie in der Dokumentation.",
       "- please select -": "Bitte wählen",
       "Blinds": "Rollläden",
       "ObjectID": "ObjektID",
@@ -14,6 +15,7 @@
       "Value": "Wert",
       "SetProperty": "Setze Eigenschaft",
       "Please select a property": "Bitte eine Eigenschaft auswählen",
+      "Please select a shutter": "Bitte einen Rollladen auswählen",
       "Finished!": "Fertig",
       "Function failed! Please check property and value.": "Funktion fehlgeschlagen: Bitte Eigenschaft und Wert prüfen."
     }
