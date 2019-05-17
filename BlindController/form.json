@@ -7,6 +7,7 @@
     ]
     },
     {"type": "SelectVariable", "name": "BlindLevelID", "caption": "Blind Level ID"},
+    {"type": "SelectVariable", "name": "SlatsLevelID", "caption": "Slats Level ID"},
     {
       "type":  "ExpansionPanel", "caption": "Time Schedule",
       "items": [
@@ -94,13 +95,15 @@
             {
               "type": "RowLayout", "items": [
               {"type": "NumberSpinner", "name": "LowSunPositionAltitude", "caption": "Low Sun Position (Altitude)", "digits": "1"},
-              {"type": "NumberSpinner", "name": "LowSunPositionBlindLevel", "caption": "Low Sun Position (Blind Level)", "digits": "2"}
+              {"type": "NumberSpinner", "name": "LowSunPositionBlindLevel", "caption": "Low Sun Position (Blind Level)", "digits": "2"},
+              {"type": "NumberSpinner", "name": "LowSunPositionSlatsLevel", "caption": "Low Sun Position (Slats Level)", "digits": "2"}
             ]
             },
             {
               "type": "RowLayout", "items": [
               {"type": "NumberSpinner", "name": "HighSunPositionAltitude", "caption": "High Sun Position (Altitude)", "digits": "1"},
-              {"type": "NumberSpinner", "name": "HighSunPositionBlindLevel", "caption": "High Sun Position (Blind Level)", "digits": "2"}
+              {"type": "NumberSpinner", "name": "HighSunPositionBlindLevel", "caption": "High Sun Position (Blind Level)", "digits": "2"},
+              {"type": "NumberSpinner", "name": "HighSunPositionSlatsLevel", "caption": "High Sun Position (Slats Level)", "digits": "2"}
             ]
             }
           ]
@@ -197,8 +200,9 @@
     {
       "type":  "RowLayout",
       "items": [
-        {"type": "NumberSpinner", "name": "MoveBlind", "caption": "Percentage from 0 (open) to 100 (close)"},
-        {"type": "Button", "caption": "Move Blind", "onClick": "$module = new IPSModule($id);if (BLC_MoveBlind($id, $MoveBlind, 0, '')){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"}
+        {"type": "NumberSpinner", "name": "BlindLevel", "caption": "BlindLevel: Percentage from 0 (open) to 100 (close)"},
+        {"type": "NumberSpinner", "name": "SlatsLevel", "caption": "SlatsLevel: Percentage from 0 (open) to 100 (close)"},
+        {"type": "Button", "caption": "Move Blind", "onClick": "$module = new IPSModule($id);if (BLC_MoveBlind($id, $BlindLevel, $SlatsLevel, 0, '')){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"}
       ]
     },
     {"type": "Button", "caption": "Show Configuration", "onClick": "echo IPS_GetObject($id)['ObjectName'] . ' (#' . $id . ')' . PHP_EOL . PHP_EOL; print_r(json_decode(IPS_GetConfiguration ($id), true));"}
@@ -227,6 +231,7 @@
     {"code": 231, "icon": "error", "caption": "Shadowing according to brightness: Brightness ID is not valid"},
     {"code": 232, "icon": "error", "caption": "Shadowing according to brightness: Threshold high brightness ID is not valid"},
     {"code": 233, "icon": "error", "caption": "Shadowing according to brightness: Threshold low brightness ID is not valid"},
-    {"code": 234, "icon": "error", "caption": "A given Level is out of range"}
+    {"code": 234, "icon": "error", "caption": "A given Blind Level is out of range"},
+    {"code": 235, "icon": "error", "caption": "A given Slats Position is out of range"}
   ]
 }

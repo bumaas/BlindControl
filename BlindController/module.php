@@ -37,10 +37,13 @@ class BlindController extends IPSModule
     private const STATUS_INST_BRIGHTNESSIDSHADOWINGBRIGHTNESS_IS_INVALID = 231;
     private const STATUS_INST_THRESHOLDIDHIGHBRIGHTNESS_IS_INVALID = 232;
     private const STATUS_INST_THRESHOLDIDLESSRIGHTNESS_IS_INVALID = 233;
-    private const STATUS_INST_LEVEL_IS_OUT_OF_RANGE = 234;
+    private const STATUS_INST_BLINDLEVEL_IS_OUT_OF_RANGE = 234;
+    private const STATUS_INST_SLATSLEVEL_IS_OUT_OF_RANGE = 235;
+    private const STATUS_INST_SLATSLEVEL_ID_IS_INVALID = 236;
 
     //property names
     private const PROP_BLINDLEVELID = 'BlindLevelID';
+    private const PROP_SLATSLEVELID = 'SlatsLevelID';
     private const PROP_CONTACTCLOSE1ID = 'ContactClose1ID';
     private const PROP_CONTACTCLOSE2ID = 'ContactClose2ID';
     private const PROP_CONTACTOPEN1ID = 'ContactOpen1ID';
@@ -48,11 +51,16 @@ class BlindController extends IPSModule
     private const PROP_EMERGENCYCONTACTID = 'EmergencyContactID';
     private const PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION = 'BrightnessIDShadowingBySunPosition';
     private const PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION = 'BrightnessThresholdIDShadowingBySunPosition';
-
+    private const PROP_LOWSUNPOSITIONBLINDLEVEL = 'LowSunPositionBlindLevel';
+    private const PROP_HIGHSUNPOSITIONBLINDLEVEL = 'HighSunPositionBlindLevel';
+    private const PROP_LOWSUNPOSITIONSLATSLEVEL = 'LowSunPositionSlatsLevel';
+    private const PROP_HIGHSUNPOSITIONSLATSLEVEL = 'HighSunPositionSlatsLevel';
 
     private $objectName;
 
-    private $profileLevel;
+    private $profileBlindLevel;
+
+    private $profileSlatsLevel;
 
 
     // Überschreibt die interne IPS_Create($id) Funktion
@@ -159,8 +167,8 @@ class BlindController extends IPSModule
         }
 
         // globale Instanzvariablen setzen
-        $this->objectName   = IPS_GetObject($this->InstanceID)['ObjectName'];
-        $this->profileLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
+        $this->objectName        = IPS_GetObject($this->InstanceID)['ObjectName'];
+        $this->profileBlindLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
 
         // $deactivationTimeAuto: Zeitraum, in dem das automatisch gesetzte Level
         // erhalten bleibt bevor es überschrieben wird.
@@ -215,7 +223,7 @@ class BlindController extends IPSModule
         $tsBlindLastMovement = $this->GetBlindLastTimeStampAndCheckAutomatic($idLevel);
 
         // Attribut TimestampAutomatik auslesen
-        $tsAutomatik = $this->ReadAttributeInteger('AttrTimeStampAutomatic');
+        $tsAutomatik = $this->ReadAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID);
 
         if ($this->checkIsDayChange($isDay)) {
             $deactivationTimeAuto = 0;
@@ -224,29 +232,39 @@ class BlindController extends IPSModule
             // prüfen, ob der Rollladen manuell bewegt wurde und somit eine Bewegungssperre besteht
             $bNoMove = $this->isMovementLocked(
                 $idLevel, $tsBlindLastMovement, $isDay, $this->ReadAttributeInteger('AttrTimeStampIsDayChange'), $tsAutomatik,
-                $this->profileLevel['LevelClosed'], $this->profileLevel['LevelOpened']
+                $this->profileBlindLevel['LevelClosed'], $this->profileBlindLevel['LevelOpened']
             );
         }
 
-        // Das aktuelle Level im Jalousieaktor auslesen
-        $levelAct = (float) GetValue($idLevel);
+        // Die aktuellen Positionen im Jalousieaktor auslesen
+        $positionsAct['BlindLevel'] = (float) GetValue($idLevel);
+
+        $slatsLevelId = $this->ReadPropertyInteger(self::PROP_SLATSLEVELID);
+        if ($slatsLevelId !== 0) {
+            $positionsAct['SlatsLevel'] = (float) GetValue($slatsLevelId);
+        } else {
+            $positionsAct['SlatsLevel'] = 0;
+        }
 
         if ($bNoMove) {
-            $levelNew = $levelAct;
+            $positionsNew = $positionsAct;
         } else if ($isDay) {
-            $levelNew = $this->profileLevel['LevelOpened'];
-            $Hinweis  = 'Tag';
+            $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelOpened'];
+            $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelOpened'];
+            $Hinweis                    = 'Tag';
             if (isset($isDayByDayDetection, $brightness)) {
                 $Hinweis .= ', ' . @GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
             }
         } else {
             $nightLevel = $this->ReadPropertyFloat('NightLevel');
             if ($nightLevel > 0) {
-                $levelNew = $nightLevel;
-                $Hinweis  = 'Nachtposition';
+                $positionsNew['BlindLevel'] = $nightLevel;
+                $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelClosed']; //todo
+                $Hinweis                    = 'Nachtposition';
             } else {
-                $levelNew = $this->profileLevel['LevelClosed'];
-                $Hinweis  = 'Nacht';
+                $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelClosed'];
+                $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelClosed']; //todo
+                $Hinweis                    = 'Nacht';
             }
             if (isset($isDayByDayDetection, $brightness)) {
                 $Hinweis .= ', ' . @GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
@@ -256,10 +274,11 @@ class BlindController extends IPSModule
 
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'tsAutomatik: %s, tsBlind: %s, levelAct: %.2f, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s, dayStart: %s, dayEnd: %s), considerDeactivationTimeAuto: %s',
-                            $this->FormatTimeStamp($tsAutomatik), $this->FormatTimeStamp($tsBlindLastMovement), $levelAct, (int) $bNoMove,
-                            (int) $isDay, (int) $isDayByTimeSchedule, (isset($isDayByDayDetection) ? (int) $isDayByDayDetection : 'null'),
-                            $dayStart ?? 'null', $dayEnd ?? 'null', (int) $considerDeactivationTimeAuto
+                            'tsAutomatik: %s, tsBlind: %s, posActBlindLevel: %.2f, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s, dayStart: %s, dayEnd: %s), considerDeactivationTimeAuto: %s',
+                            $this->FormatTimeStamp($tsAutomatik), $this->FormatTimeStamp($tsBlindLastMovement), $positionsAct['BlindLevel'],
+                            (int) $bNoMove, (int) $isDay, (int) $isDayByTimeSchedule,
+                            (isset($isDayByDayDetection) ? (int) $isDayByDayDetection : 'null'), $dayStart ?? 'null', $dayEnd ?? 'null',
+                            (int) $considerDeactivationTimeAuto
                         )
         );
 
@@ -267,14 +286,23 @@ class BlindController extends IPSModule
         if ($isDay) {
 
             // prüfen, ob Beschattung nach Sonnenstand gewünscht und notwendig
-            $levelShadowingBySunPosition = $this->getLevelOfShadowingBySunPosition($levelAct);
-            if ($levelShadowingBySunPosition !== null) {
+            $positionsShadowingBySunPosition = $this->getLevelOfShadowingBySunPosition($positionsAct['BlindLevel']);
+            if ($positionsShadowingBySunPosition !== null) {
 
-                if ($this->profileLevel['Reversed']) {
-                    $levelNew = min($levelNew, $levelShadowingBySunPosition);
+                if ($this->profileBlindLevel['Reversed']) {
+                    $positionsNew['BlindLevel'] = min($positionsNew['BlindLevel'], $positionsShadowingBySunPosition['BlindLevel']);
                 } else {
-                    $levelNew = max($levelNew, $levelShadowingBySunPosition);
+                    $positionsNew['BlindLevel'] = max($positionsNew['BlindLevel'], $positionsShadowingBySunPosition['BlindLevel']);
                 }
+
+                if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+                    if ($this->profileSlatsLevel['Reversed']) {
+                        $positionsNew['SlatsLevel'] = min($positionsNew['SlatsLevel'], $positionsShadowingBySunPosition['SlatsLevel']);
+                    } else {
+                        $positionsNew['SlatsLevel'] = max($positionsNew['SlatsLevel'], $positionsShadowingBySunPosition['SlatsLevel']);
+                    }
+                }
+
                 $Hinweis =
                     'Beschattung nach Sonnenstand, ' . @GetValueFormatted($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION));
             }
@@ -283,15 +311,16 @@ class BlindController extends IPSModule
             $levelShadowingBrightness = $this->getLevelOfShadowingByBrightness();
             if ($levelShadowingBrightness !== null) {
 
-                if ($this->profileLevel['Reversed']) {
-                    if ($levelShadowingBrightness < $levelNew) {
-                        $levelNew = $levelShadowingBrightness;
-                        $Hinweis  =
+                if ($this->profileBlindLevel['Reversed']) {
+                    if ($levelShadowingBrightness < $positionsNew['BlindLevel']) {
+                        $positionsNew['BlindLevel'] = $levelShadowingBrightness;
+                        $Hinweis                    =
                             'Beschattung nach Helligkeit, ' . @GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
                     }
-                } elseif ($levelShadowingBrightness > $levelNew) {
-                    $levelNew = $levelShadowingBrightness;
-                    $Hinweis  = 'Beschattung nach Helligkeit, ' . @GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
+                } elseif ($levelShadowingBrightness > $positionsNew['BlindLevel']) {
+                    $positionsNew['BlindLevel'] = $levelShadowingBrightness;
+                    $Hinweis                    =
+                        'Beschattung nach Helligkeit, ' . @GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
                 }
             }
 
@@ -308,16 +337,21 @@ class BlindController extends IPSModule
         if ($levelContactEmergency !== null) {
             // wenn  der Emergency Kontakt geöffnet ist dann
             // wird die Bewegungssperre aufgehoben und der Rollladen geöffnet
-            $deactivationTimeAuto = 0;
-            $bNoMove              = false;
-            $levelNew             = $levelContactEmergency;
-            $Hinweis              = 'Notfallkontakt offen';
+            $deactivationTimeAuto       = 0;
+            $bNoMove                    = false;
+            $positionsNew['BlindLevel'] = $levelContactEmergency;
+            $Hinweis                    = 'Notfallkontakt offen';
 
             //im Notfall wird die Automatik deaktiviert
             $bEmergency = true;
 
             $this->WriteAttributeBoolean('AttrContactOpen', true);
-            $this->Logger_Dbg(__FUNCTION__, "NOTFALL: Kontakt geöffnet (levelAct: $levelAct, levelNew: $levelNew)");
+            $this->Logger_Dbg(
+                __FUNCTION__, sprintf(
+                                'NOTFALL: Kontakt geöffnet (posActBlindLevel: %s, posNewBlindLevel: %s)', $positionsAct['BlindLevel'],
+                                $positionsNew['BlindLevel']
+                            )
+            );
 
 
         } elseif ($levelContactOpenBlind !== null) {
@@ -325,36 +359,46 @@ class BlindController extends IPSModule
             // wird die Bewegungssperre aufgehoben und das Level auf das Mindestlevel bei geöffnetem Kontakt gesetzt
             $deactivationTimeAuto = 0;
             $bNoMove              = false;
-            if ($this->profileLevel['Reversed']) {
-                if ($levelContactOpenBlind > $levelNew) {
-                    $levelNew = $levelContactOpenBlind;
-                    $Hinweis  = 'Kontakt offen';
+            if ($this->profileBlindLevel['Reversed']) {
+                if ($levelContactOpenBlind > $positionsNew['BlindLevel']) {
+                    $positionsNew['BlindLevel'] = $levelContactOpenBlind;
+                    $Hinweis                    = 'Kontakt offen';
                 }
-            } elseif ($levelContactOpenBlind < $levelNew) {
-                $levelNew = $levelContactOpenBlind;
-                $Hinweis  = 'Kontakt offen';
+            } elseif ($levelContactOpenBlind < $positionsNew['BlindLevel']) {
+                $positionsNew['BlindLevel'] = $levelContactOpenBlind;
+                $Hinweis                    = 'Kontakt offen';
             }
 
             $this->WriteAttributeBoolean('AttrContactOpen', true);
-            $this->Logger_Dbg(__FUNCTION__, "Kontakt geöffnet (levelAct: $levelAct, levelNew: $levelNew)");
+            $this->Logger_Dbg(
+                __FUNCTION__, sprintf(
+                                'Kontakt geöffnet (posActBlindLevel: %s, posNewBlindLevel: %s)', $positionsAct['BlindLevel'],
+                                $positionsNew['BlindLevel']
+                            )
+            );
 
         } elseif ($levelContactCloseBlind !== null) {
             // wenn  ein Kontakt geöffnet ist und der Rollladen oberhalb dem ContactClose Level steht, dann
             // wird die Bewegungssperre aufgehoben und das Level auf das Mindestlevel bei geöffnetem Kontakt gesetzt
             $deactivationTimeAuto = 0;
             $bNoMove              = false;
-            if ($this->profileLevel['Reversed']) {
-                if ($levelContactCloseBlind < $levelNew) {
-                    $levelNew = $levelContactCloseBlind;
-                    $Hinweis  = 'Kontakt offen';
+            if ($this->profileBlindLevel['Reversed']) {
+                if ($levelContactCloseBlind < $positionsNew['BlindLevel']) {
+                    $positionsNew['BlindLevel'] = $levelContactCloseBlind;
+                    $Hinweis                    = 'Kontakt offen';
                 }
-            } elseif ($levelContactCloseBlind > $levelNew) {
-                $levelNew = $levelContactCloseBlind;
-                $Hinweis  = 'Kontakt offen';
+            } elseif ($levelContactCloseBlind > $positionsNew['BlindLevel']) {
+                $positionsNew['BlindLevel'] = $levelContactCloseBlind;
+                $Hinweis                    = 'Kontakt offen';
             }
 
             $this->WriteAttributeBoolean('AttrContactOpen', true);
-            $this->Logger_Dbg(__FUNCTION__, "Kontakt geöffnet (levelAct: $levelAct, levelNew: $levelNew)");
+            $this->Logger_Dbg(
+                __FUNCTION__, sprintf(
+                                'Kontakt geöffnet (posActBlindLevel: %s, posNewBlindLevel: %s)', $positionsAct['BlindLevel'],
+                                $positionsNew['BlindLevel']
+                            )
+            );
 
         } elseif ($this->ReadAttributeBoolean('AttrContactOpen')) {
             // wenn die Rollladenposition noch auf Kontakt offen Position steht
@@ -363,11 +407,20 @@ class BlindController extends IPSModule
         }
 
         if (!$bNoMove) {
-            $level = $levelNew / ($this->profileLevel['MaxValue'] - $this->profileLevel['MinValue']);
-            if ($this->profileLevel['Reversed']) {
-                $level = 1 - $level;
+            $blindLevel = $positionsNew['BlindLevel'] / ($this->profileBlindLevel['MaxValue'] - $this->profileBlindLevel['MinValue']);
+            if ($this->profileBlindLevel['Reversed']) {
+                $blindLevel = 1 - $positionsNew['BlindLevel'];
             }
-            $this->MoveBlind((int) ($level * 100), $deactivationTimeAuto, $Hinweis);
+
+            if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+                $slatsLevel = $positionsNew['SlatsLevel'] / ($this->profileSlatsLevel['MaxValue'] - $this->profileSlatsLevel['MinValue']);
+                if ($this->profileSlatsLevel['Reversed']) {
+                    $slatsLevel = 1 - $positionsNew['SlatsLevel'];
+                }
+            } else {
+                $slatsLevel = 0;
+            }
+            $this->MoveBlind((int) ($blindLevel * 100), (int) ($slatsLevel * 100), $deactivationTimeAuto, $Hinweis);
         }
 
         //im Notfall wird die Automatik deaktiviert
@@ -387,6 +440,7 @@ class BlindController extends IPSModule
     private function RegisterProperties(): void
     {
         $this->RegisterPropertyInteger(self::PROP_BLINDLEVELID, 0);
+        $this->RegisterPropertyInteger(self::PROP_SLATSLEVELID, 0);
 
         //week plan
         $this->RegisterPropertyInteger('WeeklyTimeTableEventID', 0);
@@ -433,8 +487,10 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('TemperatureIDShadowingBySunPosition', 0);
         $this->RegisterPropertyFloat('LowSunPositionAltitude', 0);
         $this->RegisterPropertyFloat('HighSunPositionAltitude', 0);
-        $this->RegisterPropertyFloat('LowSunPositionBlindLevel', 0);
-        $this->RegisterPropertyFloat('HighSunPositionBlindLevel', 0);
+        $this->RegisterPropertyFloat(self::PROP_LOWSUNPOSITIONBLINDLEVEL, 0);
+        $this->RegisterPropertyFloat(self::PROP_HIGHSUNPOSITIONBLINDLEVEL, 0);
+        $this->RegisterPropertyFloat(self::PROP_LOWSUNPOSITIONSLATSLEVEL, 0);
+        $this->RegisterPropertyFloat(self::PROP_HIGHSUNPOSITIONSLATSLEVEL, 0);
 
         //shadowing according to brightness
         $this->RegisterPropertyInteger('ActivatorIDShadowingBrightness', 0);
@@ -553,12 +609,14 @@ class BlindController extends IPSModule
 
     private function RegisterAttributes(): void
     {
-        $this->RegisterAttributeInteger('AttrTimeStampAutomatic', 0);
+        $this->RegisterAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID, 0);
+        $this->RegisterAttributeInteger('TimeStampAutomatic' . self::PROP_SLATSLEVELID, 0);
         $this->RegisterAttributeInteger('AttrTimeStampManual', 0);
         $this->RegisterAttributeInteger('AttrTimeStampIsDayChange', 0);
         $this->RegisterAttributeBoolean('AttrIsDay', false);
         $this->RegisterAttributeBoolean('AttrContactOpen', false);
-        $this->RegisterAttributeString('lastBlindMove', '');
+        $this->RegisterAttributeString('lastMove' . self::PROP_BLINDLEVELID, '');
+        $this->RegisterAttributeString('lastMove' . self::PROP_SLATSLEVELID, '');
     }
 
     private function RegisterVariables(): void
@@ -579,10 +637,23 @@ class BlindController extends IPSModule
             return;
         }
 
-        if (!$this->checkBlindLevelId()) {
+        if (!$this->checkActionOfStatusVariable(self::PROP_BLINDLEVELID)) {
             $this->SetStatus(self::STATUS_INST_BLIND_LEVEL_ID_IS_INVALID);
             return;
         }
+
+        if ($ret = $this->checkVariableId(
+            self::PROP_SLATSLEVELID, true, [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT], self::STATUS_INST_SLATSLEVEL_ID_IS_INVALID
+        )) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) && !$this->checkActionOfStatusVariable(self::PROP_SLATSLEVELID)) {
+            $this->SetStatus(self::STATUS_INST_SLATSLEVEL_ID_IS_INVALID);
+            return;
+        }
+
         if ($ret = $this->checkEventId('WeeklyTimeTableEventID', false, EVENTTYPE_SCHEDULE, self::STATUS_INST_TIMETABLE_ID_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
@@ -736,23 +807,42 @@ class BlindController extends IPSModule
             $this->SetStatus($ret);
             return;
         }
-        $this->profileLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
-        if ($this->profileLevel !== null) {
+
+        $this->profileBlindLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
+        if ($this->profileBlindLevel !== null) {
             foreach ([
                 'NightLevel',
                 'ContactOpenLevel1',
                 'ContactOpenLevel2',
                 'ContactCloseLevel1',
                 'ContactCloseLevel2',
-                'LowSunPositionBlindLevel',
-                'HighSunPositionBlindLevel',
+                self::PROP_LOWSUNPOSITIONBLINDLEVEL,
+                self::PROP_HIGHSUNPOSITIONBLINDLEVEL,
                 'LevelLessBrightnessShadowingBrightness',
-                'LevelHighBrightnessShadowingBrightness'] as $propertyLevel) {
+                'LevelHighBrightnessShadowingBrightness'] as $propertyBlindLevel) {
                 if ($ret = $this->checkRangeFloat(
-                    $propertyLevel, $this->profileLevel['MinValue'], $this->profileLevel['MaxValue'], self::STATUS_INST_LEVEL_IS_OUT_OF_RANGE
+                    $propertyBlindLevel, $this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'],
+                    self::STATUS_INST_BLINDLEVEL_IS_OUT_OF_RANGE
                 )) {
                     $this->SetStatus($ret);
                     return;
+                }
+            }
+        }
+
+        if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+            $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
+            if ($this->profileBlindLevel !== null) {
+                foreach ([
+                    self::PROP_LOWSUNPOSITIONSLATSLEVEL,
+                    self::PROP_HIGHSUNPOSITIONSLATSLEVEL] as $propertySlatsLevel) {
+                    if ($ret = $this->checkRangeFloat(
+                        $propertySlatsLevel, $this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'],
+                        self::STATUS_INST_SLATSLEVEL_IS_OUT_OF_RANGE
+                    )) {
+                        $this->SetStatus($ret);
+                        return;
+                    }
                 }
             }
         }
@@ -813,9 +903,9 @@ class BlindController extends IPSModule
 
     }
 
-    private function checkBlindLevelId(): bool
+    private function checkActionOfStatusVariable(string $proName): bool
     {
-        $var = IPS_GetVariable($this->ReadPropertyInteger(self::PROP_BLINDLEVELID));
+        $var = IPS_GetVariable($this->ReadPropertyInteger($proName));
 
         return !(!$var['VariableAction'] && !$var['VariableCustomAction']) || (!$var['VariableCustomProfile'] && !$var['VariableProfile']);
 
@@ -909,7 +999,7 @@ class BlindController extends IPSModule
             if ($this->isContactOpen($propName)) {
                 $contactOpen = true;
                 if (isset($level)) {
-                    if ($this->profileLevel['Reversed']) {
+                    if ($this->profileBlindLevel['Reversed']) {
                         $level = max($level, $contact['level']);
                     } else {
                         $level = min($level, $contact['level']);
@@ -955,7 +1045,7 @@ class BlindController extends IPSModule
             if ($this->isContactOpen($propName)) {
                 $contactOpen = true;
                 if (isset($level)) {
-                    if ($this->profileLevel['Reversed']) {
+                    if ($this->profileBlindLevel['Reversed']) {
                         $level = min($level, $contact['level']);
                     } else {
                         $level = max($level, $contact['level']);
@@ -1002,7 +1092,7 @@ class BlindController extends IPSModule
         if ($this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID) !== 0) {
             $contacts[self::PROP_EMERGENCYCONTACTID] = [
                 'id'    => $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
-                'level' => $this->profileLevel['LevelOpened']];
+                'level' => $this->profileBlindLevel['LevelOpened']];
         }
 
         // alle Kontakte prüfen ...
@@ -1012,7 +1102,7 @@ class BlindController extends IPSModule
             if ($this->isContactOpen($propName)) {
                 $contactOpen = true;
                 if (isset($level)) {
-                    if ($this->profileLevel['Reversed']) {
+                    if ($this->profileBlindLevel['Reversed']) {
                         $level = max($level, $contact['level']);
                     } else {
                         $level = min($level, $contact['level']);
@@ -1037,7 +1127,7 @@ class BlindController extends IPSModule
         return null;
     }
 
-    private function getLevelOfShadowingBySunPosition(float $levelAct): ?float
+    private function getLevelOfShadowingBySunPosition(float $levelAct): ?array
     {
 
         $activatorID = $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition');
@@ -1055,7 +1145,6 @@ class BlindController extends IPSModule
         }
 
 
-        $level      = null;
         $brightness = $this->GetBrightness(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION, 'BrightnessAvgMinutesShadowingBySunPosition');
         if ($brightness) {
             $thresholdBrightness = $this->getBrightnessThreshold(
@@ -1065,45 +1154,54 @@ class BlindController extends IPSModule
             $thresholdBrightness = 0;
         }
 
+        $rSunAzimuth = GetValueFloat($this->ReadPropertyInteger('AzimuthID'));
+        $azimuthFrom = $this->ReadPropertyFloat('AzimuthFrom');
+        $azimuthTo   = $this->ReadPropertyFloat('AzimuthTo');
+
         /** @noinspection ProperNullCoalescingOperatorUsageInspection */
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'active: %d, brightness: %.1f/%.1f, temperature: %s', (int) GetValue($activatorID), $brightness, $thresholdBrightness,
-                            $temperature ?? 'null'
+                            'active: %d, brightness: %.1f/%.1f, azimuth: %.1f (%.1f - %.1f), temperature: %s', (int) GetValue($activatorID),
+                            $brightness, $thresholdBrightness, $rSunAzimuth, $azimuthFrom, $azimuthTo, $temperature ?? 'null'
                         )
         );
 
-        if ($brightness >= $thresholdBrightness) {
+        $positions = null;
+        if (($brightness >= $thresholdBrightness) && ($rSunAzimuth >= $azimuthFrom) && ($rSunAzimuth <= $azimuthTo)) {
 
-            $level = $this->getLevelFromSunPosition();
-            if ($level === null) {
-                return null;
-            }
-            $this->Logger_Dbg(__FUNCTION__, sprintf('levelFromSunPosition: %.2f', $level));
+            $positions = $this->getBlindPositionsFromSunPosition();
+
+            $this->Logger_Dbg(
+                __FUNCTION__, sprintf(
+                                'BlindLevelFromSunPosition: %.2f, SlatsLevelFromSunPosition: %.2f', $positions['BlindLevel'], $positions['SlatsLevel']
+                            )
+            );
 
 
             //wenn Wärmeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
-            $levelCorrectionHeat = round(0.15 * ($this->profileLevel['LevelOpened'] - $this->profileLevel['LevelClosed']), 2);
+            $levelCorrectionHeat = round(0.15 * ($this->profileBlindLevel['LevelOpened'] - $this->profileBlindLevel['LevelClosed']), 2);
 
-            if (($temperature > 27.0) || ((round($levelAct, 2) === round($level, 2) + $levelCorrectionHeat) && ($temperature > (27.0 - 0.5)))) {
-                $level += $levelCorrectionHeat;
-                $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 27°, levelAct: %.2f, level: %.2f', $levelAct, $level));
+            if (($temperature > 27.0)
+                || ((round($levelAct, 2) === round($positions['BlindLevel'], 2) + $levelCorrectionHeat)
+                    && ($temperature > (27.0 - 0.5)))) {
+                $positions['BlindLevel'] += $levelCorrectionHeat;
+                $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 27°, levelAct: %.2f, level: %.2f', $levelAct, $positions['BlindLevel']));
             }
 
             //wenn Hitzeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
-            if ($this->profileLevel['Reversed']) {
-                $levelPositionHeat = round(0.10 * ($this->profileLevel['LevelOpened'] - $this->profileLevel['LevelClosed']), 2);
+            if ($this->profileBlindLevel['Reversed']) {
+                $levelPositionHeat = round(0.10 * ($this->profileBlindLevel['LevelOpened'] - $this->profileBlindLevel['LevelClosed']), 2);
             } else {
-                $levelPositionHeat = round(0.90 * ($this->profileLevel['LevelOpened'] - $this->profileLevel['LevelClosed']), 2);
+                $levelPositionHeat = round(0.90 * ($this->profileBlindLevel['LevelOpened'] - $this->profileBlindLevel['LevelClosed']), 2);
             }
             if (($temperature > 30.0) || (($levelAct === $levelPositionHeat) && ($temperature > (30.0 - 0.5)))) {
-                $level = $levelPositionHeat;
-                $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 30°, levelAct: %.2f, level: %.2f', $levelAct, $level));
+                $positions['BlindLevel'] = $levelPositionHeat;
+                $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 30°, levelAct: %.2f, level: %.2f', $levelAct, $positions['BlindLevel']));
             }
 
         }
 
-        return $level;
+        return $positions;
 
     }
 
@@ -1150,13 +1248,13 @@ class BlindController extends IPSModule
 
         //Hysterese berücksichtigen
         //der Rollladen ist (teilweise) herabgefahren
-        if ($this->profileLevel['Reversed']) {
-            if ($levelAct < $this->profileLevel['LevelOpened']) {
+        if ($this->profileBlindLevel['Reversed']) {
+            if ($levelAct < $this->profileBlindLevel['LevelOpened']) {
                 $thresholdBrightness -= $iBrightnessHysteresis;
             } else {
                 $thresholdBrightness += $iBrightnessHysteresis;
             }
-        } elseif ($levelAct > $this->profileLevel['LevelOpened']) {
+        } elseif ($levelAct > $this->profileBlindLevel['LevelOpened']) {
             $thresholdBrightness -= $iBrightnessHysteresis;
         } else {
             $thresholdBrightness += $iBrightnessHysteresis;
@@ -1165,40 +1263,47 @@ class BlindController extends IPSModule
         return $thresholdBrightness;
     }
 
-    private function getLevelFromSunPosition(): ?float
+    private function getBlindPositionsFromSunPosition(): array
     {
 
-        $rLevelSunPosition = null;
 
-        $rSunAzimuth  = GetValueFloat($this->ReadPropertyInteger('AzimuthID'));
+        $blindPositions = null;
+
         $rSunAltitude = GetValueFloat($this->ReadPropertyInteger('AltitudeID'));
 
-        if (($rSunAzimuth >= $this->ReadPropertyFloat('AzimuthFrom')) && ($rSunAzimuth <= $this->ReadPropertyFloat('AzimuthTo'))) {
-            $AltitudeLow      = $this->ReadPropertyFloat('LowSunPositionAltitude');
-            $AltitudeHigh     = $this->ReadPropertyFloat('HighSunPositionAltitude');
-            $rAltitudeTanLow  = tan($AltitudeLow * M_PI / 180);
-            $rAltitudeTanHigh = tan($AltitudeHigh * M_PI / 180);
-            $rAltitudeTanAct  = tan($rSunAltitude * M_PI / 180);
 
-            $blindLevelLow  = $this->ReadPropertyFloat('LowSunPositionBlindLevel');
-            $blindLevelHigh = $this->ReadPropertyFloat('HighSunPositionBlindLevel');
+        $blindLevelLow  = $this->ReadPropertyFloat(self::PROP_LOWSUNPOSITIONBLINDLEVEL);
+        $blindLevelHigh = $this->ReadPropertyFloat(self::PROP_HIGHSUNPOSITIONBLINDLEVEL);
 
-            $rLevelSunPosition =
-                $blindLevelLow + ($blindLevelHigh - $blindLevelLow) * ($rAltitudeTanAct - $rAltitudeTanLow) / ($rAltitudeTanHigh - $rAltitudeTanLow);
+        $blindPositions['BlindLevel'] = $this->calcPosition($blindLevelLow, $blindLevelHigh, $rSunAltitude);
 
-            if ($this->profileLevel['Reversed']) {
-                $rLevelSunPosition = min($rLevelSunPosition, $this->profileLevel['LevelOpened']);
-                $rLevelSunPosition = max($rLevelSunPosition, $this->profileLevel['LevelClosed']);
-            } else {
-                $rLevelSunPosition = max($rLevelSunPosition, $this->profileLevel['LevelOpened']);
-                $rLevelSunPosition = min($rLevelSunPosition, $this->profileLevel['LevelClosed']);
-            }
+        if ($this->profileBlindLevel['Reversed']) {
+            $blindPositions['BlindLevel'] = min($blindPositions['BlindLevel'], $this->profileBlindLevel['LevelOpened']);
+            $blindPositions['BlindLevel'] = max($blindPositions['BlindLevel'], $this->profileBlindLevel['LevelClosed']);
+        } else {
+            $blindPositions['BlindLevel'] = max($blindPositions['BlindLevel'], $this->profileBlindLevel['LevelOpened']);
+            $blindPositions['BlindLevel'] = min($blindPositions['BlindLevel'], $this->profileBlindLevel['LevelClosed']);
         }
 
-        return $rLevelSunPosition;
+        $blindPositions['SlatsLevel'] = $this->calcPosition(
+            $this->ReadPropertyFloat(self::PROP_LOWSUNPOSITIONSLATSLEVEL), $this->ReadPropertyFloat(self::PROP_HIGHSUNPOSITIONSLATSLEVEL),
+            $rSunAltitude
+        );
+
+        return $blindPositions;
 
     }
 
+    private function calcPosition(float $lowPosition, float $highPosition, float $sunAltitude): float
+    {
+        $AltitudeLow      = $this->ReadPropertyFloat('LowSunPositionAltitude');
+        $AltitudeHigh     = $this->ReadPropertyFloat('HighSunPositionAltitude');
+        $rAltitudeTanLow  = tan($AltitudeLow * M_PI / 180);
+        $rAltitudeTanHigh = tan($AltitudeHigh * M_PI / 180);
+        $rAltitudeTanAct  = tan($sunAltitude * M_PI / 180);
+
+        return $lowPosition + ($highPosition - $lowPosition) * ($rAltitudeTanAct - $rAltitudeTanLow) / ($rAltitudeTanHigh - $rAltitudeTanLow);
+    }
 
     private function getLevelOfShadowingByBrightness(): ?float
     {
@@ -1278,7 +1383,8 @@ class BlindController extends IPSModule
             } else if ($levelAct === $blindLevelOpened) {
                 $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell geöffnet.', $this->objectName));
             } else {
-                $levelPercent = ($levelAct - $this->profileLevel['MinValue']) / ($this->profileLevel['MaxValue'] - $this->profileLevel['MinValue']);
+                $levelPercent = ($levelAct - $this->profileBlindLevel['MinValue']) / ($this->profileBlindLevel['MaxValue']
+                                                                                      - $this->profileBlindLevel['MinValue']);
 
                 $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent));
             }
@@ -1319,7 +1425,7 @@ class BlindController extends IPSModule
     }
 
     //-----------------------------------------------
-    public function MoveBlind(int $percentClose, int $deactivationTimeAuto, string $hint): bool
+    public function MoveBlind(int $percentBlindClose, int $percentSlatsClosed, int $deactivationTimeAuto, string $hint): bool
     {
 
         if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
@@ -1327,109 +1433,159 @@ class BlindController extends IPSModule
         }
 
         $this->Logger_Dbg(
-            __FUNCTION__, sprintf('percentClose: %s, deactivationTimeAuto: %s, hint: %s', $percentClose, $deactivationTimeAuto, $hint)
+            __FUNCTION__, sprintf(
+                            'percentBlindClose: %s, percentSlatClose: %s, deactivationTimeAuto: %s, hint: %s', $percentBlindClose,
+                            $percentSlatsClosed, $deactivationTimeAuto, $hint
+                        )
         );
 
-        if (($percentClose < 0) || ($percentClose > 100)) {
+        if (($percentBlindClose < 0) || ($percentBlindClose > 100)) {
+            return false;
+        }
+
+        if (($percentSlatsClosed < 0) || ($percentSlatsClosed > 100)) {
             return false;
         }
 
         // globale Instanzvariablen setzen
-        $this->objectName   = IPS_GetObject($this->InstanceID)['ObjectName'];
-        $this->profileLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
+        $this->objectName        = IPS_GetObject($this->InstanceID)['ObjectName'];
+        $this->profileBlindLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
 
-        if ($this->profileLevel === false) {
+        if ($this->profileBlindLevel === null) {
             return false;
         }
 
 
-        $lastBlindMove = $this->ReadAttributeString('lastBlindMove');
-        if ($lastBlindMove !== '') {
-            $lastBlindMove = json_decode($lastBlindMove, true);
-            if (($lastBlindMove['movement']['percentClose'] === $percentClose) && ($lastBlindMove['movement']['percentClose'] === $percentClose)
-                && ((time() - $lastBlindMove['timeStamp']) < 30)) {
+        $retBladeLevel = $this->MoveToPosition(self::PROP_BLINDLEVELID, $percentBlindClose, $deactivationTimeAuto, $hint);
+        if ($retBladeLevel) {
+            $this->WriteInfo($retBladeLevel, $hint, true);
+        }
+
+        //gibt es Lamellen?
+        if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+            $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
+            $retSlatsLevel           = $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClosed, $deactivationTimeAuto, $hint);
+            if ($retSlatsLevel) {
+                $this->WriteInfo($retSlatsLevel, $hint, false);
+            }
+            return ($retBladeLevel !== null || ($retSlatsLevel !== null));
+        }
+
+        return ($retBladeLevel !== null);
+    }
+
+    private function MoveToPosition(string $propName, float $percentClose, int $deactivationTimeAuto, $hint): ?float
+    {
+
+        $positionID = $this->ReadPropertyInteger($propName);
+        if ($positionID === 0) {
+            return null;
+        }
+
+        $profile = $this->GetProfileInformation($propName);
+        if ($profile === null) {
+            return null;
+        }
+
+
+        $lastMove = $this->ReadAttributeString('lastMove' . $propName);
+        if ($lastMove !== '') {
+            $lastMove = json_decode($lastMove, true);
+            if (($lastMove['movement']['percentClose'] === $percentClose) && ((time() - $lastMove['timeStamp']) < 30)) {
                 //dieselbe Bewegung in den letzten 30 Sekunden
                 $this->Logger_Dbg(
-                    __FUNCTION__, sprintf('Move ignored! Same movement just %s s before', time() - $lastBlindMove['timeStamp'])
+                    __FUNCTION__, sprintf('#%s: Move ignored! Same movement just %s s before', $positionID, time() - $lastMove['timeStamp'])
                 );
-                return false;
+                return null;
             }
 
         }
 
-        $levelNew = $this->profileLevel['MinValue'] + ($percentClose / 100) * ($this->profileLevel['MaxValue'] - $this->profileLevel['MinValue']);
+        $positionNew = $profile['MinValue'] + ($percentClose / 100) * ($profile['MaxValue'] - $profile['MinValue']);
 
-        if ($this->profileLevel['Reversed']) {
-            $levelNew = $this->profileLevel['MaxValue'] - $levelNew;
+        if ($profile['Reversed']) {
+            $positionNew = $profile['MaxValue'] - $positionNew;
         }
 
-        $levelID             = $this->ReadPropertyInteger(self::PROP_BLINDLEVELID);
-        $levelAct            = GetValue($levelID); //integer and float are supported
-        $levelDiffPercentage = abs($levelNew - $levelAct) / ($this->profileLevel['MaxValue'] - $this->profileLevel['MinValue']);
-        $timeDiffAuto        = time() - $this->ReadAttributeInteger('AttrTimeStampAutomatic');
+        $positionAct            = GetValue($positionID); //integer and float are supported
+        $positionDiffPercentage = abs($positionNew - $positionAct) / ($profile['MaxValue'] - $profile['MinValue']);
+        $timeDiffAuto           = time() - $this->ReadAttributeInteger('TimeStampAutomatic' . $propName);
 
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'levelAct: %s, levelNew: %s, levelDiffPercentage: %.2f/0,05, timeDiffAuto: %s/%s', $levelAct, $levelNew,
-                            $levelDiffPercentage, $timeDiffAuto, $deactivationTimeAuto
+                            '#%s: positionAct: %s, positionNew: %s, positionDiffPercentage: %.2f/0,05, timeDiffAuto: %s/%s', $positionID,
+                            $positionAct, $positionNew, $positionDiffPercentage, $timeDiffAuto, $deactivationTimeAuto
                         )
         );
 
-        $ret = true;
+        $ret = null;
 
-        // Wenn sich das aktuelle Level um mehr als 5% von neuem Level unterscheidet
-        if (($levelDiffPercentage > 0.05) && ($timeDiffAuto >= $deactivationTimeAuto)) {
+        // Wenn sich die aktuelle Position um mehr als 5% von neuer Position unterscheidet
+        if (($positionDiffPercentage > 0.05) && ($timeDiffAuto >= $deactivationTimeAuto)) {
 
-            // Level setzen
+            //Position setzen
             //Wert übertragen
-            if (@RequestAction($levelID, $levelNew)) {
+            if (@RequestAction($positionID, $positionNew)) {
                 // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
-                $this->WriteAttributeInteger('AttrTimeStampAutomatic', time());
+                $this->WriteAttributeInteger('TimeStampAutomatic' . $propName, time());
                 $this->WriteAttributeString(
-                    'lastBlindMove', json_encode(['timeStamp' => time(), 'movement' => ['percentClose' => $percentClose, 'hint' => $hint]])
+                    'lastMove' . $propName, json_encode(['timeStamp' => time(), 'movement' => ['percentClose' => $percentClose, 'hint' => $hint]])
                 );
                 $this->Logger_Dbg(
-                    __FUNCTION__,
-                    "$this->objectName: TimestampAutomatik: " . $this->FormatTimeStamp($this->ReadAttributeInteger('AttrTimeStampAutomatic'))
+                    __FUNCTION__, "$this->objectName: TimestampAutomatik: " . $this->FormatTimeStamp(
+                                    $this->ReadAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID)
+                                )
                 );
+                $ret = $positionNew;
 
-                $this->WriteInfo($levelNew, $hint);
             } else {
-                $this->Logger_Err(
-                    'Fehler beim Setzen der Werte. (id = ' . $levelID . ', Value = ' . $percentClose . ')'
-                );
-                $ret = false;
+                $this->Logger_Err(sprintf('%s: Fehler beim Setzen der Werte. (Value = %s)', $positionID, $percentClose));
+                $ret = null;
             }
-            $this->Logger_Dbg(__FUNCTION__, $this->objectName . ': ' . $levelAct . ' to ' . $levelNew);
+            $this->Logger_Dbg(__FUNCTION__, sprintf('#%s: %s to %s', $positionID, $positionAct, $positionNew));
 
             // kleine Pause, um Kommunikationsstörungen zu vermeiden
             sleep(5);
 
-        } else {
-            if (!$levelDiffPercentage) {
-                $this->Logger_Dbg(__FUNCTION__, sprintf('No Movement! Level %s already reached.', $levelAct));
+        } elseif (!$positionDiffPercentage) {
+            $this->Logger_Dbg(__FUNCTION__, sprintf('#%s: No Movement! Position %s already reached.', $positionID, $positionAct));
 
-            } elseif ($levelDiffPercentage <= 0.05) {
-                $this->Logger_Dbg(__FUNCTION__, sprintf('No Movement! Movement less than 5 percent (%.2f).', $levelDiffPercentage));
-            } else {
-                $this->Logger_Dbg(
-                    __FUNCTION__, sprintf('No Movement! DeactivationTimeAuto of %s not reached (%s).', $deactivationTimeAuto, $timeDiffAuto)
-                );
-            }
+        } elseif ($positionDiffPercentage <= 0.05) {
+            $this->Logger_Dbg(__FUNCTION__, sprintf('#%s: No Movement! Movement less than 5 percent (%.2f).', $positionID, $positionDiffPercentage));
+        } else {
+            $this->Logger_Dbg(
+                __FUNCTION__, sprintf(
+                                '#%s: No Movement! DeactivationTimeAuto of %s not reached (%s).', $positionID, $deactivationTimeAuto, $timeDiffAuto
+                            )
+            );
         }
 
         return $ret;
+
     }
 
-    private function WriteInfo(float $rLevelneu, string $hint): void
+    private function WriteInfo(float $rLevelneu, string $hint, bool $isBlind): void
     {
-        if ($rLevelneu === (float) $this->profileLevel['LevelClosed']) {
-            $logMessage = sprintf('Der Rollladen \'%s\' wurde geschlossen.', $this->objectName);
-        } else if ($rLevelneu === (float) $this->profileLevel['LevelOpened']) {
-            $logMessage = sprintf('Der Rollladen \'%s\' wurde geöffnet.', $this->objectName);
+        if ($isBlind) {
+            if ($rLevelneu === (float) $this->profileBlindLevel['LevelClosed']) {
+                $logMessage = sprintf('Der Rollladen \'%s\' wurde geschlossen.', $this->objectName);
+            } else if ($rLevelneu === (float) $this->profileBlindLevel['LevelOpened']) {
+                $logMessage = sprintf('Der Rollladen \'%s\' wurde geöffnet.', $this->objectName);
+            } else {
+                $levelPercent = ($rLevelneu - $this->profileBlindLevel['MinValue']) / ($this->profileBlindLevel['MaxValue']
+                                                                                       - $this->profileBlindLevel['MinValue']);
+                $logMessage   = sprintf('Der Rollladen \'%s\' wurde auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent);
+            }
         } else {
-            $levelPercent = ($rLevelneu - $this->profileLevel['MinValue']) / ($this->profileLevel['MaxValue'] - $this->profileLevel['MinValue']);
-            $logMessage   = sprintf('Der Rollladen \'%s\' wurde auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent);
+            if ($rLevelneu === (float) $this->profileSlatsLevel['LevelClosed']) {
+                $logMessage = sprintf('Die Lamellen \'%s\' wurden geschlossen.', $this->objectName);
+            } else if ($rLevelneu === (float) $this->profileSlatsLevel['LevelOpened']) {
+                $logMessage = sprintf('Die Lamellen \'%s\' wurden geöffnet.', $this->objectName);
+            } else {
+                $levelPercent = ($rLevelneu - $this->profileSlatsLevel['MinValue']) / ($this->profileSlatsLevel['MaxValue']
+                                                                                       - $this->profileSlatsLevel['MinValue']);
+                $logMessage   = sprintf('Die Lamellen \'%s\' wurden auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent);
+            }
         }
 
         if ($hint === '') {
@@ -1649,7 +1805,9 @@ class BlindController extends IPSModule
     private function GetProfileInformation(string $propName): ?array
     {
 
-        $variable = IPS_GetVariable($this->ReadPropertyInteger($propName));
+        if (!($variable = @IPS_GetVariable($this->ReadPropertyInteger($propName)))) {
+            return null;
+        };
 
         if ($variable['VariableCustomProfile'] !== '') {
             $profileName = $variable['VariableCustomProfile'];
@@ -1670,6 +1828,7 @@ class BlindController extends IPSModule
         $reversed = strcasecmp('reversed', end($profileNameParts)) === 0;
         switch ($propName) {
             case self::PROP_BLINDLEVELID:
+            case self::PROP_SLATSLEVELID:
                 return [
                     'Name'        => $profileName,
                     'ProfileType' => $profile['ProfileType'],
@@ -1704,15 +1863,15 @@ class BlindController extends IPSModule
 
         //prüfen, ob Automatik nach der letzten Rollladenbewegung eingestellt wurde.
         $tsAutomaticVariable  = IPS_GetVariable(IPS_GetObjectIDByIdent('ACTIVATED', $this->InstanceID))['VariableChanged'];
-        $tsAutomaticAttribute = $this->ReadAttributeInteger('AttrTimeStampAutomatic');
+        $tsAutomaticAttribute = $this->ReadAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID);
         if ($tsAutomaticAttribute === 0) {
             $tsAutomaticAttribute = $tsBlindLevelChanged;
-            $this->WriteAttributeInteger('AttrTimeStampAutomatic', $tsAutomaticAttribute);
+            $this->WriteAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID, $tsAutomaticAttribute);
         }
 
         if (($tsAutomaticVariable > $tsBlindLevelChanged) && ($tsAutomaticAttribute !== $tsBlindLevelChanged) && $this->GetValue('ACTIVATED')) {
             // .. dann Timestamp Automatik mit Timestamp des Rollladens gleichsetzen
-            $this->WriteAttributeInteger('AttrTimeStampAutomatic', $tsBlindLevelChanged);
+            $this->WriteAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID, $tsBlindLevelChanged);
             $this->Logger_Inf(sprintf('Der Rollladen \'%s\' bewegt sich nun wieder automatisch.', $this->objectName));
         }
         return $tsBlindLevelChanged;

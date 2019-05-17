@@ -42,10 +42,10 @@
       "Define the range of azimuth for shadowing:": "Angabe des Bereichs der Sonnenrichtung, in dem beschattet werden soll",
       "From Azimuth": "Sonnenrichtung (von)",
       "To Azimuth": "Sonnenrichtung (bis)",
-      "Define a brightness sensor and a threshold if the brightness should be considered": "Angabe eines Helligkeitssensors und eines Schwellwertes, wenn die Helligkeit berücksichtig werden soll",
+      "Define a brightness sensor and a threshold if the brightness should be considered": "Angabe eines Helligkeitssensors und eines Schwellwertes wenn die Helligkeit berücksichtigt werden soll",
       "Define an additional temperature sensor when the outdoor temperature should be considered": "Angabe eines Temperatursensors wenn zusätzlich die Außentemperatur berücksichtigt werden soll",
       "Temperature ID": "Temperatur ID",
-      "Determination of the degree of shadowing": "Bestimmung der Beschattungshöhe",
+      "Determination of the degree of shadowing": "Bestimmung des Beschattungsgrades",
       "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate roller shutter height is calculated to the current altitude.":
       "Angabe von zwei extremen Sonnenhöhen und den zugehörigen Rollladenpositionen. Aus diesen Werten werden die zum jeweiligen Sonnenstand passenden Rollladenpositionen ermittelt.",
       "Low Sun Position (Altitude)": "Sonnenhöhe (niedrige Sonnenposition)",
@@ -81,7 +81,8 @@
       "Debug information are written additionally to standard logfile": "Debug Informationen werden zusätzlich in das Standardlogfile geschrieben",
       "Debug information are written additionally to the logfile of IPSLibrary": "Debug Informationen werden zusätzlich in das Logfile der IPSLibrary geschrieben",
       "Control Blind": "Steuerungslauf",
-      "Percentage from 0 (open) to 100 (close)": "Verdunkelungsgrad von 0 (offen) bis 100 (geschlossen)",
+      "BlindLevel: Percentage from 0 (open) to 100 (close)": "Behanghöhe von 0 (offen) bis 100 (geschlossen)",
+      "SlatsLevel: Percentage from 0 (open) to 100 (close)": "Lamellenstellung von 0 (offen) bis 100 (geschlossen)",
       "Move Blind": "Rollladen bewegen",
       "Show Configuration": "Zeige Konfiguration",
       "Weekly Timetable Event ID is not valid":                                       "Wochenplan ID ist ungültig",
@@ -107,7 +108,8 @@
       "Shadowing according to brightness: Brightness ID is not valid":                "Beschattung nach Helligkeit: Helligkeit ID ist ungültig",
       "Shadowing according to brightness: Threshold high brightness ID is not valid": "Beschattung nach Helligkeit: Helligkeitsschwellwert höhere Helligkeit ID ist ungültig",
       "Shadowing according to brightness: Threshold low brightness ID is not valid":  "Beschattung nach Helligkeit: Helligkeitsschwellwert geringere Helligkeit ID ist ungültig",
-      "A given Level is out of range":                                                "Eine angegebene Rollladenposition ist außerhalb des gültigen Bereichs",
+      "A given Blind Level is out of range":                                          "Eine angegebene Rollladenposition ist außerhalb des gültigen Bereichs",
+      "A given Slats Position is out of range":                                       "Eine angegebene Lamellenposition ist außerhalb des gültigen Bereichs",
       "Finished!": "Fertig!",
       "Error!": "Fehler!"
     }
