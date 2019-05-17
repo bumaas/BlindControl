@@ -68,13 +68,6 @@ class BlindControlGroupMaster extends IPSModule
             $properties[] = ['value' => $property, 'caption' => $property];
         }
 
-        /*        {
-                    "type": "RowLayout", "items": [
-              {"type": "Label", "caption": "In this instance, all parameters for controlling a single blind are stored. The description of the individual parameters can be found in the documentation."},
-              {"type": "Button", "caption": "Show Documentation", "onClick": "echo 'https://github.com/bumaas/BlindControl/blob/master/README.md';", "link": true}
-            ]
-            },
-        */
         $form['elements'][] = [
             'type'  => 'RowLayout',
             'items' => [

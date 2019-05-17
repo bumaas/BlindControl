@@ -5,9 +5,9 @@
   "url":           "",
   "compatibility": {
     "version": "5.1",
-    "date":    1518562800
+    "date":    0
   },
-  "version":       "1.30",
-  "build":         3,
+  "version":       "1.40",
+  "build":         0,
   "date":          0
 }

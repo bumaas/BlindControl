@@ -162,7 +162,7 @@ Die Zeiten übersteuern die in der Tagerkennung ermittelten Zeiten.
  
 
 ### Beschattung nach Sonnenstand (optional)
-Es sind die Variablen anzugeben, aus denen der Sonnenstand (Azimuth = Sonnenrichtung, Altitude = Sonnenhöhe) geholt werden soll. Hier bieten sich gleichnamigen Variablen des Location Moduls an.
+Es sind die Variablen anzugeben, aus denen der Sonnenstand (Azimuth = Sonnenrichtung, Altitude = Sonnenhöhe) geholt werden soll. Hier bieten sich die gleichnamigen Variablen des Location Moduls an.
 
 Des weiteren ist der Bereich (Azimuth von/bis) der Sonnenrichtung anzugeben, in dem die Beschattung stattfinden soll.
 Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen Helligkeitswert beinhaltet (z.B. von einem Helligkeitssensor) sowie eine Variable, die den Schwellwert beinhaltet. Soll als Helligkeitswert ein Durchschnittswert der letzten Minuten genommen werden,
@@ -186,7 +186,8 @@ Praktisches Beispielszenario:
 Im Normalfall wird nach Sonnenstand beschattet. Wenn jedoch der Fernseher eingeschaltet wird, dann soll je nach Helligkeit stärker oder schwächer abgedunkelt werden.
 
 ### Erkennung von Kontakten (optional)
-Um auf offene Fenster/Türen oder auch Regen/Sturm reagieren zu können, können bis zu vier Kontakte angegeben werden.
+Um auf offene Fenster/Türen oder auch Regen/Sturm reagieren zu können, können bis zu vier Kontakte angegeben werden. Ein Kontakt wird als offen erkannt, wenn der Wert >0 ist. Bei Kontakten, die im geöffneten Zustand den Wert 0 haben, ist ein 'Reversed'-Profil zu verwenden.
+
 Je zwei Kontakte dienen dem Öffnen (Fenster/Tür) sowie dem Schließen (Regen/Wind) eines Rollladens.
 Je Kontakt ist anzugeben, in welche Position mindestens gefahren werden soll.   
 Wird ein Kontakt als offen erkannt, dann wird sofort auf die gewünschte Position gefahren. Nach dem Schließen des Kontaktes wird die dann gültige Höhe neu ermittelt und sofort angefahren.
