@@ -2,7 +2,7 @@
 
 Modul für Symcon ab Version 5.1.
 
-Steuert einen Rollladen nach vorgegebenen Einstellungen.
+Steuert einen Rollladen bzw. eine Jalousie nach vorgegebenen Einstellungen.
 
 ## Dokumentation
 
@@ -34,12 +34,12 @@ Aktuelle Features:
 - Aktivierung/Deaktivierung über Statusvariable
 - Notfall Sensor
 - herstellerunabhängig
+- Lamellenstellung bei Jalousien
 
 Noch nicht unterstützt wird:
-- Lamellenstellung bei Stores
 - Zufallsfunktion bei Tagesanfang/Tagesende
 
-Zusätzlich kann zur leichteren Verwaltung mehrerer Rollläden ein Gruppen Master definiert werden.
+Zusätzlich kann zur leichteren Verwaltung mehrerer Rollläden/Jalousien ein Gruppen Master definiert werden.
 
 ## 2. Voraussetzungen
 
@@ -48,6 +48,7 @@ Zusätzlich kann zur leichteren Verwaltung mehrerer Rollläden ein Gruppen Maste
  - Es werden alle Aktoren unterstützt, die über eine Statusvariable verfügen und sich über RequestAction steuern lassen.
 Die Statusvariable muss vom Typ Integer oder Float sein und ein Profil mit einem korrekten Minimal- und Maximalwert besitzen. Bei einem Rollladen, der beim Minimalwert 
 geschlossen und beim Maximalwert geöffnet ist (z.B. typischerweise bei Homematic), ist ein Profil mit der Namensendung ".Reversed" zu verwenden.  
+Zur Steuerung von Lamellen bei Jalousien ist eine eigene Statusvariable notwendig, über die die Stellung der Lamellen gesteuert werden kann. Für sie gelten die gleichen Vorausetzungen.
 
 ## 3. Installation
 
@@ -75,12 +76,18 @@ BLC_ControlBlind(int $InstanceID, bool $considerDeactvationTimes)
 Prüft die Rollladenposition gemäß der in der Instanz festgelegten Eigenschaften und fährt den Rollladen auf die ermittelte Position. Wenn $considerDeactivationTimes == true, dann wird DeactivationAutomaticMovement berücksichtigt.
 
 ```php
-BLC_MoveBlind(int $InstanceID, int $percentClose, int $deactivationTimeAuto, string $hint): bool
+BLC_MoveBlind(int $InstanceID, int $percentBlindClose, int $percentSlatsClosed, int $deactivationTimeAuto, string $hint): bool
 ```
-Fährt den Rollladen auf den gewünschten Schließungsgrad.
-$percentClose: 0 - 100
-Angabe des Schließungsgrades (0=geöffnet, 100 = geschlossen)
+Fährt den Rollladen/die Jalousie auf die gewünschte Position.
+
+$percentBlindClose: 0 - 100
+Angabe des Schließungsgrades des Behangs (Höhe) (0=geöffnet, 100 = geschlossen)
+
+$percentSlatsClose: 0 - 100
+Angabe des Schließungsgrades der Lamellen (Stellung) (0=geöffnet, 100 = geschlossen)
+
 $deactivationTimeAuto: Anzahl der Sekunden, die mindestens seit der letzten automatischen Bewegung vergangen sein müssen. Sonst wird der Rollladen nicht bewegt.
+
 $hint: Hinweis, der in die Statusvariable LAST_MESSAGE geschrieben wird. Ist der Hinweis leer, dann wird er nicht geschrieben.
 
 ```php
@@ -120,6 +127,8 @@ Zeigt das Icon den falschen Zustand an, dann ist dem Profil im Namen ein '.Rever
 Dieses neue Profil ist dann der Variablen zuzuordnen.
 
 Diese Positionsvariable ist im Modul als 'Rollladen Level ID' anzugeben.
+
+Das gleiche Vorgehen empfielt sich auch für die Überprüfung der Lamellenpositionierung bei Jalousien.
 
 
 ### Einrichtung des Wochenplans
@@ -199,6 +208,7 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | Eigenschaft | Typ     | Standardwert            | Funktion                                  |
 | :--------- | :-----: | :------------------------| :--------------------------------------- |
 | BlindLevelID               | integer | 0 | Statusvariable, des zu steuernden Rollladens. Sie muss vom Typ Integer oder Float sein und über ein korrektes Profil verfügen. |
+| SlatsLevelID               | integer | 0 | Statusvariable, der  zu steuernden Lamellen einer Jalousie. Sie muss vom Typ Integer oder Float sein und über ein korrektes Profil verfügen. |
 | WeeklyTimeTableEventID     | integer | 0 | Verweis auf ein Wochenplanevent, dass die täglichen Grundzeiten für Rollladen rauf und Rollladen runter abbildet.       |                  |
 | WakeUpTimeID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Hochfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein|
 | WakeUpTimeOffset               | integer | 0 | Offset zur WakeUpTime in Minuten|
@@ -206,7 +216,7 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | BedTimeOffset               | integer | 0 | Offset zur BedTime in Minuten|
 | HolidayIndicatorID         | integer | 0 | Indikatorvariable, die anzeigt, ob ein Urlaubs-/Feiertag anliegt|
 | DayUsedWhenHoliday         | integer | 0 | legt fest, welcher Wochentag des Wochenplans im Fall eines Urlaubs-/Feiertages herangezogen werden soll|
-| NightLevel           | float   | 0 | Höhe, auf die der Rollladen in der Nacht gefahren wird, wenn er geschlossen werden soll
+| NightBlindLevel           | float   | 0 | Höhe, auf die der Rollladen in der Nacht gefahren wird, wenn er geschlossen werden soll
 | IsDayIndicatorID           | integer | 0 | Indikatorvariable, die anzeigt, ob es Tag oder Nacht ist. Es kann z.B. die ISDAY Statusvariable des Location Controls genutzt werden.
 | BrightnessID               | integer | 0 | Indikatorvariable, die die Helligkeit zur Tag/Nacht Bestimmung abbildet.  |
 | BrightnessAvgMinutes       | integer | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll  |
@@ -230,9 +240,11 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | BrightnessIDShadowingBrightness| integer   | 0 | Indikatorvariable, die die Helligkeit zur Beschattung nach Helligkeit angibt
 | BrightnessAvgMinutesShadowingBrightness| integer   | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt bei der Beschattung nach Helligkeit gebildet werden soll
 | ThresholdIDHighBrightness      | integer   | 0 | Indikatorvariable, die den hohen Helligkeitsschwellwert Zur Steuerung nach Helligkeit zur Verfügung stellt
-| LevelHighBrightnessShadowingBrightness      | integer   | 0 | Level, der bei erreichen der hohen Helligkeit angefahren werden soll
+| BlindLevelHighBrightnessShadowingBrightness      | integer   | 0 | RollladenLevel, der bei erreichen der hohen Helligkeit angefahren werden soll
+| SlatsLevelHighBrightnessShadowingBrightness      | integer   | 0 | LamellenLevel, der bei erreichen der hohen Helligkeit angefahren werden soll
 | ThresholdIDLessBrightness      | integer   | 0 | Indikatorvariable, die den niedrigen Helligkeitsschwellwert Zur Steuerung nach Helligkeit zur Verfügung stellt
-| LevelLessBrightnessShadowingBrightness      | integer   | 0 | Level, der bei erreichen der niedrigeren Helligkeit angefahren werden soll
+| BlindLevelLessBrightnessShadowingBrightness      | integer   | 0 | RollladenLevel, der bei erreichen der niedrigeren Helligkeit angefahren werden soll
+| SlatsLevelLessBrightnessShadowingBrightness      | integer   | 0 | LamellenLevel, der bei erreichen der niedrigeren Helligkeit angefahren werden soll
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
 | DeactivationAutomaticMovement | integer | 20| legt fest, wie lange nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird. Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|
 | DeactivationManualMovement | integer | 120  | legt fest, wie lange nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll. Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|

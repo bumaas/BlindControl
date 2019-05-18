@@ -7,7 +7,7 @@
     ]
     },
     {"type": "SelectVariable", "name": "BlindLevelID", "caption": "Blind Level ID"},
-    {"type": "SelectVariable", "name": "SlatsLevelID", "caption": "Slats Level ID"},
+    {"type": "SelectVariable", "name": "SlatsLevelID", "caption": "Slats Level ID (optional)"},
     {
       "type":  "ExpansionPanel", "caption": "Time Schedule",
       "items": [
@@ -39,8 +39,13 @@
             {"type": "NumberSpinner", "name": "BedTimeOffset", "caption": "Bedtime Offset", "suffix": "Minutes"}
           ]
         },
-        {"type": "Label", "caption": "If the blind is not to be completely closed, a night position (>0) can be specified."},
-        {"type": "NumberSpinner", "name": "NightLevel", "caption": "Night Level", "digits": "2"}
+        {"type": "Label", "caption": "If the blind is not to be completely closed, a night position can be specified."},
+        {
+          "type": "RowLayout", "items": [
+          {"type": "NumberSpinner", "name": "NightBlindLevel", "caption": "Night Blind Level", "digits": "2"},
+          {"type": "NumberSpinner", "name": "NightSlatsLevel", "caption": "Night Slats Level", "digits": "2"}
+        ]
+        }
       ]
     },
     {
@@ -114,23 +119,26 @@
       "type":  "ExpansionPanel", "caption": "Shadowing According to Brightness (optional)",
       "items": [
         {"type": "SelectVariable", "name": "ActivatorIDShadowingBrightness", "caption": "Activator ID"},
-        {"type": "Label", "caption": "Define the brightness indicator and up to two different levels"},
+        {"type": "Label", "caption": "Define the brightness indicator"},
         {
           "type": "RowLayout", "items": [
           {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "caption": "Brightness ID"},
           {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBrightness", "caption": "Average of the last minutes", "suffix": "Minutes"}
         ]
         },
+        {"type": "Label", "caption": "Define up to two different levels"},
         {
           "type": "RowLayout", "items": [
           {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "caption": "Threshold less brightness ID"},
-          {"type": "NumberSpinner", "name": "LevelLessBrightnessShadowingBrightness", "caption": "Level at less brightness", "digits": "2"}
+          {"type": "NumberSpinner", "name": "BlindLevelLessBrightnessShadowingBrightness", "caption": "Blind Level at less brightness", "digits": "2"},
+          {"type": "NumberSpinner", "name": "SlatsLevelLessBrightnessShadowingBrightness", "caption": "Slats Level at less brightness", "digits": "2"}
         ]
         },
         {
           "type": "RowLayout", "items": [
           {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "caption": "Threshold high brightness ID"},
-          {"type": "NumberSpinner", "name": "LevelHighBrightnessShadowingBrightness", "caption": "Level at high brightness", "digits": "2"}
+          {"type": "NumberSpinner", "name": "BlindLevelHighBrightnessShadowingBrightness", "caption": "Blind Level at high brightness", "digits": "2"},
+          {"type": "NumberSpinner", "name": "SlatsLevelHighBrightnessShadowingBrightness", "caption": "Slats Level at high brightness", "digits": "2"}
         ]
         }
       ]
@@ -210,7 +218,7 @@
   "status":   [
     {"code": 201, "icon": "error", "caption": "Weekly Timetable Event ID is not valid"},
     {"code": 202, "icon": "error", "caption": "Holiday Indicator ID is not valid"},
-    {"code": 203, "icon": "error", "caption": "Level ID is not valid"},
+    {"code": 203, "icon": "error", "caption": "Blind Level ID is not valid"},
     {"code": 204, "icon": "error", "caption": "Brightness ID is not valid"},
     {"code": 205, "icon": "error", "caption": "Brightness Threshold ID is not valid"},
     {"code": 206, "icon": "error", "caption": "IsDay ID is not valid"},
@@ -232,6 +240,7 @@
     {"code": 232, "icon": "error", "caption": "Shadowing according to brightness: Threshold high brightness ID is not valid"},
     {"code": 233, "icon": "error", "caption": "Shadowing according to brightness: Threshold low brightness ID is not valid"},
     {"code": 234, "icon": "error", "caption": "A given Blind Level is out of range"},
-    {"code": 235, "icon": "error", "caption": "A given Slats Position is out of range"}
+    {"code": 235, "icon": "error", "caption": "A given Slats Position is out of range"},
+    {"code": 236, "icon": "error", "caption": "Slats Level ID is not valid"}
   ]
 }
