@@ -104,6 +104,7 @@ class BlindController extends IPSModule
         } else {
             $this->Logger_Dbg(__FUNCTION__, sprintf('Ident: %s, Value: %s', $Ident, $Value));
         }
+
         if ($this->SetValue($Ident, $Value)) {
             $this->SetInstanceStatusAndTimerEvent();
             $this->ControlBlind(false);
@@ -474,6 +475,7 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('BedTimeID', 0);
         $this->RegisterPropertyInteger('BedTimeOffset', 0);
         $this->RegisterPropertyFloat(self::PROP_NIGHTBLINDLEVEL, 0);
+        $this->RegisterPropertyFloat(self::PROP_NIGHTSLATSLEVEL, 0);
 
         //day detection
         $this->RegisterPropertyInteger('IsDayIndicatorID', 0);
