@@ -433,7 +433,7 @@ class BlindController extends IPSModule
         if (!$bNoMove) {
             $blindLevel = $positionsNew['BlindLevel'] / ($this->profileBlindLevel['MaxValue'] - $this->profileBlindLevel['MinValue']);
             if ($this->profileBlindLevel['Reversed']) {
-                $blindLevel = 1 - $positionsNew['BlindLevel'];
+                $blindLevel = 1 - $blindLevel;
             }
 
             if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
