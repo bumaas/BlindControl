@@ -2,7 +2,7 @@
   "translations": {
     "de": {
       "In this instance, all parameters for controlling a single blind are stored. The description of the individual parameters can be found in the documentation.": "In dieser Instanz werden alle Parameter zur Steuerung eines einzelnen Rollladens hinterlegt. Die Beschreibung der einzelnen Parameter ist in der Dokumentation zu finden.",
-      "Show Documentation": "Öffne Dokumentation",
+      "Show Documentation": "Dokumentation anzeigen",
       "Blind Level ID":"Rollladen Level ID",
       "Slats Level ID (optional)":"Lamellen Level ID (optional)",
       "Time Schedule":"Wochenplan",

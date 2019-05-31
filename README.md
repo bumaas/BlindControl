@@ -120,15 +120,15 @@ Dies lässt sich am einfachsten überprüfen, indem die zu steuernde Positions V
 
 Nun sollte sich im Webfront folgendes Bild für einen geöffneten bzw. geschlossenen Rollladen ergeben:
 
-![image](docs/Rollladen geöffnet.jpg)
-![image](docs/Rollladen geschlossen.jpg)
+![image](docs/Rollladen_geöffnet.jpg)
+![image](docs/Rollladen_geschlossen.jpg)
 
 Zeigt das Icon den falschen Zustand an, dann ist dem Profil im Namen ein '.Reversed' anzuhängen. Man erreicht dies, indem das bislang zugeordnete Profil kopiert wird und dabei dem Namen ein '.Reversed' (Groß-/Kleinschreibung beachten!) angehängt wird.
 Dieses neue Profil ist dann der Variablen zuzuordnen.
 
 Diese Positionsvariable ist im Modul als 'Rollladen Level ID' anzugeben.
 
-Das gleiche Vorgehen empfielt sich auch für die Überprüfung der Lamellenpositionierung bei Jalousien.
+Das gleiche Vorgehen empfiehlt sich auch für die Überprüfung der Lamellenpositionierung bei Jalousien.
 
 
 ### Einrichtung des Wochenplans
@@ -161,7 +161,7 @@ Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen He
 dann ist die Anzahl der Minuten anzugeben, über die der Durchschnitt gebildet werden soll. Der Durchschnitt wird aus den archivierten Daten gewonnen. Dazu ist es notwendig, dass für die Variable die Archivierung aktiviert ist.
  
  
-![image](docs/LUX Messwert.jpg)
+![image](docs/LUX_Messwert.jpg)
 
 ![image](docs/Helligkeitsschwellwert.jpg)
 
@@ -246,8 +246,8 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | BlindLevelLessBrightnessShadowingBrightness      | integer   | 0 | RollladenLevel, der bei erreichen der niedrigeren Helligkeit angefahren werden soll
 | SlatsLevelLessBrightnessShadowingBrightness      | integer   | 0 | LamellenLevel, der bei erreichen der niedrigeren Helligkeit angefahren werden soll
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
-| DeactivationAutomaticMovement | integer | 20| legt fest, wie lange nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird. Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|
-| DeactivationManualMovement | integer | 120  | legt fest, wie lange nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll. Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|
+| DeactivationAutomaticMovement | integer | 20| legt fest, wie lange am Tag nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird. Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|
+| DeactivationManualMovement | integer | 120  | legt fest, wie lange am Tag nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll. Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|
 | WriteLogInformationToIPSLogger | boolean | false  | legt fest, ob die Log Informationen zusätzlich zum Standard Logfile auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 | WriteDebugInformationToIPSLogger | boolean | false  | legt fest, ob die Debug Informationen zusätzlich zum Debugger auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 | WriteDebugInformationToLogfile | boolean | false  | legt fest, ob die Debug Informationen zusätzlich in das Standard Logfile geschrieben werden sollen. Wichtig: dazu muss der Symcon Spezialschalter 'LogfileVerbose' aktiviert sein
