@@ -280,10 +280,10 @@ class BlindController extends IPSModule
             $positionsNew = $positionsAct;
         } else if ($isDay) {
             $lastManualMovement = json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true);
+            $deactivationManualMovement = $this->ReadPropertyInteger('DeactivationManualMovement');
             if (isset ($lastManualMovement['timeStamp'])
-                && strtotime(
-                       '+ ' . $this->ReadPropertyInteger('DeactivationManualMovement') . ' minutes', $lastManualMovement['timeStamp']
-                   ) > time()) {
+                && (($deactivationManualMovement === 0) ||strtotime('+ ' . $deactivationManualMovement . ' minutes', $lastManualMovement['timeStamp']
+                   ) > time())) {
                 $positionsNew['BlindLevel'] = $lastManualMovement['level'];
             } else {
                 $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelOpened'];
@@ -1446,7 +1446,7 @@ class BlindController extends IPSModule
             return false;
         }
 
-        $deactivationTimeManu = $this->ReadPropertyInteger('DeactivationManualMovement') * 60;
+        $deactivationTimeManuSecs = $this->ReadPropertyInteger('DeactivationManualMovement') * 60;
 
 
         //Zeitpunkt festhalten, sofern noch nicht geschehen
@@ -1455,10 +1455,10 @@ class BlindController extends IPSModule
 
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
-                                'Rollladenlevel wurde manuell gesetzt: %.2f, TimestampAutomatic: %s, TimestampManual: %s, deactivationTimeManu: %s/%s',
+                                'Rollladenlevel wurde manuell gesetzt: %.2f, TimestampAutomatic: %s, TimestampManual: %s, deactivationTimeManuSecs: %s/%s',
                                 $levelAct, $this->FormatTimeStamp($tsAutomatik),
                                 $this->FormatTimeStamp(json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true)['timeStamp']),
-                                time() - $tsBlindLastMovement, $deactivationTimeManu
+                                time() - $tsBlindLastMovement, $deactivationTimeManuSecs
                             )
             );
 
@@ -1485,14 +1485,14 @@ class BlindController extends IPSModule
             if ($levelAct === $blindLevelClosed) {
                 $bNoMove = true;
             } else {
-                $bNoMove = ((time() - $tsBlindLastMovement) < $deactivationTimeManu);
+                $bNoMove = ($deactivationTimeManuSecs === 0) || (strtotime('+ ' . $deactivationTimeManuSecs . ' seconds', $tsManualMovement) > time());
             }
 
             if ($bNoMove) {
                 $this->Logger_Dbg(
                     __FUNCTION__, sprintf(
                                     'Rollladen wurde manuell bewegt (Tag: %s). DeactivationTimeManu: %s/%s', date('H:i:s', $tsManualMovement),
-                                    time() - $tsBlindLastMovement, $deactivationTimeManu
+                                    time() - $tsBlindLastMovement, $deactivationTimeManuSecs
                                 )
                 );
             }
