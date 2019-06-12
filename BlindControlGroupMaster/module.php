@@ -273,7 +273,7 @@ class BlindControlGroupMaster extends IPSModule
         foreach ($shutters as $shutter) {
             $ID = $shutter['instanceID'];
             $this->LogMessage(__CLASS__ . '::' . __FUNCTION__ . ': Shutter: ' . $ID, KL_DEBUG);
-            IPS_RequestAction($ID, 'Activated', $active);
+            IPS_RequestAction($ID, 'ACTIVATED', $active);
         }
     }
 }
