@@ -72,10 +72,13 @@
       "Angabe von bis zu zwei Kontakten. Der Rollladen wird sofort geschlossen und auf die gewünschte Maximalhöhe gefahren wenn einer der Kontakte offen ist.",
       "Contact 1 ID": "Kontakt 1 ID",
       "Maximum height when the contact is open": "Maximalhöhe wenn Kontakt offen ist",
+      "Maximum slats position when the contact is open": "Maximale Lamellen Position wenn Kontakt offen ist",
       "Contact 2 ID": "Kontakt 2 ID",
       "Minimum height when the contact is open": "Minimalhöhe wenn Kontakt offen ist",
+      "Minimum slats position when the contact is open": "Minimale Lamellen Position wenn Kontakt offen ist",
       "Define up to two contacts/variables. The blind is opened immediately to the given minimum height if one of the contacts are open.":
       "Angabe von bis zu zwei Kontakten. Der Rollladen wird sofort geöffnet und auf die gewünschte Minimalhöhe gefahren wenn einer der Kontakte offen ist.",
+      "Contacts to close the blind have a higher priority than the ones to open": "Kontakte zum Schließen des Rollladens haben eine höhere Priorität als die zum Öffnen",
       "Emergency Contact (optional)": "Notfall Kontakt (optional)",
       "Emergency contact ID": "Notfall Kontakt ID",
       "Define an emergency contact. The blind is opened immediately if the contact is open. Additionally the automatic is deactivated.":

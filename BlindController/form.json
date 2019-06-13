@@ -153,13 +153,15 @@
             {
               "type": "RowLayout", "items": [
               {"type": "SelectVariable", "name": "ContactClose1ID", "caption": "Contact 1 ID"},
-              {"type": "NumberSpinner", "name": "ContactCloseLevel1", "caption": "Maximum height when the contact is open", "digits": "2"}
+              {"type": "NumberSpinner", "name": "ContactCloseLevel1", "caption": "Maximum height when the contact is open", "digits": "2"},
+              {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel1", "caption": "Maximum slats position when the contact is open", "digits": "2"}
             ]
             },
             {
               "type": "RowLayout", "items": [
               {"type": "SelectVariable", "name": "ContactClose2ID", "caption": "Contact 2 ID"},
-              {"type": "NumberSpinner", "name": "ContactCloseLevel2", "caption": "Maximum height when the contact is open", "digits": "2"}
+              {"type": "NumberSpinner", "name": "ContactCloseLevel2", "caption": "Maximum height when the contact is open", "digits": "2"},
+              {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel2", "caption": "Maximum slats position when the contact is open", "digits": "2"}
             ]
             }
           ]
@@ -171,17 +173,20 @@
             {
               "type": "RowLayout", "items": [
               {"type": "SelectVariable", "name": "ContactOpen1ID", "caption": "Contact 1 ID"},
-              {"type": "NumberSpinner", "name": "ContactOpenLevel1", "caption": "Minimum height when the contact is open", "digits": "2"}
+              {"type": "NumberSpinner", "name": "ContactOpenLevel1", "caption": "Minimum height when the contact is open", "digits": "2"},
+              {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel1", "caption": "Minimum slats position when the contact is open", "digits": "2"}
             ]
             },
             {
               "type": "RowLayout", "items": [
               {"type": "SelectVariable", "name": "ContactOpen2ID", "caption": "Contact 2 ID"},
-              {"type": "NumberSpinner", "name": "ContactOpenLevel2", "caption": "Minimum height when the contact is open", "digits": "2"}
+              {"type": "NumberSpinner", "name": "ContactOpenLevel2", "caption": "Minimum height when the contact is open", "digits": "2"},
+              {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel2", "caption": "Minimum slats position when the contact is open", "digits": "2"}
             ]
             }
           ]
-        }
+        },
+        {"type": "CheckBox", "name": "ContactsToCloseHaveHigherPriority", "caption": "Contacts to close the blind have a higher priority than the ones to open"}
       ]
     },
     {

@@ -46,9 +46,18 @@ class BlindController extends IPSModule
     private const PROP_SLATSLEVELID = 'SlatsLevelID';
     private const PROP_CONTACTCLOSE1ID = 'ContactClose1ID';
     private const PROP_CONTACTCLOSE2ID = 'ContactClose2ID';
+    private const PROP_CONTACTCLOSELEVEL1 = 'ContactCloseLevel1';
+    private const PROP_CONTACTCLOSELEVEL2 = 'ContactCloseLevel2';
+    private const PROP_CONTACTCLOSESLATSLEVEL1 = 'ContactCloseSlatsLevel1';
+    private const PROP_CONTACTCLOSESLATSLEVEL2 = 'ContactCloseSlatsLevel2';
     private const PROP_CONTACTOPEN1ID = 'ContactOpen1ID';
     private const PROP_CONTACTOPEN2ID = 'ContactOpen2ID';
+    private const PROP_CONTACTOPENLEVEL1 = 'ContactOpenLevel1';
+    private const PROP_CONTACTOPENLEVEL2 = 'ContactOpenLevel2';
+    private const PROP_CONTACTOPENSLATSLEVEL1 = 'ContactOpenSlatsLevel1';
+    private const PROP_CONTACTOPENSLATSLEVEL2 = 'ContactOpenSlatsLevel2';
     private const PROP_EMERGENCYCONTACTID = 'EmergencyContactID';
+    private const PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY = 'ContactsToCloseHaveHigherPriority';
     private const PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION = 'BrightnessIDShadowingBySunPosition';
     private const PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION = 'BrightnessThresholdIDShadowingBySunPosition';
     private const PROP_LOWSUNPOSITIONBLINDLEVEL = 'LowSunPositionBlindLevel';
@@ -136,6 +145,9 @@ class BlindController extends IPSModule
 
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
     {
+
+        parent::MessageSink($TimeStamp, $SenderID, $Message, $Data);
+
         if (json_decode($this->GetBuffer('LastMessage'), true) === [$SenderID, $Message, $Data]) {
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
@@ -279,11 +291,13 @@ class BlindController extends IPSModule
         if ($bNoMove) {
             $positionsNew = $positionsAct;
         } else if ($isDay) {
-            $lastManualMovement = json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true);
+            $lastManualMovement         = json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true);
             $deactivationManualMovement = $this->ReadPropertyInteger('DeactivationManualMovement');
             if (isset ($lastManualMovement['timeStamp'])
-                && (($deactivationManualMovement === 0) ||strtotime('+ ' . $deactivationManualMovement . ' minutes', $lastManualMovement['timeStamp']
-                   ) > time())) {
+                && (($deactivationManualMovement === 0)
+                    || strtotime(
+                           '+ ' . $deactivationManualMovement . ' minutes', $lastManualMovement['timeStamp']
+                       ) > time())) {
                 $positionsNew['BlindLevel'] = $lastManualMovement['level'];
             } else {
                 $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelOpened'];
@@ -379,10 +393,22 @@ class BlindController extends IPSModule
             $deactivationTimeAuto = 0;
         }
 
-        // prüfen, ob ein Kontakt offen ist
-        $levelContactOpenBlind  = $this->getLevelOpenBlindContact();
-        $levelContactCloseBlind = $this->getLevelCloseBlindContact();
-        $levelContactEmergency  = $this->getLevelEmergencyContact();
+        // prüfen, ob der Emergency Kontakt offen ist
+        $levelContactEmergency = $this->getLevelEmergencyContact();
+
+
+        // prüfen, ob ein Kontakt zum Öffnen oder Schließen offen ist
+        $positionsContactOpenBlind  = $this->getPositionsOfOpenBlindContact();
+        $positionsContactCloseBlind = $this->getPositionsOfCloseBlindContact();
+
+        if (($positionsContactOpenBlind !== null) && ($positionsContactCloseBlind !== null)) {
+            //check the priority
+            if ($this->ReadPropertyBoolean(self::PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY)) {
+                $positionsContactOpenBlind = null;
+            } else {
+                $positionsContactCloseBlind = null;
+            }
+        }
 
         if ($levelContactEmergency !== null) {
             // wenn  der Emergency Kontakt geöffnet ist dann
@@ -404,49 +430,69 @@ class BlindController extends IPSModule
             );
 
 
-        } elseif ($levelContactOpenBlind !== null) {
-            // wenn  ein Kontakt geöffnet ist und der Rollladen unter dem ContactOpen Level steht, dann
+        } elseif ($positionsContactOpenBlind !== null) {
+            // wenn  ein Kontakt geöffnet ist und der Rollladen bzw die Lamellen unter dem ContactOpen Level steht, dann
             // wird die Bewegungssperre aufgehoben und das Level auf das Mindestlevel bei geöffnetem Kontakt gesetzt
             $deactivationTimeAuto = 0;
             $bNoMove              = false;
             if ($this->profileBlindLevel['Reversed']) {
-                if ($levelContactOpenBlind > $positionsNew['BlindLevel']) {
-                    $positionsNew['BlindLevel'] = $levelContactOpenBlind;
+                if ($positionsContactOpenBlind['BlindLevel'] > $positionsNew['BlindLevel']) {
+                    $positionsNew['BlindLevel'] = $positionsContactOpenBlind['BlindLevel'];
                     $Hinweis                    = 'Kontakt offen';
                 }
-            } elseif ($levelContactOpenBlind < $positionsNew['BlindLevel']) {
-                $positionsNew['BlindLevel'] = $levelContactOpenBlind;
+            } elseif ($positionsContactOpenBlind['BlindLevel'] < $positionsNew['BlindLevel']) {
+                $positionsNew['BlindLevel'] = $positionsContactOpenBlind['BlindLevel'];
+                $Hinweis                    = 'Kontakt offen';
+            }
+
+            if ($this->profileSlatsLevel['Reversed']) {
+                if ($positionsContactOpenBlind['SlatsLevel'] > $positionsNew['SlatsLevel']) {
+                    $positionsNew['SlatsLevel'] = $positionsContactOpenBlind['SlatsLevel'];
+                    $Hinweis                    = 'Kontakt offen';
+                }
+            } elseif ($positionsContactOpenBlind['SlatsLevel'] < $positionsNew['SlatsLevel']) {
+                $positionsNew['SlatsLevel'] = $positionsContactOpenBlind['SlatsLevel'];
                 $Hinweis                    = 'Kontakt offen';
             }
 
             $this->WriteAttributeBoolean('AttrContactOpen', true);
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
-                                'Kontakt geöffnet (posActBlindLevel: %s, posNewBlindLevel: %s)', $positionsAct['BlindLevel'],
-                                $positionsNew['BlindLevel']
+                                'Kontakt geöffnet (posActBlindLevel: %s, posNewBlindLevel: %s, posActSlatsLevel: %s, posNewSlatsLevel: %s)',
+                                $positionsAct['BlindLevel'], $positionsNew['BlindLevel'], $positionsAct['SlatsLevel'], $positionsNew['SlatsLevel']
                             )
             );
 
-        } elseif ($levelContactCloseBlind !== null) {
-            // wenn  ein Kontakt geöffnet ist und der Rollladen oberhalb dem ContactClose Level steht, dann
+        } elseif ($positionsContactCloseBlind !== null) {
+            // wenn  ein Kontakt geöffnet ist und der Rollladen bzw. die Lamellen oberhalb dem ContactClose Level steht, dann
             // wird die Bewegungssperre aufgehoben und das Level auf das Mindestlevel bei geöffnetem Kontakt gesetzt
             $deactivationTimeAuto = 0;
             $bNoMove              = false;
             if ($this->profileBlindLevel['Reversed']) {
-                if ($levelContactCloseBlind < $positionsNew['BlindLevel']) {
-                    $positionsNew['BlindLevel'] = $levelContactCloseBlind;
+                if ($positionsContactCloseBlind['BlindLevel'] < $positionsNew['BlindLevel']) {
+                    $positionsNew['BlindLevel'] = $positionsContactCloseBlind['BlindLevel'];
                     $Hinweis                    = 'Kontakt offen';
                 }
-            } elseif ($levelContactCloseBlind > $positionsNew['BlindLevel']) {
-                $positionsNew['BlindLevel'] = $levelContactCloseBlind;
+            } elseif ($positionsContactCloseBlind['BlindLevel'] > $positionsNew['BlindLevel']) {
+                $positionsNew['BlindLevel'] = $positionsContactCloseBlind['BlindLevel'];
+                $Hinweis                    = 'Kontakt offen';
+            }
+
+            if ($this->profileSlatsLevel['Reversed']) {
+                if ($positionsContactCloseBlind['SlatsLevel'] < $positionsNew['SlatsLevel']) {
+                    $positionsNew['SlatsLevel'] = $positionsContactCloseBlind['SlatsLevel'];
+                    $Hinweis                    = 'Kontakt offen';
+                }
+            } elseif ($positionsContactCloseBlind['SlatsLevel'] > $positionsNew['SlatsLevel']) {
+                $positionsNew['SlatsLevel'] = $positionsContactCloseBlind['SlatsLevel'];
                 $Hinweis                    = 'Kontakt offen';
             }
 
             $this->WriteAttributeBoolean('AttrContactOpen', true);
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
-                                'Kontakt geöffnet (posActBlindLevel: %s, posNewBlindLevel: %s)', $positionsAct['BlindLevel'],
-                                $positionsNew['BlindLevel']
+                                'Kontakt geöffnet (posActBlindLevel: %s, posNewBlindLevel: %s, posActSlatsLevel: %s, posNewSlatsLevel: %s)',
+                                $positionsAct['BlindLevel'], $positionsNew['BlindLevel'], $positionsAct['SlatsLevel'], $positionsNew['SlatsLevel']
                             )
             );
 
@@ -516,15 +562,22 @@ class BlindController extends IPSModule
         //contacts open
         $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN1ID, 0);
         $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN2ID, 0);
-        $this->RegisterPropertyFloat('ContactOpenLevel1', 0);
-        $this->RegisterPropertyFloat('ContactOpenLevel2', 0);
-        $this->RegisterPropertyInteger(self::PROP_EMERGENCYCONTACTID, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTOPENLEVEL1, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTOPENLEVEL2, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTOPENSLATSLEVEL1, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTOPENSLATSLEVEL2, 0);
 
         //contacts close
         $this->RegisterPropertyInteger(self::PROP_CONTACTCLOSE1ID, 0);
         $this->RegisterPropertyInteger(self::PROP_CONTACTCLOSE2ID, 0);
-        $this->RegisterPropertyFloat('ContactCloseLevel1', 0);
-        $this->RegisterPropertyFloat('ContactCloseLevel2', 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSELEVEL1, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSELEVEL2, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSESLATSLEVEL1, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSESLATSLEVEL2, 0);
+        $this->RegisterPropertyBoolean(self::PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY, false);
+
+        //emergency contact
+        $this->RegisterPropertyInteger(self::PROP_EMERGENCYCONTACTID, 0);
 
         //shadowing according to sun position
         $this->RegisterPropertyInteger('ActivatorIDShadowingBySunPosition', 0);
@@ -870,16 +923,17 @@ class BlindController extends IPSModule
         if ($this->profileBlindLevel !== null) {
             foreach ([
                 self::PROP_NIGHTBLINDLEVEL,
-                'ContactOpenLevel1',
-                'ContactOpenLevel2',
-                'ContactCloseLevel1',
-                'ContactCloseLevel2',
+                self::PROP_CONTACTOPENLEVEL1,
+                self::PROP_CONTACTOPENLEVEL2,
+                self::PROP_CONTACTCLOSELEVEL1,
+                self::PROP_CONTACTCLOSELEVEL2,
                 self::PROP_LOWSUNPOSITIONBLINDLEVEL,
                 self::PROP_HIGHSUNPOSITIONBLINDLEVEL,
                 self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
                 self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
                 self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
                 self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS] as $propertyBlindLevel) {
+
                 if ($ret = $this->checkRangeFloat(
                     $propertyBlindLevel, $this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'],
                     self::STATUS_INST_BLINDLEVEL_IS_OUT_OF_RANGE
@@ -892,10 +946,15 @@ class BlindController extends IPSModule
 
         if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
             $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
-            if ($this->profileBlindLevel !== null) {
+            if ($this->profileSlatsLevel !== null) {
                 foreach ([
                     self::PROP_LOWSUNPOSITIONSLATSLEVEL,
-                    self::PROP_HIGHSUNPOSITIONSLATSLEVEL] as $propertySlatsLevel) {
+                    self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
+                    self::PROP_CONTACTCLOSESLATSLEVEL1,
+                    self::PROP_CONTACTCLOSESLATSLEVEL2,
+                    self::PROP_CONTACTOPENSLATSLEVEL1,
+                    self::PROP_CONTACTOPENSLATSLEVEL2] as $propertySlatsLevel) {
+
                     if ($ret = $this->checkRangeFloat(
                         $propertySlatsLevel, $this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'],
                         self::STATUS_INST_SLATSLEVEL_IS_OUT_OF_RANGE
@@ -1037,92 +1096,113 @@ class BlindController extends IPSModule
         return false;
     }
 
-    private function getLevelOpenBlindContact(): ?float
+    private function getPositionsOfOpenBlindContact(): ?array
     {
         $contacts = [];
 
         if ($this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID) !== 0) {
             $contacts[self::PROP_CONTACTOPEN1ID] = [
-                'id'    => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID),
-                'level' => $this->ReadPropertyFloat('ContactOpenLevel1')];
+                'id'         => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID),
+                'blindlevel' => $this->ReadPropertyFloat(self::PROP_CONTACTOPENLEVEL1),
+                'slatslevel' => $this->ReadPropertyFloat(self::PROP_CONTACTOPENSLATSLEVEL1)];
         }
         if ($this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID) !== 0) {
             $contacts[self::PROP_CONTACTOPEN2ID] = [
-                'id'    => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID),
-                'level' => $this->ReadPropertyFloat('ContactOpenLevel2')];
+                'id'         => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID),
+                'blindlevel' => $this->ReadPropertyFloat(self::PROP_CONTACTOPENLEVEL2),
+                'slatslevel' => $this->ReadPropertyFloat(self::PROP_CONTACTOPENSLATSLEVEL2)];
         }
 
         // alle Kontakte prüfen ...
-        $contactOpen = null;
-        $level       = null;
+        $contactOpen    = null;
+        $blindPositions = null;
+
         foreach ($contacts as $propName => $contact) {
             if ($this->isContactOpen($propName)) {
                 $contactOpen = true;
-                if (isset($level)) {
+                if (isset($blindPositions)) {
                     if ($this->profileBlindLevel['Reversed']) {
-                        $level = max($level, $contact['level']);
+                        $blindPositions['BlindLevel'] = max($blindPositions['BlindLevel'], $contact['blindlevel']);
                     } else {
-                        $level = min($level, $contact['level']);
+                        $blindPositions['BlindLevel'] = min($blindPositions['BlindLevel'], $contact['blindlevel']);
+                    }
+                    if ($this->profileSlatsLevel['Reversed']) {
+                        $blindPositions['SlatsLevel'] = max($blindPositions['SlatsLevel'], $contact['slatslevel']);
+                    } else {
+                        $blindPositions['SlatsLevel'] = min($blindPositions['SlatsLevel'], $contact['slatslevel']);
                     }
                 } else {
-                    $level = $contact['level'];
+                    $blindPositions['BlindLevel'] = $contact['blindlevel'];
+                    $blindPositions['SlatsLevel'] = $contact['slatslevel'];
                 }
+
                 $this->Logger_Dbg(
                     __FUNCTION__, sprintf(
-                                    'contact is open: #%s, value: %s, level: %s', $contact['id'], @GetValueFormatted($contact['id']),
-                                    $contact['level']
+                                    'contact is open: #%s, value: %s, blindlevel: %s, slatslevel: %s', $contact['id'],
+                                    $this->GetFormattedValue($contact['id']), $contact['blindlevel'], $contact['slatslevel']
                                 )
                 );
             }
         }
 
         if ($contactOpen) {
-            return $level;
+            return $blindPositions;
         }
 
         return null;
     }
 
-    private function getLevelCloseBlindContact(): ?float
+    private function getPositionsOfCloseBlindContact(): ?array
     {
         $contacts = [];
 
         if ($this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID) !== 0) {
             $contacts[self::PROP_CONTACTCLOSE1ID] = [
-                'id'    => $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID),
-                'level' => $this->ReadPropertyFloat('ContactCloseLevel1')];
+                'id'         => $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID),
+                'blindlevel' => $this->ReadPropertyFloat(self::PROP_CONTACTCLOSELEVEL1),
+                'slatslevel' => $this->ReadPropertyFloat(self::PROP_CONTACTCLOSESLATSLEVEL1)];
         }
         if ($this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID) !== 0) {
             $contacts[self::PROP_CONTACTCLOSE2ID] = [
-                'id'    => $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
-                'level' => $this->ReadPropertyFloat('ContactCloseLevel2')];
+                'id'         => $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
+                'blindlevel' => $this->ReadPropertyFloat(self::PROP_CONTACTCLOSELEVEL2),
+                'slatslevel' => $this->ReadPropertyFloat(self::PROP_CONTACTCLOSESLATSLEVEL2)];
         }
 
         // alle Kontakte prüfen ...
-        $contactOpen = null;
-        $level       = null;
+        $contactOpen    = null;
+        $blindPositions = null;
+
         foreach ($contacts as $propName => $contact) {
             if ($this->isContactOpen($propName)) {
                 $contactOpen = true;
-                if (isset($level)) {
+                if (isset($blindPositions)) {
                     if ($this->profileBlindLevel['Reversed']) {
-                        $level = min($level, $contact['level']);
+                        $blindPositions['BlindLevel'] = min($blindPositions['BlindLevel'], $contact['blindlevel']);
                     } else {
-                        $level = max($level, $contact['level']);
+                        $blindPositions['BlindLevel'] = max($blindPositions['BlindLevel'], $contact['blindlevel']);
+                    }
+                    if ($this->profileSlatsLevel['Reversed']) {
+                        $blindPositions['SlatsLevel'] = min($blindPositions['SlatsLevel'], $contact['slatslevel']);
+                    } else {
+                        $blindPositions['SlatsLevel'] = max($blindPositions['SlatsLevel'], $contact['slatslevel']);
                     }
                 } else {
-                    $level = $contact['level'];
+                    $blindPositions['BlindLevel'] = $contact['blindlevel'];
+                    $blindPositions['SlatsLevel'] = $contact['slatslevel'];
                 }
 
                 $this->Logger_Dbg(
-                    __FUNCTION__,
-                    sprintf('contact is open: #%s, value: %s, level: %s', $contact['id'], $this->GetFormattedValue($contact['id']), $contact['level'])
+                    __FUNCTION__, sprintf(
+                                    'contact is open: #%s, value: %s, blindlevel: %s, slatslevel: %s', $contact['id'],
+                                    $this->GetFormattedValue($contact['id']), $contact['blindlevel'], $contact['slatslevel']
+                                )
                 );
             }
         }
 
         if ($contactOpen) {
-            return $level;
+            return $blindPositions;
         }
 
         return null;
@@ -1485,7 +1565,8 @@ class BlindController extends IPSModule
             if ($levelAct === $blindLevelClosed) {
                 $bNoMove = true;
             } else {
-                $bNoMove = ($deactivationTimeManuSecs === 0) || (strtotime('+ ' . $deactivationTimeManuSecs . ' seconds', $tsManualMovement) > time());
+                $bNoMove =
+                    ($deactivationTimeManuSecs === 0) || (strtotime('+ ' . $deactivationTimeManuSecs . ' seconds', $tsManualMovement) > time());
             }
 
             if ($bNoMove) {

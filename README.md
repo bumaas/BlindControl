@@ -225,6 +225,11 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | DayEndID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein|
 | ContactOpen1ID, ContactOpen2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Mindesthöhe gefahren
 | ContactOpenLevel1, ContactOpenLevel2           | float   | 0 | Höhe, auf die der Rollladen mindestens gefahren wird, wenn der zugehörige Kontakt offen ist.
+| ContactOpenSlatsLevel1, ContactOpenSlatsLevel2           | float   | 0 | Position, auf die die Lamellen mindestens gefahren werden, wenn der zugehörige Kontakt offen ist.
+| ContactClose1ID, ContactClose2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactCloseLevel' angegebene Maximalhöhe gefahren
+| ContactCloseLevel1, ContactCloseLevel2           | float   | 0 | Höhe, auf die der Rollladen maximal gefahren wird, wenn der zugehörige Kontakt offen ist.
+| ContactCloseSlatsLevel1, ContactCloseSlatsLevel2           | float   | 0 | Position, auf die die Lamellen maximal gefahren werden, wenn der zugehörige Kontakt offen ist.
+| ContactsToCloseHaveHigherPriority   | boolean   | false | legt fest, ob die Kontakte zum Schließen eines Rollladens eine höhere Priorität als die zum Öffnen haben sollen.
 | EmergencyContactID        | integer   | 0 | Notfall Indikator: wenn der Kontakt ungleich 0 ist, wird der Rollladen sofort geöffnet. Gleichzeitig wird die Automatik außer Betrieb genommen.
 | ActivatorIDShadowingBySunPosition | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Sonnenstand aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
 | AzimuthID| integer   | 0 | Indikatorvariable, die den aktuellen Sonnenstand (Richtung) wiedergibt.  
