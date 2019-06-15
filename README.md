@@ -236,6 +236,8 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | AltitudeID      | integer   | 0 | Indikatorvariable, die den aktuellen Sonnenstand (Höhe) wiedergibt.
 | AzimuthFrom      | integer   | 0 | Angabe, ab welcher Sonnenrichtung die Beschattungssteuerung aktiv sein soll
 | AzimuthTo      | integer   | 0 | Angabe, bis zu welcher Sonnenrichtung die Beschattungssteuerung aktiv sein soll
+| AltitudeFrom      | integer   | 0 | Angabe, ab welcher Sonnenhöhe die Beschattungssteuerung aktiv sein soll
+| AltitudeTo      | integer   | 0 | Angabe, bis zu welcher Sonnenhöhe die Beschattungssteuerung aktiv sein soll
 | BrightnessIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable, die die Helligkeit zur Beschattung nach Sonnenposition angibt
 | BrightnessAvgMinutesShadowingBySunPosition      | integer   | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll 
 | BrightnessThresholdIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable, die den Schwellwert zur Beschattung nach Sonnenposition zur Verfügung stellt

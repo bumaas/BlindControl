@@ -58,6 +58,12 @@ class BlindController extends IPSModule
     private const PROP_CONTACTOPENSLATSLEVEL2 = 'ContactOpenSlatsLevel2';
     private const PROP_EMERGENCYCONTACTID = 'EmergencyContactID';
     private const PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY = 'ContactsToCloseHaveHigherPriority';
+    private const PROP_AZIMUTHID = 'AzimuthID';
+    private const PROP_ALTITUDEID = 'AltitudeID';
+    private const PROP_AZIMUTHFROM = 'AzimuthFrom';
+    private const PROP_AZIMUTHTO = 'AzimuthTo';
+    private const PROP_ALTITUDEFROM = 'AltitudeFrom';
+    private const PROP_ALTITUDETO = 'AltitudeTo';
     private const PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION = 'BrightnessIDShadowingBySunPosition';
     private const PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION = 'BrightnessThresholdIDShadowingBySunPosition';
     private const PROP_LOWSUNPOSITIONBLINDLEVEL = 'LowSunPositionBlindLevel';
@@ -581,10 +587,12 @@ class BlindController extends IPSModule
 
         //shadowing according to sun position
         $this->RegisterPropertyInteger('ActivatorIDShadowingBySunPosition', 0);
-        $this->RegisterPropertyInteger('AzimuthID', 0);
-        $this->RegisterPropertyInteger('AltitudeID', 0);
-        $this->RegisterPropertyFloat('AzimuthFrom', 0);
-        $this->RegisterPropertyFloat('AzimuthTo', 0);
+        $this->RegisterPropertyInteger(self::PROP_AZIMUTHID, 0);
+        $this->RegisterPropertyInteger(self::PROP_ALTITUDEID, 0);
+        $this->RegisterPropertyFloat(self::PROP_AZIMUTHFROM, 0);
+        $this->RegisterPropertyFloat(self::PROP_AZIMUTHTO, 360);
+        $this->RegisterPropertyFloat(self::PROP_ALTITUDEFROM, 0);
+        $this->RegisterPropertyFloat(self::PROP_ALTITUDETO, 90);
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION, 0);
         $this->RegisterPropertyInteger('BrightnessAvgMinutesShadowingBySunPosition', 0);
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION, 0);
@@ -640,8 +648,8 @@ class BlindController extends IPSModule
             $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
 
             $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition'),
-            $this->ReadPropertyInteger('AzimuthID'),
-            $this->ReadPropertyInteger('AltitudeID'),
+            $this->ReadPropertyInteger(self::PROP_AZIMUTHID),
+            $this->ReadPropertyInteger(self::PROP_ALTITUDEID),
             $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION),
             $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION),
             $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition'),
@@ -676,8 +684,8 @@ class BlindController extends IPSModule
             self::PROP_CONTACTOPEN2ID                              => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID),
             self::PROP_EMERGENCYCONTACTID                          => $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
             'ActivatorIDShadowingBySunPosition'                    => $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition'),
-            'AzimuthID'                                            => $this->ReadPropertyInteger('AzimuthID'),
-            'AltitudeID'                                           => $this->ReadPropertyInteger('AltitudeID'),
+            self::PROP_AZIMUTHID                                            => $this->ReadPropertyInteger(self::PROP_AZIMUTHID),
+            self::PROP_ALTITUDEID                                           => $this->ReadPropertyInteger(self::PROP_ALTITUDEID),
             self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION          => $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION),
             self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION => $this->ReadPropertyInteger(
                 self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION
@@ -851,7 +859,7 @@ class BlindController extends IPSModule
         }
 
         if ($ret = $this->checkVariableId(
-            'AzimuthID', $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0, [VARIABLETYPE_FLOAT],
+            self::PROP_AZIMUTHID, $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0, [VARIABLETYPE_FLOAT],
             self::STATUS_INST_AZIMUTHID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -859,7 +867,7 @@ class BlindController extends IPSModule
         }
 
         if ($ret = $this->checkVariableId(
-            'AltitudeID', $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0, [VARIABLETYPE_FLOAT],
+            self::PROP_ALTITUDEID, $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0, [VARIABLETYPE_FLOAT],
             self::STATUS_INST_ALTITUDEID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1294,20 +1302,24 @@ class BlindController extends IPSModule
             $thresholdBrightness = 0;
         }
 
-        $rSunAzimuth = GetValueFloat($this->ReadPropertyInteger('AzimuthID'));
-        $azimuthFrom = $this->ReadPropertyFloat('AzimuthFrom');
-        $azimuthTo   = $this->ReadPropertyFloat('AzimuthTo');
+        $rSunAzimuth = GetValueFloat($this->ReadPropertyInteger(self::PROP_AZIMUTHID));
+        $azimuthFrom = $this->ReadPropertyFloat(self::PROP_AZIMUTHFROM);
+        $azimuthTo   = $this->ReadPropertyFloat(self::PROP_AZIMUTHTO);
+
+        $rSunAltitude = GetValueFloat($this->ReadPropertyInteger(self::PROP_ALTITUDEID));
+        $altitudeFrom = $this->ReadPropertyFloat(self::PROP_ALTITUDEFROM);
+        $altitudeTo   = $this->ReadPropertyFloat(self::PROP_ALTITUDETO);
 
         /** @noinspection ProperNullCoalescingOperatorUsageInspection */
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'active: %d, brightness: %.1f/%.1f, azimuth: %.1f (%.1f - %.1f), temperature: %s', (int) GetValue($activatorID),
-                            $brightness, $thresholdBrightness, $rSunAzimuth, $azimuthFrom, $azimuthTo, $temperature ?? 'null'
+                            'active: %d, brightness: %.1f/%.1f, azimuth: %.1f (%.1f - %.1f), altitude: %.1f (%.1f - %.1f), temperature: %s', (int) GetValue($activatorID),
+                            $brightness, $thresholdBrightness, $rSunAzimuth, $azimuthFrom, $azimuthTo, $rSunAltitude, $altitudeFrom, $altitudeTo, $temperature ?? 'null'
                         )
         );
 
         $positions = null;
-        if (($brightness >= $thresholdBrightness) && ($rSunAzimuth >= $azimuthFrom) && ($rSunAzimuth <= $azimuthTo)) {
+        if (($brightness >= $thresholdBrightness) && ($rSunAzimuth >= $azimuthFrom) && ($rSunAzimuth <= $azimuthTo) && ($rSunAltitude >= $altitudeFrom) && ($rSunAltitude <= $altitudeTo)) {
 
             $positions = $this->getBlindPositionsFromSunPosition();
 

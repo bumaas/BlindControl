@@ -76,11 +76,17 @@
         {"type": "Label", "caption": "Define the sun position indicators"},
         {"type": "SelectVariable", "name": "AzimuthID", "caption": "Azimuth ID"},
         {"type": "SelectVariable", "name": "AltitudeID", "caption": "Altitude ID"},
-        {"type": "Label", "caption": "Define the range of azimuth for shadowing:"},
+        {"type": "Label", "caption": "Define the range of azimuth and altitude for shadowing:"},
         {
           "type": "RowLayout", "items": [
           {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1"},
           {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1"}
+        ]
+        },
+        {
+          "type": "RowLayout", "items": [
+          {"type": "NumberSpinner", "name": "AltitudeFrom", "caption": "From Altitude", "digits": "1"},
+          {"type": "NumberSpinner", "name": "AltitudeTo", "caption": "To Altitude", "digits": "1"}
         ]
         },
         {"type": "Label", "caption": "Define a brightness sensor and a threshold if the brightness should be considered"},
