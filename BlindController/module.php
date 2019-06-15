@@ -114,7 +114,7 @@ class BlindController extends IPSModule
     {
 
         /** @noinspection DegradedSwitchInspection */
-        switch (strtoupper($Ident)) {
+        switch ($Ident) {
             case 'ACTIVATED':
                 if ($Value) {
                     //reset manual movement
@@ -1486,35 +1486,39 @@ class BlindController extends IPSModule
         }
 
 
-        $positions               = null;
-        $brightness              = $this->GetBrightness('BrightnessIDShadowingBrightness', 'BrightnessAvgMinutesShadowingBrightness', $levelAct);
-        $thresholdLessBrightness = GetValue($thresholdIDHighBrightness);
+        $positions  = null;
+        $brightness = $this->GetBrightness('BrightnessIDShadowingBrightness', 'BrightnessAvgMinutesShadowingBrightness', $levelAct);
 
-        if (($thresholdIDHighBrightness > 0) && ($brightness > $thresholdLessBrightness)) {
-            $positions['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS);
-            $positions['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS);
-            $this->Logger_Dbg(
-                __FUNCTION__, sprintf(
-                                'Beschattung bei hoher Helligkeit (%s/%s): BlindLevel: %s, SlatsLevel: %s', $brightness, $thresholdLessBrightness,
-                                $positions['BlindLevel'], $positions['SlatsLevel']
-                            )
-            );
-            return $positions;
+        if ($thresholdIDHighBrightness > 0) {
+            $thresholdLessBrightness = GetValue($thresholdIDHighBrightness);
+            if ($brightness > $thresholdLessBrightness) {
+                $positions['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS);
+                $positions['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS);
+                $this->Logger_Dbg(
+                    __FUNCTION__, sprintf(
+                                    'Beschattung bei hoher Helligkeit (%s/%s): BlindLevel: %s, SlatsLevel: %s', $brightness, $thresholdLessBrightness,
+                                    $positions['BlindLevel'], $positions['SlatsLevel']
+                                )
+                );
+                return $positions;
+            }
         }
 
-        $thresholdBrightness = GetValue($thresholdIDLessBrightness);
-        if (($thresholdIDLessBrightness > 0) && ($brightness > $thresholdBrightness)) {
-            $positions['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS);
-            $positions['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS);
-            $this->Logger_Dbg(
-                __FUNCTION__, sprintf(
-                                'Beschattung bei niedriger Helligkeit (%s/%s): BlindLevel: %s, SlatsLevel: %s', $brightness, $thresholdBrightness,
-                                $positions['BlindLevel'], $positions['SlatsLevel']
-                            )
-            );
-            return $positions;
-        }
+        if ($thresholdIDLessBrightness > 0) {
+            $thresholdBrightness = GetValue($thresholdIDLessBrightness);
+            if ($brightness > $thresholdBrightness) {
+                $positions['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS);
+                $positions['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS);
+                $this->Logger_Dbg(
+                    __FUNCTION__, sprintf(
+                                    'Beschattung bei niedriger Helligkeit (%s/%s): BlindLevel: %s, SlatsLevel: %s', $brightness, $thresholdBrightness,
+                                    $positions['BlindLevel'], $positions['SlatsLevel']
+                                )
+                );
 
+                return $positions;
+            }
+        }
         return null;
     }
 
@@ -1721,7 +1725,9 @@ class BlindController extends IPSModule
             $this->Logger_Dbg(__FUNCTION__, sprintf('#%s: No Movement! Position %s already reached.', $positionID, $positionAct));
 
         } elseif ($positionDiffPercentage <= 0.05) {
-            $this->Logger_Dbg(__FUNCTION__, sprintf('#%s: No Movement! Movement less than 5 percent (%.2f).', $positionID, $positionDiffPercentage));
+            $this->Logger_Dbg(
+                __FUNCTION__, sprintf('#%s: No Movement! Movement less than 5 percent (%.2f).', $positionID, $positionDiffPercentage)
+            );
         } else {
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
