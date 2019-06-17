@@ -39,11 +39,20 @@
             {"type": "NumberSpinner", "name": "BedTimeOffset", "caption": "Bedtime Offset", "suffix": "Minutes"}
           ]
         },
-        {"type": "Label", "caption": "If the blind is not to be completely closed, a night position can be specified."},
+        {"type": "Label", "caption": "If the blind is not to be completely closed at night, a different close position can be specified."},
         {
           "type": "RowLayout", "items": [
-          {"type": "NumberSpinner", "name": "NightBlindLevel", "caption": "Night Blind Level", "digits": "2"},
-          {"type": "NumberSpinner", "name": "NightSlatsLevel", "caption": "Night Slats Level", "digits": "2"}
+          {"type": "CheckBox", "name": "ActivatedIndividualNightLevels"},
+          {"type": "NumberSpinner", "name": "NightBlindLevel", "caption": "Blind Level", "digits": "2"},
+          {"type": "NumberSpinner", "name": "NightSlatsLevel", "caption": "Slats Level", "digits": "2"}
+        ]
+        },
+        {"type": "Label", "caption": "If the blind is not to be completely opened at day, a different open position can be specified."},
+        {
+          "type": "RowLayout", "items": [
+          {"type": "CheckBox", "name": "ActivatedIndividualDayLevels"},
+          {"type": "NumberSpinner", "name": "DayBlindLevel", "caption": "Blind Level", "digits": "2"},
+          {"type": "NumberSpinner", "name": "DaySlatsLevel", "caption": "Slats Level", "digits": "2"}
         ]
         }
       ]
@@ -255,6 +264,10 @@
     {"code": 233, "icon": "error", "caption": "Shadowing according to brightness: Threshold low brightness ID is not valid"},
     {"code": 234, "icon": "error", "caption": "A given Blind Level is out of range"},
     {"code": 235, "icon": "error", "caption": "A given Slats Position is out of range"},
-    {"code": 236, "icon": "error", "caption": "Slats Level ID is not valid"}
+    {"code": 236, "icon": "error", "caption": "Slats Level ID is not valid"},
+    {"code": 237, "icon": "error", "caption": "Blind Level variable without profile"},
+    {"code": 238, "icon": "error", "caption": "Profile of Blind Level variable has wrong min/max values"},
+    {"code": 239, "icon": "error", "caption": "Profile of Slats Level variable has wrong min/max values"},
+    {"code": 240, "icon": "error", "caption": "Slats Level variable without profile"}
   ]
 }

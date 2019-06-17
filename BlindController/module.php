@@ -40,6 +40,10 @@ class BlindController extends IPSModule
     private const STATUS_INST_BLINDLEVEL_IS_OUT_OF_RANGE = 234;
     private const STATUS_INST_SLATSLEVEL_IS_OUT_OF_RANGE = 235;
     private const STATUS_INST_SLATSLEVEL_ID_IS_INVALID = 236;
+    private const STATUS_INST_BLINDLEVEL_ID_PROFILE_NOT_SET = 237;
+    private const STATUS_INST_BLINDLEVEL_ID_PROFILE_MIN_MAX_INVALID = 238;
+    private const STATUS_INST_SLATSLEVEL_ID_PROFILE_MIN_MAX_INVALID = 239;
+    private const STATUS_INST_SLATSLEVEL_ID_PROFILE_NOT_SET = 240;
 
     //property names
     private const PROP_BLINDLEVELID = 'BlindLevelID';
@@ -70,6 +74,10 @@ class BlindController extends IPSModule
     private const PROP_HIGHSUNPOSITIONBLINDLEVEL = 'HighSunPositionBlindLevel';
     private const PROP_LOWSUNPOSITIONSLATSLEVEL = 'LowSunPositionSlatsLevel';
     private const PROP_HIGHSUNPOSITIONSLATSLEVEL = 'HighSunPositionSlatsLevel';
+    private const PROP_ACTIVATEDINDIVIDUALDAYLEVELS = 'ActivatedIndividualDayLevels';
+    private const PROP_DAYBLINDLEVEL = 'DayBlindLevel';
+    private const PROP_DAYSLATSLEVEL = 'DaySlatsLevel';
+    private const PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS = 'ActivatedIndividualNightLevels';
     private const PROP_NIGHTBLINDLEVEL = 'NightBlindLevel';
     private const PROP_NIGHTSLATSLEVEL = 'NightSlatsLevel';
     private const PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS = 'BlindLevelLessBrightnessShadowingBrightness';
@@ -306,32 +314,30 @@ class BlindController extends IPSModule
                        ) > time())) {
                 $positionsNew['BlindLevel'] = $lastManualMovement['level'];
             } else {
-                $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelOpened'];
+                if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)){
+                    $positionsNew['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_DAYBLINDLEVEL);
+                } else {
+                    $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelOpened'];
+                }
+
             }
-            $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelOpened'];
+            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)){
+                $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelOpened'];
+            } else {
+                $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelOpened'];
+            }
             $Hinweis                    = 'Tag';
-        } else {
-            $nightBlindLevel = $this->ReadPropertyFloat(self::PROP_NIGHTBLINDLEVEL);
-            $nightSlatsLevel = $this->ReadPropertyFloat(self::PROP_NIGHTSLATSLEVEL);
-
-            if ($nightBlindLevel > 0) {
-                $positionsNew['BlindLevel'] = $nightBlindLevel;
-            } else {
-                $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelClosed'];
-            }
-            if ($nightSlatsLevel > 0) {
-                $positionsNew['SlatsLevel'] = $nightSlatsLevel;
-            } else {
-                $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelClosed'];
-            }
-
-            if (($nightBlindLevel > 0) || ($nightSlatsLevel > 0)) {
+        } else { //it is night
+            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)){
+                $positionsNew['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_NIGHTBLINDLEVEL);
+                $positionsNew['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_NIGHTSLATSLEVEL);
                 $Hinweis = 'Nachtposition';
             } else {
+                $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelClosed'];
+                $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelClosed'];
                 $Hinweis = 'Nacht';
             }
-
-        }
+         }
 
 
         if (isset($isDayByDayDetection, $brightness)) {
@@ -552,6 +558,10 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger('WakeUpTimeOffset', 0);
         $this->RegisterPropertyInteger('BedTimeID', 0);
         $this->RegisterPropertyInteger('BedTimeOffset', 0);
+        $this->RegisterPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS, false);
+        $this->RegisterPropertyFloat(self::PROP_DAYBLINDLEVEL, 0);
+        $this->RegisterPropertyFloat(self::PROP_DAYSLATSLEVEL, 0);
+        $this->RegisterPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS, false);
         $this->RegisterPropertyFloat(self::PROP_NIGHTBLINDLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_NIGHTSLATSLEVEL, 0);
 
@@ -684,8 +694,8 @@ class BlindController extends IPSModule
             self::PROP_CONTACTOPEN2ID                              => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID),
             self::PROP_EMERGENCYCONTACTID                          => $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
             'ActivatorIDShadowingBySunPosition'                    => $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition'),
-            self::PROP_AZIMUTHID                                            => $this->ReadPropertyInteger(self::PROP_AZIMUTHID),
-            self::PROP_ALTITUDEID                                           => $this->ReadPropertyInteger(self::PROP_ALTITUDEID),
+            self::PROP_AZIMUTHID                                   => $this->ReadPropertyInteger(self::PROP_AZIMUTHID),
+            self::PROP_ALTITUDEID                                  => $this->ReadPropertyInteger(self::PROP_ALTITUDEID),
             self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION          => $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION),
             self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION => $this->ReadPropertyInteger(
                 self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION
@@ -929,8 +939,8 @@ class BlindController extends IPSModule
 
         $this->profileBlindLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
         if ($this->profileBlindLevel !== null) {
-            foreach ([
-                self::PROP_NIGHTBLINDLEVEL,
+            $propertyBlindLevels = [
+                self::PROP_DAYBLINDLEVEL,
                 self::PROP_CONTACTOPENLEVEL1,
                 self::PROP_CONTACTOPENLEVEL2,
                 self::PROP_CONTACTCLOSELEVEL1,
@@ -940,7 +950,17 @@ class BlindController extends IPSModule
                 self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
                 self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
                 self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
-                self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS] as $propertyBlindLevel) {
+                self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS];
+
+            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)){
+                $propertyBlindLevels[] = self::PROP_DAYBLINDLEVEL;
+            }
+
+            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)){
+                $propertyBlindLevels[] = self::PROP_NIGHTBLINDLEVEL;
+            }
+
+            foreach ($propertyBlindLevels as $propertyBlindLevel) {
 
                 if ($ret = $this->checkRangeFloat(
                     $propertyBlindLevel, $this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'],
@@ -949,19 +969,38 @@ class BlindController extends IPSModule
                     $this->SetStatus($ret);
                     return;
                 }
+
             }
+            if ($this->profileBlindLevel['MinValue'] === $this->profileBlindLevel['MaxValue']) {
+                $this->SetStatus(self::STATUS_INST_BLINDLEVEL_ID_PROFILE_MIN_MAX_INVALID);
+                return;
+            }
+        } else {
+            $this->SetStatus(self::STATUS_INST_BLINDLEVEL_ID_PROFILE_NOT_SET);
+            return;
         }
+
 
         if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
             $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
             if ($this->profileSlatsLevel !== null) {
-                foreach ([
+                $propertySlatsLevels = [
                     self::PROP_LOWSUNPOSITIONSLATSLEVEL,
                     self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
                     self::PROP_CONTACTCLOSESLATSLEVEL1,
                     self::PROP_CONTACTCLOSESLATSLEVEL2,
                     self::PROP_CONTACTOPENSLATSLEVEL1,
-                    self::PROP_CONTACTOPENSLATSLEVEL2] as $propertySlatsLevel) {
+                    self::PROP_CONTACTOPENSLATSLEVEL2];
+
+                if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)){
+                    $propertySlatsLevels[] = self::PROP_DAYSLATSLEVEL;
+                }
+
+                if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)){
+                    $propertySlatsLevels[] = self::PROP_NIGHTSLATSLEVEL;
+                }
+
+                foreach ($propertySlatsLevels as $propertySlatsLevel) {
 
                     if ($ret = $this->checkRangeFloat(
                         $propertySlatsLevel, $this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'],
@@ -971,6 +1010,12 @@ class BlindController extends IPSModule
                         return;
                     }
                 }
+                if ($this->profileSlatsLevel['MinValue'] === $this->profileSlatsLevel['MaxValue']) {
+                    $this->SetStatus(self::STATUS_INST_SLATSLEVEL_ID_PROFILE_MIN_MAX_INVALID);
+                    return;
+                }
+            } else {
+                $this->SetStatus(self::STATUS_INST_SLATSLEVEL_ID_PROFILE_NOT_SET);
             }
         }
 
@@ -1313,13 +1358,16 @@ class BlindController extends IPSModule
         /** @noinspection ProperNullCoalescingOperatorUsageInspection */
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'active: %d, brightness: %.1f/%.1f, azimuth: %.1f (%.1f - %.1f), altitude: %.1f (%.1f - %.1f), temperature: %s', (int) GetValue($activatorID),
-                            $brightness, $thresholdBrightness, $rSunAzimuth, $azimuthFrom, $azimuthTo, $rSunAltitude, $altitudeFrom, $altitudeTo, $temperature ?? 'null'
+                            'active: %d, brightness: %.1f/%.1f, azimuth: %.1f (%.1f - %.1f), altitude: %.1f (%.1f - %.1f), temperature: %s',
+                            (int) GetValue($activatorID), $brightness, $thresholdBrightness, $rSunAzimuth, $azimuthFrom, $azimuthTo, $rSunAltitude,
+                            $altitudeFrom, $altitudeTo, $temperature ?? 'null'
                         )
         );
 
         $positions = null;
-        if (($brightness >= $thresholdBrightness) && ($rSunAzimuth >= $azimuthFrom) && ($rSunAzimuth <= $azimuthTo) && ($rSunAltitude >= $altitudeFrom) && ($rSunAltitude <= $altitudeTo)) {
+        if (($brightness >= $thresholdBrightness) && ($rSunAzimuth >= $azimuthFrom) && ($rSunAzimuth <= $azimuthTo)
+            && ($rSunAltitude >= $altitudeFrom)
+            && ($rSunAltitude <= $altitudeTo)) {
 
             $positions = $this->getBlindPositionsFromSunPosition();
 
