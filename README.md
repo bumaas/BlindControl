@@ -209,6 +209,7 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | :--------- | :-----: | :------------------------| :--------------------------------------- |
 | BlindLevelID               | integer | 0 | Statusvariable, des zu steuernden Rollladens. Sie muss vom Typ Integer oder Float sein und über ein korrektes Profil verfügen. |
 | SlatsLevelID               | integer | 0 | Statusvariable, der  zu steuernden Lamellen einer Jalousie. Sie muss vom Typ Integer oder Float sein und über ein korrektes Profil verfügen. |
+| <br>**Wochenplan**     |  | |  | |
 | WeeklyTimeTableEventID     | integer | 0 | Verweis auf ein Wochenplanevent, dass die täglichen Grundzeiten für Rollladen rauf und Rollladen runter abbildet.       |                  |
 | WakeUpTimeID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Hochfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein|
 | WakeUpTimeOffset               | integer | 0 | Offset zur WakeUpTime in Minuten|
@@ -222,12 +223,37 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | ActivatedIndividualNightLevels           | boolean   | false | aktiviert die individuellen Nacht Positionen
 | NightBlindLevel           | float   | 0 | Höhe, auf die der Rollladen in der Nacht gefahren wird, wenn er geschlossen werden soll
 | NightSlatsLevel           | float   | 0 | Position, auf die die Lamellen in der Nacht gefahren werden, wenn sie geschlossen werden sollen
+| <br>**'Ist es Tag'-Erkennung**     |  | |  | |
 | IsDayIndicatorID           | integer | 0 | Indikatorvariable, die anzeigt, ob es Tag oder Nacht ist. Es kann z.B. die ISDAY Statusvariable des Location Controls genutzt werden.
 | BrightnessID               | integer | 0 | Indikatorvariable, die die Helligkeit zur Tag/Nacht Bestimmung abbildet.  |
 | BrightnessAvgMinutes       | integer | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll  |
 | BrightnessThresholdID      | integer | 0 | Indikatorvariable, die den Schwellwert zur Tag/Nacht Bestimmung zur Verfügung stellt |
 | DayStartID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesanfangszeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und kleiner als '12:00' sein|
 | DayEndID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein|
+| <br>**Beschattung nach Sonnenstand**     |  | |  | |
+| ActivatorIDShadowingBySunPosition | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Sonnenstand aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
+| AzimuthID| integer   | 0 | Indikatorvariable, die den aktuellen Sonnenstand (Richtung) wiedergibt.  
+| AltitudeID      | integer   | 0 | Indikatorvariable, die den aktuellen Sonnenstand (Höhe) wiedergibt.
+| AzimuthFrom      | float   | 0 | Angabe, ab welcher Sonnenrichtung die Beschattungssteuerung aktiv sein soll
+| AzimuthTo      | float   | 0 | Angabe, bis zu welcher Sonnenrichtung die Beschattungssteuerung aktiv sein soll
+| AltitudeFrom      | float   | 0 | Angabe, ab welcher Sonnenhöhe die Beschattungssteuerung aktiv sein soll
+| AltitudeTo      | float   | 0 | Angabe, bis zu welcher Sonnenhöhe die Beschattungssteuerung aktiv sein soll
+| BrightnessIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable, die die Helligkeit zur Beschattung nach Sonnenposition angibt
+| BrightnessAvgMinutesShadowingBySunPosition      | integer   | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll 
+| BrightnessThresholdIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable, die den Schwellwert zur Beschattung nach Sonnenposition zur Verfügung stellt
+| TemperatureIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable die einen Temperatursensor (Außentemperatur) wiedergibt. 
+| LowSunPositionAltitude<br>HighSunPositionAltitude<br>LowSunPositionBlindLevel<br>HighSunPositionBlindLevel | float   | 0 | Aus diesen möglichst weit auseinanderliegenden Wertepaaren wird die Behanghöhe in Abhängigkeit von der Sonnenhöhe errechnet  
+| <br>**Beschattung nach Helligkeit**     |  | |  | |
+| ActivatorIDShadowingBrightness | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Helligkeit aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
+| BrightnessIDShadowingBrightness| integer   | 0 | Indikatorvariable, die die Helligkeit zur Beschattung nach Helligkeit angibt
+| BrightnessAvgMinutesShadowingBrightness| integer   | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt bei der Beschattung nach Helligkeit gebildet werden soll
+| ThresholdIDHighBrightness      | integer   | 0 | Indikatorvariable, die den hohen Helligkeitsschwellwert Zur Steuerung nach Helligkeit zur Verfügung stellt
+| BlindLevelHighBrightnessShadowingBrightness      | float   | 0 | RollladenLevel, der bei erreichen der hohen Helligkeit angefahren werden soll
+| SlatsLevelHighBrightnessShadowingBrightness      | float   | 0 | LamellenLevel, der bei erreichen der hohen Helligkeit angefahren werden soll
+| ThresholdIDLessBrightness      | integer   | 0 | Indikatorvariable, die den niedrigen Helligkeitsschwellwert Zur Steuerung nach Helligkeit zur Verfügung stellt
+| BlindLevelLessBrightnessShadowingBrightness      | float   | 0 | RollladenLevel, der bei erreichen der niedrigeren Helligkeit angefahren werden soll
+| SlatsLevelLessBrightnessShadowingBrightness      | float   | 0 | LamellenLevel, der bei erreichen der niedrigeren Helligkeit angefahren werden soll
+| <br>**Kontakte**     |  | |  | |
 | ContactOpen1ID, ContactOpen2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Mindesthöhe gefahren
 | ContactOpenLevel1, ContactOpenLevel2           | float   | 0 | Höhe, auf die der Rollladen mindestens gefahren wird, wenn der zugehörige Kontakt offen ist.
 | ContactOpenSlatsLevel1, ContactOpenSlatsLevel2           | float   | 0 | Position, auf die die Lamellen mindestens gefahren werden, wenn der zugehörige Kontakt offen ist.
@@ -235,28 +261,9 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
 | ContactCloseLevel1, ContactCloseLevel2           | float   | 0 | Höhe, auf die der Rollladen maximal gefahren wird, wenn der zugehörige Kontakt offen ist.
 | ContactCloseSlatsLevel1, ContactCloseSlatsLevel2           | float   | 0 | Position, auf die die Lamellen maximal gefahren werden, wenn der zugehörige Kontakt offen ist.
 | ContactsToCloseHaveHigherPriority   | boolean   | false | legt fest, ob die Kontakte zum Schließen eines Rollladens eine höhere Priorität als die zum Öffnen haben sollen.
+| <br>**Notfallkontakt**     |  | |  | |
 | EmergencyContactID        | integer   | 0 | Notfall Indikator: wenn der Kontakt ungleich 0 ist, wird der Rollladen sofort geöffnet. Gleichzeitig wird die Automatik außer Betrieb genommen.
-| ActivatorIDShadowingBySunPosition | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Sonnenstand aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
-| AzimuthID| integer   | 0 | Indikatorvariable, die den aktuellen Sonnenstand (Richtung) wiedergibt.  
-| AltitudeID      | integer   | 0 | Indikatorvariable, die den aktuellen Sonnenstand (Höhe) wiedergibt.
-| AzimuthFrom      | integer   | 0 | Angabe, ab welcher Sonnenrichtung die Beschattungssteuerung aktiv sein soll
-| AzimuthTo      | integer   | 0 | Angabe, bis zu welcher Sonnenrichtung die Beschattungssteuerung aktiv sein soll
-| AltitudeFrom      | integer   | 0 | Angabe, ab welcher Sonnenhöhe die Beschattungssteuerung aktiv sein soll
-| AltitudeTo      | integer   | 0 | Angabe, bis zu welcher Sonnenhöhe die Beschattungssteuerung aktiv sein soll
-| BrightnessIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable, die die Helligkeit zur Beschattung nach Sonnenposition angibt
-| BrightnessAvgMinutesShadowingBySunPosition      | integer   | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll 
-| BrightnessThresholdIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable, die den Schwellwert zur Beschattung nach Sonnenposition zur Verfügung stellt
-| TemperatureIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable die einen Temperatursensor (Außentemperatur) wiedergibt. 
-| LowSunPositionAltitude<br>HighSunPositionAltitude<br>LowSunPositionBlindLevel<br>HighSunPositionBlindLevel | integer   | 0 | Aus diesen möglichst weit auseinanderliegenden Wertepaaren wird die Behanghöhe in Abhängigkeit von der Sonnenhöhe errechnet  
-| ActivatorIDShadowingBrightness | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Helligkeit aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
-| BrightnessIDShadowingBrightness| integer   | 0 | Indikatorvariable, die die Helligkeit zur Beschattung nach Helligkeit angibt
-| BrightnessAvgMinutesShadowingBrightness| integer   | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt bei der Beschattung nach Helligkeit gebildet werden soll
-| ThresholdIDHighBrightness      | integer   | 0 | Indikatorvariable, die den hohen Helligkeitsschwellwert Zur Steuerung nach Helligkeit zur Verfügung stellt
-| BlindLevelHighBrightnessShadowingBrightness      | integer   | 0 | RollladenLevel, der bei erreichen der hohen Helligkeit angefahren werden soll
-| SlatsLevelHighBrightnessShadowingBrightness      | integer   | 0 | LamellenLevel, der bei erreichen der hohen Helligkeit angefahren werden soll
-| ThresholdIDLessBrightness      | integer   | 0 | Indikatorvariable, die den niedrigen Helligkeitsschwellwert Zur Steuerung nach Helligkeit zur Verfügung stellt
-| BlindLevelLessBrightnessShadowingBrightness      | integer   | 0 | RollladenLevel, der bei erreichen der niedrigeren Helligkeit angefahren werden soll
-| SlatsLevelLessBrightnessShadowingBrightness      | integer   | 0 | LamellenLevel, der bei erreichen der niedrigeren Helligkeit angefahren werden soll
+| <br>**Experteneinstellungen**     |  | |  | |
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
 | DeactivationAutomaticMovement | integer | 20| legt fest, wie lange am Tag nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird. <br>Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|
 | DeactivationManualMovement | integer | 120  | legt fest, wie lange am Tag nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll. Die Zeit wird nicht berücksichtigt bei Kontakten. <br>Ist kein Wert gesetzt (=0), so gilt die Zeit bis zum nächsten Tag/Nacht Wechsel.|
