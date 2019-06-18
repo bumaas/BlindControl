@@ -99,6 +99,7 @@
       "SlatsLevel: Percentage from 0 (open) to 100 (close)": "Lamellenstellung von 0 (offen) bis 100 (geschlossen)",
       "Move Blind": "Rollladen bewegen",
       "Show Configuration": "Zeige Konfiguration",
+      "Perform control run": "Steuerungslauf durchführen",
       "Weekly Timetable Event ID is not valid":                                       "'Wochenplan ID' ist ungültig",
       "Holiday Indicator ID is not valid":                                            "'Feier-/Urlaubstag ID' ist ungültig",
       "Blind Level ID is not valid":                                                  "'Rollladen Level ID' ist ungültig",
