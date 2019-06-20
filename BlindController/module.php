@@ -314,34 +314,34 @@ class BlindController extends IPSModule
                        ) > time())) {
                 $positionsNew['BlindLevel'] = $lastManualMovement['level'];
             } else {
-                if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)){
+                if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
                     $positionsNew['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_DAYBLINDLEVEL);
                 } else {
                     $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelOpened'];
                 }
 
             }
-            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)){
+            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
                 $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelOpened'];
             } else {
                 $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelOpened'];
             }
-            $Hinweis                    = 'Tag';
+            $Hinweis = 'Tag';
         } else { //it is night
-            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)){
+            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)) {
                 $positionsNew['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_NIGHTBLINDLEVEL);
                 $positionsNew['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_NIGHTSLATSLEVEL);
-                $Hinweis = 'Nachtposition';
+                $Hinweis                    = 'Nachtposition';
             } else {
                 $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelClosed'];
                 $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelClosed'];
-                $Hinweis = 'Nacht';
+                $Hinweis                    = 'Nacht';
             }
-         }
+        }
 
 
         if (isset($isDayByDayDetection, $brightness)) {
-            $Hinweis .= ', ' . @GetValueFormatted($this->ReadPropertyInteger('BrightnessID'));
+            $Hinweis .= ', ' . $this->GetFormattedValue($this->ReadPropertyInteger('BrightnessID'));
         }
 
         $this->Logger_Dbg(
@@ -355,7 +355,7 @@ class BlindController extends IPSModule
         );
 
         // am Tag wird überprüft, ob das Fenster beschattet werden soll
-        if ($isDay) {
+        if ($isDay && !$bNoMove) {
 
             // prüfen, ob Beschattung nach Sonnenstand gewünscht und notwendig
             $positionsShadowingBySunPosition = $this->getPositionsOfShadowingBySunPosition($positionsAct['BlindLevel']);
@@ -376,7 +376,7 @@ class BlindController extends IPSModule
                 }
 
                 $Hinweis =
-                    'Beschattung nach Sonnenstand, ' . @GetValueFormatted($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION));
+                    'Beschattung nach Sonnenstand, ' . $this->GetFormattedValue($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION));
             }
 
             // prüfen, ob Beschattung bei Helligkeit gewünscht und notwendig
@@ -397,7 +397,7 @@ class BlindController extends IPSModule
                     }
                 }
 
-                $Hinweis = 'Beschattung nach Helligkeit, ' . @GetValueFormatted($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
+                $Hinweis = 'Beschattung nach Helligkeit, ' . $this->GetFormattedValue($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
             }
 
         } else {
@@ -952,11 +952,11 @@ class BlindController extends IPSModule
                 self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
                 self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS];
 
-            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)){
+            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
                 $propertyBlindLevels[] = self::PROP_DAYBLINDLEVEL;
             }
 
-            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)){
+            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)) {
                 $propertyBlindLevels[] = self::PROP_NIGHTBLINDLEVEL;
             }
 
@@ -992,11 +992,11 @@ class BlindController extends IPSModule
                     self::PROP_CONTACTOPENSLATSLEVEL1,
                     self::PROP_CONTACTOPENSLATSLEVEL2];
 
-                if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)){
+                if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
                     $propertySlatsLevels[] = self::PROP_DAYSLATSLEVEL;
                 }
 
-                if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)){
+                if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)) {
                     $propertySlatsLevels[] = self::PROP_NIGHTSLATSLEVEL;
                 }
 
@@ -1378,25 +1378,38 @@ class BlindController extends IPSModule
             );
 
 
-            //wenn Wärmeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
-            $levelCorrectionHeat = round(0.15 * ($this->profileBlindLevel['LevelOpened'] - $this->profileBlindLevel['LevelClosed']), 2);
-
-            if (($temperature > 27.0)
-                || ((round($levelAct, 2) === round($positions['BlindLevel'], 2) + $levelCorrectionHeat)
-                    && ($temperature > (27.0 - 0.5)))) {
-                $positions['BlindLevel'] += $levelCorrectionHeat;
-                $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 27°, levelAct: %.2f, level: %.2f', $levelAct, $positions['BlindLevel']));
-            }
-
-            //wenn Hitzeschutz notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
+            //wenn zusätzlicher *Hitzeschutz* notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
             if ($this->profileBlindLevel['Reversed']) {
                 $levelPositionHeat = round(0.10 * ($this->profileBlindLevel['LevelOpened'] - $this->profileBlindLevel['LevelClosed']), 2);
             } else {
-                $levelPositionHeat = round(0.90 * ($this->profileBlindLevel['LevelOpened'] - $this->profileBlindLevel['LevelClosed']), 2);
+                $levelPositionHeat = round(0.90 * ($this->profileBlindLevel['LevelClosed'] - $this->profileBlindLevel['LevelOpened']), 2);
             }
-            if (($temperature > 30.0) || (($levelAct === $levelPositionHeat) && ($temperature > (30.0 - 0.5)))) {
+
+            if (($temperature > 30.0) || ((round($levelAct, 1) === round($levelPositionHeat, 1)) && ($temperature > (30.0 - 0.5)))) {
                 $positions['BlindLevel'] = $levelPositionHeat;
                 $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 30°, levelAct: %.2f, level: %.2f', $levelAct, $positions['BlindLevel']));
+                return $positions;
+            }
+
+
+            //wenn zusätlicher *Wärmeschutz* notwendig oder bereits eingeschaltet und Hysterese nicht unterschritten
+            if ($this->profileBlindLevel['Reversed']) {
+                $levelCorrectionHeat = -round(0.15 * ($this->profileBlindLevel['LevelOpened'] - $this->profileBlindLevel['LevelClosed']), 2);
+            } else {
+                $levelCorrectionHeat = round(0.15 * ($this->profileBlindLevel['LevelClosed'] - $this->profileBlindLevel['LevelOpened']), 2);
+            }
+
+            if (($temperature > 27.0)
+                || ((round($levelAct, 1) === round($positions['BlindLevel'] + $levelCorrectionHeat, 1))
+                    && ($temperature > (27.0 - 0.5)))) {
+                $positions['BlindLevel'] += $levelCorrectionHeat;
+                $this->Logger_Dbg(
+                    __FUNCTION__, sprintf(
+                                    'Temp gt 27°, levelAct: %.2f, level: %.2f, levelCorrectionHeat: %.2f', $levelAct, $positions['BlindLevel'],
+                                    $levelCorrectionHeat
+                                )
+                );
+                return $positions;
             }
 
         }
@@ -1513,13 +1526,16 @@ class BlindController extends IPSModule
 
     private function calcPosition(float $lowPosition, float $highPosition, float $sunAltitude): float
     {
-        $AltitudeLow      = $this->ReadPropertyFloat('LowSunPositionAltitude');
-        $AltitudeHigh     = $this->ReadPropertyFloat('HighSunPositionAltitude');
-        $rAltitudeTanLow  = tan($AltitudeLow * M_PI / 180);
-        $rAltitudeTanHigh = tan($AltitudeHigh * M_PI / 180);
-        $rAltitudeTanAct  = tan($sunAltitude * M_PI / 180);
+        $AltitudeLow  = $this->ReadPropertyFloat('LowSunPositionAltitude');
+        $AltitudeHigh = $this->ReadPropertyFloat('HighSunPositionAltitude');
+        if ($AltitudeLow !== $AltitudeHigh) {
+            $rAltitudeTanLow  = tan($AltitudeLow * M_PI / 180);
+            $rAltitudeTanHigh = tan($AltitudeHigh * M_PI / 180);
+            $rAltitudeTanAct  = tan($sunAltitude * M_PI / 180);
 
-        return $lowPosition + ($highPosition - $lowPosition) * ($rAltitudeTanAct - $rAltitudeTanLow) / ($rAltitudeTanHigh - $rAltitudeTanLow);
+            return $lowPosition + ($highPosition - $lowPosition) * ($rAltitudeTanAct - $rAltitudeTanLow) / ($rAltitudeTanHigh - $rAltitudeTanLow);
+        }
+        return $lowPosition;
     }
 
     private function getPositionsOfShadowingByBrightness(float $levelAct): ?array
