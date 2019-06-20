@@ -375,8 +375,7 @@ class BlindController extends IPSModule
                     }
                 }
 
-                $Hinweis =
-                    'Beschattung nach Sonnenstand, ' . $this->GetFormattedValue($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION));
+                $Hinweis = 'Beschattung nach Sonnenstand';
             }
 
             // prüfen, ob Beschattung bei Helligkeit gewünscht und notwendig
