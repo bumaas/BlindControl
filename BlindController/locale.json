@@ -129,10 +129,10 @@
       "Shadowing according to brightness: Threshold low brightness ID is not valid":  "'Beschattung nach Helligkeit': 'Helligkeitsschwellwert geringere Helligkeit ID' ist ungültig",
       "A given Blind Level is out of range":                                          "Eine angegebene Rollladenposition ist außerhalb des gültigen Bereichs",
       "A given Slats Position is out of range":                                       "Eine angegebene Lamellenposition ist außerhalb des gültigen Bereichs",
-      "Blind Level variable without profile":                                         "Die Rollladen Variable hat kein Profil",
-      "Profile of Blind Level variable has wrong min/max values":                     "Das Profil der Rollladen Level Variable hat falsche Min-/Max-Werte",
-      "Profile of Slats Level variable has wrong min/max values":                     "Das Profil der Lamellen Level Variable hat falsche Min-/Max-Werte",
-      "Slats Level variable without profile":                                         "Die Lamellen Variable hat kein Profil",
+      "Blind Level variable without profile":                                         "Die Rollladen Level Variable hat kein Profil",
+      "Profile of Blind Level variable has wrong min/max values":                     "Das Profil der Rollladen Level Variable hat keine oder falsche Min-/Max-Werte",
+      "Profile of Slats Level variable has wrong min/max values":                     "Das Profil der Lamellen Level Variable hat keine oder falsche Min-/Max-Werte",
+      "Slats Level variable without profile":                                         "Die Lamellen Level Variable hat kein Profil",
       "Finished!": "Fertig!",
       "Error!": "Fehler!"
     }

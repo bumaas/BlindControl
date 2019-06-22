@@ -226,7 +226,6 @@ class BlindControlGroupMaster extends IPSModule
             );
 
             try {
-                var_dump($Value);
                 if (!settype($Value, gettype(IPS_GetProperty($ID, $Property)))) {
                     return false;
                 }

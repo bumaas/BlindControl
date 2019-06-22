@@ -375,7 +375,11 @@ class BlindController extends IPSModule
                     }
                 }
 
-                $Hinweis = 'Beschattung nach Sonnenstand';
+                if ($this->ReadPropertyInteger('BrightnessIDShadowingBrightness') > 0){
+                    $Hinweis = 'Beschattung nach Sonnenstand,' . $this->GetFormattedValue($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
+                } else {
+                    $Hinweis = 'Beschattung nach Sonnenstand';
+                }
             }
 
             // prüfen, ob Beschattung bei Helligkeit gewünscht und notwendig
@@ -1015,6 +1019,7 @@ class BlindController extends IPSModule
                 }
             } else {
                 $this->SetStatus(self::STATUS_INST_SLATSLEVEL_ID_PROFILE_NOT_SET);
+                return;
             }
         }
 
@@ -1078,7 +1083,7 @@ class BlindController extends IPSModule
     {
         $var = IPS_GetVariable($this->ReadPropertyInteger($proName));
 
-        return !(!$var['VariableAction'] && !$var['VariableCustomAction']) || (!$var['VariableCustomProfile'] && !$var['VariableProfile']);
+        return ($var['VariableAction'] || $var['VariableCustomAction']) && ($var['VariableCustomProfile'] || $var['VariableProfile']);
 
     }
 
@@ -2064,7 +2069,7 @@ class BlindController extends IPSModule
             $profileName = $variable['VariableProfile'];
         }
 
-        if ($profileName === null) {
+        if ($profileName === '') {
             return null;
         }
 
