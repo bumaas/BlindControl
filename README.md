@@ -205,6 +205,9 @@ Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des
  
 ### Blind Controller
 
+**Hinweis**: Als Werte sind immer die Originalwerte und nicht die umgerechneten Werte anzugeben. Beispiel: wenn die referierte Levelvariable einen Wertebereich von 0-255 hat, so ist bei allen Properties, die sich auf das Level beziehen, ebenfalls ein Wert von 0-255 anzugeben.
+und nicht ein Wert von 100 für "geschlossen".
+
 | Eigenschaft | Typ     | Standardwert            | Funktion                                  |
 | :--------- | :-----: | :------------------------| :--------------------------------------- |
 | BlindLevelID               | integer | 0 | Statusvariable, des zu steuernden Rollladens. Sie muss vom Typ Integer oder Float sein und über ein korrektes Profil verfügen. |

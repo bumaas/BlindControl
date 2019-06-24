@@ -1628,14 +1628,14 @@ class BlindController extends IPSModule
             );
 
             if ($levelAct === $blindLevelClosed) {
-                $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell geschlossen.', $this->objectName));
+                $this->Logger_Inf(sprintf('\'%s\' wurde manuell geschlossen.', $this->objectName));
             } else if ($levelAct === $blindLevelOpened) {
-                $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell geöffnet.', $this->objectName));
+                $this->Logger_Inf(sprintf('\'%s\' wurde manuell geöffnet.', $this->objectName));
             } else {
                 $levelPercent = ($levelAct - $this->profileBlindLevel['MinValue']) / ($this->profileBlindLevel['MaxValue']
                                                                                       - $this->profileBlindLevel['MinValue']);
 
-                $this->Logger_Inf(sprintf('Der Rollladen \'%s\' wurde manuell auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent));
+                $this->Logger_Inf(sprintf('\'%s\' wurde manuell auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent));
             }
 
         }
@@ -1709,6 +1709,7 @@ class BlindController extends IPSModule
 
         //gibt es Lamellen?
         if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+
             $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
             $retSlatsLevel           = $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClosed, $deactivationTimeAuto, $hint);
             if ($retSlatsLevel !== null) {
@@ -1720,7 +1721,7 @@ class BlindController extends IPSModule
         return ($retBladeLevel !== null);
     }
 
-    private function MoveToPosition(string $propName, float $percentClose, int $deactivationTimeAuto, $hint): ?float
+    private function MoveToPosition(string $propName, int $percentClose, int $deactivationTimeAuto, $hint): ?float
     {
 
         $positionID = $this->ReadPropertyInteger($propName);
@@ -1736,7 +1737,7 @@ class BlindController extends IPSModule
 
         $lastMove = json_decode($this->ReadAttributeString(self::ATTR_LASTMOVE . $propName), true);
 
-        if (((float) $lastMove['percentClose'] === $percentClose) && ($lastMove['timeStamp'] > strtotime('-40 secs'))) {
+        if (((int) $lastMove['percentClose'] === $percentClose) && ($lastMove['timeStamp'] > strtotime('-40 secs'))) {
             //dieselbe Bewegung in den letzten 40 Sekunden
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
@@ -1783,6 +1784,10 @@ class BlindController extends IPSModule
             //Position setzen
             //Wert übertragen
             if (@RequestAction($positionID, $positionNew)) {
+
+                // warten, bis die Zielposition erreicht ist
+                $this->waitUntilBlindLevelIsReached($propName, $percentClose);
+
                 // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
                 $this->WriteAttributeInteger('TimeStampAutomatic' . $propName, time());
                 $this->WriteAttributeString(
@@ -1802,7 +1807,7 @@ class BlindController extends IPSModule
             $this->Logger_Dbg(__FUNCTION__, sprintf('#%s(%s): %s to %s', $positionID, $propName, $positionAct, $positionNew));
 
             // kleine Pause, um Kommunikationsstörungen zu vermeiden
-            sleep(5);
+            sleep(2);
 
         } elseif (!$positionDiffPercentage) {
             $this->Logger_Dbg(__FUNCTION__, sprintf('#%s(%s): No Movement! Position %s already reached.', $positionID, $propName, $positionAct));
@@ -1824,17 +1829,47 @@ class BlindController extends IPSModule
 
     }
 
+    private function waitUntilBlindLevelIsReached(string $propName, int $percentClose)
+    {
+        $levelID = $this->ReadPropertyInteger($propName);
+        if ($levelID === 0) {
+            return;
+        }
+
+        $profile = $this->GetProfileInformation($propName);
+
+        for ($i = 0; $i < 60; $i++) {
+            $percentCloseCurrent = (GetValue($levelID) - $profile['MinValue']) / ($profile['MaxValue'] - $profile['MinValue']) * 100;
+
+            if ($profile['Reversed']) {
+                $percentCloseCurrent = 100 - $percentCloseCurrent;
+            }
+
+            if (abs($percentClose - $percentCloseCurrent) > 5) {
+                set_time_limit(30);
+                sleep(1);
+            } else {
+                $this->Logger_Dbg(
+                    __FUNCTION__, sprintf('#%s(%s): Position reached (%.2f).', $levelID, $propName, $percentClose - $percentCloseCurrent)
+                );
+                return;
+            }
+        }
+        $this->Logger_Inf(sprintf('#%s(%s): Position not reached! (%.2f).', $levelID, $propName, $percentClose - $percentCloseCurrent));
+
+    }
+
     private function WriteInfo(float $rLevelneu, string $hint, bool $isBlind): void
     {
         if ($isBlind) {
             if ($rLevelneu === (float) $this->profileBlindLevel['LevelClosed']) {
-                $logMessage = sprintf('Der Rollladen \'%s\' wurde geschlossen.', $this->objectName);
+                $logMessage = sprintf('\'%s\' wurde geschlossen.', $this->objectName);
             } else if ($rLevelneu === (float) $this->profileBlindLevel['LevelOpened']) {
-                $logMessage = sprintf('Der Rollladen \'%s\' wurde geöffnet.', $this->objectName);
+                $logMessage = sprintf('\'%s\' wurde geöffnet.', $this->objectName);
             } else {
                 $levelPercent = ($rLevelneu - $this->profileBlindLevel['MinValue']) / ($this->profileBlindLevel['MaxValue']
                                                                                        - $this->profileBlindLevel['MinValue']);
-                $logMessage   = sprintf('Der Rollladen \'%s\' wurde auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent);
+                $logMessage   = sprintf('\'%s\' wurde auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent);
             }
         } elseif ($rLevelneu === (float) $this->profileSlatsLevel['LevelClosed']) {
             $logMessage = sprintf('Die Lamellen \'%s\' wurden geschlossen.', $this->objectName);
@@ -2130,7 +2165,7 @@ class BlindController extends IPSModule
         if (($tsAutomaticVariable > $tsBlindLevelChanged) && ($tsAutomaticAttribute !== $tsBlindLevelChanged) && $this->GetValue('ACTIVATED')) {
             // .. dann Timestamp Automatik mit Timestamp des Rollladens gleichsetzen
             $this->WriteAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID, $tsBlindLevelChanged);
-            $this->Logger_Inf(sprintf('Der Rollladen \'%s\' bewegt sich nun wieder automatisch.', $this->objectName));
+            $this->Logger_Inf(sprintf('\'%s\' bewegt sich nun wieder automatisch.', $this->objectName));
         }
         return $tsBlindLevelChanged;
     }
