@@ -1486,13 +1486,9 @@ class BlindController extends IPSModule
         if ($this->profileBlindLevel['Reversed']) {
             if ($levelAct < $this->profileBlindLevel['LevelOpened']) {
                 $thresholdBrightness -= $iBrightnessHysteresis;
-            } else {
-                $thresholdBrightness += $iBrightnessHysteresis;
             }
         } elseif ($levelAct > $this->profileBlindLevel['LevelOpened']) {
             $thresholdBrightness -= $iBrightnessHysteresis;
-        } else {
-            $thresholdBrightness += $iBrightnessHysteresis;
         }
 
         return $thresholdBrightness;

@@ -157,7 +157,7 @@ Er soll aber nur dann hochgefahren werden, wenn es Tag ist und nur dann herunter
 Hierzu kann die Tagerkennung zusätzlich eingerichtet werden. Dann wird (und bleibt) der Rollladen nur dann hochgefahren, wenn beide Bedingungen (Öffnungszeit laut Wochenplan und "es ist Tag") erfüllt sind.
 
 Damit der Tag erkannt wird, kann entweder auf eine bereits bestehenden Variable verwiesen werden (hier bietet sich die 'IsDay' Variable des Location Moduls an) oder durch einen Helligkeitsvergleich erfolgen.
-Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen Helligkeitswert beinhaltet (z.B. von einem Helligkeitssensor) sowie eine Variable, die den Schwellwert beinhaltet. Soll als Helligkeitswert ein Durchschnittswert der letzten Minuten genommen werden,
+Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuelleDeactivationManualMovementn Helligkeitswert beinhaltet (z.B. von einem Helligkeitssensor) sowie eine Variable, die den Schwellwert beinhaltet. Soll als Helligkeitswert ein Durchschnittswert der letzten Minuten genommen werden,
 dann ist die Anzahl der Minuten anzugeben, über die der Durchschnitt gebildet werden soll. Der Durchschnitt wird aus den archivierten Daten gewonnen. Dazu ist es notwendig, dass für die Variable die Archivierung aktiviert ist.
  
  
@@ -269,7 +269,7 @@ und nicht ein Wert von 100 für "geschlossen".
 | <br>**Experteneinstellungen**     |  | |  | |
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
 | DeactivationAutomaticMovement | integer | 20| legt fest, wie lange am Tag nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird. <br>Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|
-| DeactivationManualMovement | integer | 120  | legt fest, wie lange am Tag nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll. Die Zeit wird nicht berücksichtigt bei Kontakten. <br>Ist kein Wert gesetzt (=0), so gilt die Zeit bis zum nächsten Tag/Nacht Wechsel.|
+| DeactivationManualMovement | integer | 120  | legt fest, wie lange am Tag nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll.<br>Ist kein Wert gesetzt (=0), so gilt die Zeit bis zum nächsten Tag/Nacht Wechsel.<br>Ausnahmen: Die Zeit wird nicht berücksichtigt bei Kontakten: hier wird sofort gefahren. Auch wird die Zeit nicht berücksichtigt, wenn ein Rollladen manuell ganz geschlossen wurde: hier bleibt der Rollladen geschlossen.|
 | WriteLogInformationToIPSLogger | boolean | false  | legt fest, ob die Log Informationen zusätzlich zum Standard Logfile auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 | WriteDebugInformationToIPSLogger | boolean | false  | legt fest, ob die Debug Informationen zusätzlich zum Debugger auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 | WriteDebugInformationToLogfile | boolean | false  | legt fest, ob die Debug Informationen zusätzlich in das Standard Logfile geschrieben werden sollen. Wichtig: dazu muss der Symcon Spezialschalter 'LogfileVerbose' aktiviert sein
