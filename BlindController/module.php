@@ -1343,7 +1343,7 @@ class BlindController extends IPSModule
         }
 
 
-        $brightness = $this->GetBrightness(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION, 'BrightnessAvgMinutesShadowingBySunPosition', $levelAct);
+        $brightness = $this->GetBrightness(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION, 'BrightnessAvgMinutesShadowingBySunPosition', $levelAct, true);
         if ($brightness) {
             $thresholdBrightness = $this->getBrightnessThreshold(
                 $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION), $levelAct, $temperature
@@ -1423,7 +1423,7 @@ class BlindController extends IPSModule
 
     }
 
-    private function GetBrightness(string $propBrightnessID, string $propBrightnessAvgMinutes, float $levelAct): ?float
+    private function GetBrightness(string $propBrightnessID, string $propBrightnessAvgMinutes, float $levelAct, bool $shadowing): ?float
     {
         $brightnessID = $this->ReadPropertyInteger($propBrightnessID);
         if ($brightnessID === 0) {
@@ -1443,18 +1443,20 @@ class BlindController extends IPSModule
                 }
                 $brightnessAvg = round($sum / count($werte), 2);
 
-                //aktuellen Helligkeitswert berücksichtigen
-                //prüfen, ob der Rollladen (teilweise) herabgefahren ist. Wenn ja, dann max, sonst min der beiden Helligkeitswerte
-                if ($this->profileBlindLevel['Reversed']) {
-                    if ($levelAct < $this->profileBlindLevel['LevelOpened']) {
+                if ($shadowing){
+                    //aktuellen Helligkeitswert berücksichtigen
+                    //prüfen, ob der Rollladen (teilweise) herabgefahren ist. Wenn ja, dann max, sonst min der beiden Helligkeitswerte
+                    if ($this->profileBlindLevel['Reversed']) {
+                        if ($levelAct < $this->profileBlindLevel['LevelOpened']) {
+                            $brightnessAvg = max($brightnessAvg, $brightness);
+                        } else {
+                            $brightnessAvg = min($brightnessAvg, $brightness);
+                        }
+                    } elseif ($levelAct > $this->profileBlindLevel['LevelOpened']) {
                         $brightnessAvg = max($brightnessAvg, $brightness);
                     } else {
                         $brightnessAvg = min($brightnessAvg, $brightness);
                     }
-                } elseif ($levelAct > $this->profileBlindLevel['LevelOpened']) {
-                    $brightnessAvg = max($brightnessAvg, $brightness);
-                } else {
-                    $brightnessAvg = min($brightnessAvg, $brightness);
                 }
 
                 return $brightnessAvg;
@@ -1564,7 +1566,7 @@ class BlindController extends IPSModule
 
 
         $positions  = null;
-        $brightness = $this->GetBrightness('BrightnessIDShadowingBrightness', 'BrightnessAvgMinutesShadowingBrightness', $levelAct);
+        $brightness = $this->GetBrightness('BrightnessIDShadowingBrightness', 'BrightnessAvgMinutesShadowingBrightness', $levelAct, true);
 
         if ($thresholdIDHighBrightness > 0) {
             $thresholdLessBrightness = GetValue($thresholdIDHighBrightness);
@@ -1945,7 +1947,7 @@ class BlindController extends IPSModule
 
         //optional Values
         if ($this->ReadPropertyInteger('BrightnessID')) {
-            $brightness = $this->GetBrightness('BrightnessID', 'BrightnessAvgMinutes', $levelAct);
+            $brightness = $this->GetBrightness('BrightnessID', 'BrightnessAvgMinutes', $levelAct, false);
         }
 
         $brightnessThresholdID = $this->ReadPropertyInteger('BrightnessThresholdID');
