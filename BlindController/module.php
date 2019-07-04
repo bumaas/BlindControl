@@ -88,6 +88,7 @@ class BlindController extends IPSModule
     //attribute names
     private const ATTR_MANUALMOVEMENT = 'manualMovement';
     private const ATTR_LASTMOVE = 'lastMovement';
+    private const ATTR_TIMESTAMP_AUTOMATIC = 'TimeStampAutomatic';
 
     private $objectName;
 
@@ -132,7 +133,7 @@ class BlindController extends IPSModule
             case 'ACTIVATED':
                 if ($Value) {
                     //reset manual movement
-                    $this->WriteAttributeString(self::ATTR_MANUALMOVEMENT, json_encode(['timeStamp' => null, 'level' => null]));
+                    $this->WriteAttributeString(self::ATTR_MANUALMOVEMENT, json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null]));
                 }
                 break;
 
@@ -247,7 +248,7 @@ class BlindController extends IPSModule
             $this->profileSlatsLevel    = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
             $positionsAct['SlatsLevel'] = (float) GetValue($slatsLevelId);
         } else {
-            $positionsAct['SlatsLevel'] = 0;
+            $positionsAct['SlatsLevel'] = null;
         }
 
         // 'tagsüber' nach Wochenplan ermitteln
@@ -285,10 +286,10 @@ class BlindController extends IPSModule
 
 
         //Zeitpunkt der letzten Rollladenbewegung
-        $tsBlindLastMovement = $this->GetBlindLastTimeStampAndCheckAutomatic($blindLevelId);
+        $tsBlindLastMovement = $this->GetBlindLastTimeStampAndCheckAutomatic($blindLevelId, $slatsLevelId);
 
         // Attribut TimestampAutomatik auslesen
-        $tsAutomatik = $this->ReadAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID);
+        $tsAutomatik = $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
 
         if ($this->checkIsDayChange($isDay)) {
             $deactivationTimeAuto = 0;
@@ -296,8 +297,8 @@ class BlindController extends IPSModule
         } else {
             // prüfen, ob der Rollladen manuell bewegt wurde und somit eine Bewegungssperre besteht
             $bNoMove = $this->isMovementLocked(
-                $positionsAct['BlindLevel'], $tsBlindLastMovement, $isDay, $this->ReadAttributeInteger('AttrTimeStampIsDayChange'), $tsAutomatik,
-                $this->profileBlindLevel['LevelClosed'], $this->profileBlindLevel['LevelOpened']
+                $positionsAct['BlindLevel'], $positionsAct['SlatsLevel'], $tsBlindLastMovement, $isDay, $this->ReadAttributeInteger('AttrTimeStampIsDayChange'), $tsAutomatik,
+                $this->profileBlindLevel['LevelClosed'], $this->profileBlindLevel['LevelOpened'], $this->profileSlatsLevel['LevelClosed'], $this->profileSlatsLevel['LevelOpened']
             );
         }
 
@@ -529,10 +530,10 @@ class BlindController extends IPSModule
                 if ($this->profileSlatsLevel['Reversed']) {
                     $slatsLevel = 1 - $positionsNew['SlatsLevel'];
                 }
+                $this->MoveBlind((int) ($blindLevel * 100), (int) ($slatsLevel * 100), $deactivationTimeAuto, $Hinweis);
             } else {
-                $slatsLevel = 0;
+                $this->MoveBlind((int) ($blindLevel * 100), null, $deactivationTimeAuto, $Hinweis);
             }
-            $this->MoveBlind((int) ($blindLevel * 100), (int) ($slatsLevel * 100), $deactivationTimeAuto, $Hinweis);
         }
 
         //im Notfall wird die Automatik deaktiviert
@@ -737,9 +738,8 @@ class BlindController extends IPSModule
 
     private function RegisterAttributes(): void
     {
-        $this->RegisterAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID, 0);
-        $this->RegisterAttributeInteger('TimeStampAutomatic' . self::PROP_SLATSLEVELID, 0);
-        $this->RegisterAttributeString(self::ATTR_MANUALMOVEMENT, json_encode(['timeStamp' => null, 'level' => null]));
+        $this->RegisterAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, 0);
+        $this->RegisterAttributeString(self::ATTR_MANUALMOVEMENT, json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null]));
         $this->RegisterAttributeInteger('AttrTimeStampIsDayChange', 0);
         $this->RegisterAttributeBoolean('AttrIsDay', false);
         $this->RegisterAttributeBoolean('AttrContactOpen', false);
@@ -1601,8 +1601,8 @@ class BlindController extends IPSModule
         return null;
     }
 
-    private function isMovementLocked($levelAct, int $tsBlindLastMovement, bool $isDay, int $tsIsDayChanged, int $tsAutomatik,
-                                      float $blindLevelClosed, float $blindLevelOpened): bool
+    private function isMovementLocked($blindLevelAct, $slatsLevelAct, int $tsBlindLastMovement, bool $isDay, int $tsIsDayChanged, int $tsAutomatik,
+                                      float $blindLevelClosed, float $blindLevelOpened, ?float $slatsLevelClosed, ?float $slatsLevelOpened): bool
     {
         //zuerst prüfen, ob der Rollladen nach der letzten aut. Bewegung (+60sec) manuell bewegt wurde
         if ($tsBlindLastMovement <= strtotime('+1 minute', $tsAutomatik)) {
@@ -1614,26 +1614,42 @@ class BlindController extends IPSModule
 
         //Zeitpunkt festhalten, sofern noch nicht geschehen
         if ($tsBlindLastMovement !== json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true)['timeStamp']) {
-            $this->WriteAttributeString(self::ATTR_MANUALMOVEMENT, json_encode(['timeStamp' => $tsBlindLastMovement, 'level' => $levelAct]));
+            $this->WriteAttributeString(self::ATTR_MANUALMOVEMENT, json_encode(['timeStamp' => $tsBlindLastMovement, 'blindLevel' => $blindLevelAct, 'slatsLevel' => $slatsLevelAct]));
 
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
-                                'Rollladenlevel wurde manuell gesetzt: %.2f, TimestampAutomatic: %s, TimestampManual: %s, deactivationTimeManuSecs: %s/%s',
-                                $levelAct, $this->FormatTimeStamp($tsAutomatik),
+                                'Rollladen wurde manuell gesetzt. blindLevelAct: %.2f, slatsLevelAct: %.2f, TimestampAutomatic: %s, TimestampManual: %s, deactivationTimeManuSecs: %s/%s',
+                                $blindLevelAct, $slatsLevelAct??'null', $this->FormatTimeStamp($tsAutomatik),
                                 $this->FormatTimeStamp(json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true)['timeStamp']),
                                 time() - $tsBlindLastMovement, $deactivationTimeManuSecs
                             )
             );
 
-            if ($levelAct === $blindLevelClosed) {
-                $this->Logger_Inf(sprintf('\'%s\' wurde manuell geschlossen.', $this->objectName));
-            } else if ($levelAct === $blindLevelOpened) {
-                $this->Logger_Inf(sprintf('\'%s\' wurde manuell geöffnet.', $this->objectName));
-            } else {
-                $levelPercent = ($levelAct - $this->profileBlindLevel['MinValue']) / ($this->profileBlindLevel['MaxValue']
-                                                                                      - $this->profileBlindLevel['MinValue']);
+            if ($slatsLevelAct === null){
+                if ($blindLevelAct === $blindLevelClosed) {
+                    $this->Logger_Inf(sprintf('\'%s\' wurde manuell geschlossen.', $this->objectName));
+                } else if ($blindLevelAct === $blindLevelOpened) {
+                    $this->Logger_Inf(sprintf('\'%s\' wurde manuell geöffnet.', $this->objectName));
+                } else {
+                    $blindLevelPercent = ($blindLevelAct - $this->profileBlindLevel['MinValue']) / ($this->profileBlindLevel['MaxValue']
+                                                                                               - $this->profileBlindLevel['MinValue']);
 
-                $this->Logger_Inf(sprintf('\'%s\' wurde manuell auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent));
+                    $this->Logger_Inf(sprintf('\'%s\' wurde manuell auf %.0f%% gefahren.', $this->objectName, 100 * $blindLevelPercent));
+                }
+            } else {
+                if (($blindLevelAct === $blindLevelClosed) && ($slatsLevelAct ===  $slatsLevelClosed)) {
+                    $this->Logger_Inf(sprintf('\'%s\' wurde manuell geschlossen.', $this->objectName));
+                } else if (($blindLevelAct === $blindLevelOpened) && ($slatsLevelAct ===  $slatsLevelOpened)) {
+                    $this->Logger_Inf(sprintf('\'%s\' wurde manuell geöffnet.', $this->objectName));
+                } else {
+                    $blindLevelPercent = ($blindLevelAct - $this->profileBlindLevel['MinValue']) / ($this->profileBlindLevel['MaxValue']
+                                                                                               - $this->profileBlindLevel['MinValue']);
+                    $slatsLevelPercent = ($slatsLevelAct - $this->profileSlatsLevel['MinValue']) / ($this->profileSlatsLevel['MaxValue']
+                                                                                               - $this->profileSlatsLevel['MinValue']);
+
+                    $this->Logger_Inf(sprintf('\'%s\' wurde manuell auf %.0f%%(Höhe), %.0f%%(Lamellen) gefahren.', $this->objectName, 100 * $blindLevelPercent, 100 * $slatsLevelPercent));
+                }
+
             }
 
         }
@@ -1645,7 +1661,7 @@ class BlindController extends IPSModule
             //tagsüber gilt:
 
             // der Rollladen ist nicht bereits manuell geschlossen worden
-            if ($levelAct === $blindLevelClosed) {
+            if (($blindLevelAct === $blindLevelClosed) && ($slatsLevelAct === $slatsLevelClosed)) {
                 $bNoMove = true;
             } else {
                 $bNoMove =
@@ -1673,7 +1689,7 @@ class BlindController extends IPSModule
     }
 
     //-----------------------------------------------
-    public function MoveBlind(int $percentBlindClose, int $percentSlatsClosed, int $deactivationTimeAuto, string $hint): bool
+    public function MoveBlind(int $percentBlindClose, ?int $percentSlatsClosed, int $deactivationTimeAuto, string $hint): bool
     {
 
         if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
@@ -1683,7 +1699,7 @@ class BlindController extends IPSModule
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
                             'percentBlindClose: %s, percentSlatClose: %s, deactivationTimeAuto: %s, hint: %s', $percentBlindClose,
-                            $percentSlatsClosed, $deactivationTimeAuto, $hint
+                            $percentSlatsClosed ?? 'null', $deactivationTimeAuto, $hint
                         )
         );
 
@@ -1744,7 +1760,7 @@ class BlindController extends IPSModule
                             )
             );
             // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
-            $this->WriteAttributeInteger('TimeStampAutomatic' . $propName, time());
+            $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, time());
             $this->WriteAttributeString(
                 self::ATTR_LASTMOVE . $propName, json_encode(['timeStamp' => time(), 'percentClose' => $percentClose, 'hint' => $hint])
             );
@@ -1765,7 +1781,7 @@ class BlindController extends IPSModule
 
         $positionAct            = GetValue($positionID); //integer and float are supported
         $positionDiffPercentage = abs($positionNew - $positionAct) / ($profile['MaxValue'] - $profile['MinValue']);
-        $timeDiffAuto           = time() - $this->ReadAttributeInteger('TimeStampAutomatic' . $propName);
+        $timeDiffAuto           = time() - $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
 
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
@@ -1787,13 +1803,13 @@ class BlindController extends IPSModule
                 $this->waitUntilBlindLevelIsReached($propName, $percentClose);
 
                 // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
-                $this->WriteAttributeInteger('TimeStampAutomatic' . $propName, time());
+                $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, time());
                 $this->WriteAttributeString(
                     self::ATTR_LASTMOVE . $propName, json_encode(['timeStamp' => time(), 'percentClose' => $percentClose, 'hint' => $hint])
                 );
                 $this->Logger_Dbg(
                     __FUNCTION__, "$this->objectName: TimestampAutomatik: " . $this->FormatTimeStamp(
-                                    $this->ReadAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID)
+                                    $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC)
                                 )
                 );
                 $ret = $positionNew;
@@ -2148,24 +2164,28 @@ class BlindController extends IPSModule
     }
 
     //-----------------------------------------------
-    private function GetBlindLastTimeStampAndCheckAutomatic(int $id_Level): int
+    private function GetBlindLastTimeStampAndCheckAutomatic(int $idBlindLevel, int $idSlatsLevel): int
     {
-        $tsBlindLevelChanged = IPS_GetVariable($id_Level)['VariableChanged'];
+        $tsBlindChanged = IPS_GetVariable($idBlindLevel)['VariableChanged'];
+
+        if ($idSlatsLevel !== 0){
+            $tsBlindChanged = max($tsBlindChanged, IPS_GetVariable($idSlatsLevel)['VariableChanged']);
+        }
 
         //prüfen, ob Automatik nach der letzten Rollladenbewegung eingestellt wurde.
         $tsAutomaticVariable  = IPS_GetVariable(IPS_GetObjectIDByIdent('ACTIVATED', $this->InstanceID))['VariableChanged'];
-        $tsAutomaticAttribute = $this->ReadAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID);
+        $tsAutomaticAttribute = $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
         if ($tsAutomaticAttribute === 0) {
-            $tsAutomaticAttribute = $tsBlindLevelChanged;
-            $this->WriteAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID, $tsAutomaticAttribute);
+            $tsAutomaticAttribute = $tsBlindChanged;
+            $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, $tsAutomaticAttribute);
         }
 
-        if (($tsAutomaticVariable > $tsBlindLevelChanged) && ($tsAutomaticAttribute !== $tsBlindLevelChanged) && $this->GetValue('ACTIVATED')) {
+        if (($tsAutomaticVariable > $tsBlindChanged) && ($tsAutomaticAttribute !== $tsBlindChanged) && $this->GetValue('ACTIVATED')) {
             // .. dann Timestamp Automatik mit Timestamp des Rollladens gleichsetzen
-            $this->WriteAttributeInteger('TimeStampAutomatic' . self::PROP_BLINDLEVELID, $tsBlindLevelChanged);
+            $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, $tsBlindChanged);
             $this->Logger_Inf(sprintf('\'%s\' bewegt sich nun wieder automatisch.', $this->objectName));
         }
-        return $tsBlindLevelChanged;
+        return $tsBlindChanged;
     }
 
     private function FormatTimeStamp(int $ts): string
