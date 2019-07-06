@@ -322,7 +322,7 @@ class BlindController extends IPSModule
                     || strtotime(
                            '+ ' . $deactivationManualMovement . ' minutes', $lastManualMovement['timeStamp']
                        ) > time())) {
-                $positionsNew['BlindLevel'] = $lastManualMovement['level'];
+                $positionsNew['BlindLevel'] = $lastManualMovement['blindLevel'];
             } else {
                 /** @noinspection NestedPositiveIfStatementsInspection */
                 if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
@@ -475,7 +475,7 @@ class BlindController extends IPSModule
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
                                 'Kontakt geöffnet (posActBlindLevel: %s, posNewBlindLevel: %s, posActSlatsLevel: %s, posNewSlatsLevel: %s)',
-                                $positionsAct['BlindLevel'], $positionsNew['BlindLevel'], $positionsAct['SlatsLevel'], $positionsNew['SlatsLevel']
+                                $positionsAct['BlindLevel'], $positionsNew['BlindLevel'], $positionsAct['SlatsLevel']??'null', $positionsNew['SlatsLevel']??'null'
                             )
             );
 
@@ -508,7 +508,7 @@ class BlindController extends IPSModule
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
                                 'Kontakt geöffnet (posActBlindLevel: %s, posNewBlindLevel: %s, posActSlatsLevel: %s, posNewSlatsLevel: %s)',
-                                $positionsAct['BlindLevel'], $positionsNew['BlindLevel'], $positionsAct['SlatsLevel'], $positionsNew['SlatsLevel']
+                                $positionsAct['BlindLevel'], $positionsNew['BlindLevel'], $positionsAct['SlatsLevel']??'null', $positionsNew['SlatsLevel']??'null'
                             )
             );
 
