@@ -292,8 +292,17 @@ class BlindController extends IPSModule
         $tsAutomatik = $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
 
         if ($this->checkIsDayChange($isDay)) {
+            //beim Tageswechsel ...
+
+            //wird die anstehende Bewegung sofort ausgeführt
             $deactivationTimeAuto = 0;
+
+            //wird eine manuelle Bewegung zurückgesetzt
+            $this->WriteAttributeString(self::ATTR_MANUALMOVEMENT, json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null]));
+
+            //wird keine Bewegungssperre gesetzt
             $bNoMove              = false;
+
         } else {
             // prüfen, ob der Rollladen manuell bewegt wurde und somit eine Bewegungssperre besteht
             $bNoMove = $this->isMovementLocked(
@@ -304,9 +313,9 @@ class BlindController extends IPSModule
 
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'tsAutomatik: %s, tsBlind: %s, posActBlindLevel: %.2f,  posActSlatsLevel: %.2f, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s, dayStart: %s, dayEnd: %s), considerDeactivationTimeAuto: %s',
+                            'tsAutomatik: %s, tsBlind: %s, posActBlindLevel: %.2f,  posActSlatsLevel: %s, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s, dayStart: %s, dayEnd: %s), considerDeactivationTimeAuto: %s',
                             $this->FormatTimeStamp($tsAutomatik), $this->FormatTimeStamp($tsBlindLastMovement), $positionsAct['BlindLevel'],
-                            $positionsAct['SlatsLevel'], (int) $bNoMove, (int) $isDay, (int) $isDayByTimeSchedule,
+                            $positionsAct['SlatsLevel']??'null', (int) $bNoMove, (int) $isDay, (int) $isDayByTimeSchedule,
                             (isset($isDayByDayDetection) ? (int) $isDayByDayDetection : 'null'), $dayStart ?? 'null', $dayEnd ?? 'null',
                             (int) $considerDeactivationTimeAuto
                         )
