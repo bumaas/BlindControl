@@ -1725,36 +1725,31 @@ class BlindController extends IPSModule
         }
 
 
-        $retBladeLevel = $this->MoveToPosition(self::PROP_BLINDLEVELID, $percentBlindClose, $deactivationTimeAuto, $hint);
-        if ($retBladeLevel !== null) {
-            $this->WriteInfo($retBladeLevel, $hint, true);
-        }
+        $moveBladeOk = $this->MoveToPosition(self::PROP_BLINDLEVELID, $percentBlindClose, $deactivationTimeAuto, $hint);
 
         //gibt es Lamellen?
         if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
 
             $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
-            $retSlatsLevel           = $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClosed, $deactivationTimeAuto, $hint);
-            if ($retSlatsLevel !== null) {
-                $this->WriteInfo($retSlatsLevel, $hint, false);
-            }
-            return ($retBladeLevel !== null || ($retSlatsLevel !== null));
+            $moveSlatsOk           = $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClosed, $deactivationTimeAuto, $hint);
+
+            return ($moveBladeOk && $moveSlatsOk);
         }
 
-        return ($retBladeLevel !== null);
+        return $moveBladeOk;
     }
 
-    private function MoveToPosition(string $propName, int $percentClose, int $deactivationTimeAuto, $hint): ?float
+    private function MoveToPosition(string $propName, int $percentClose, int $deactivationTimeAuto, $hint): bool
     {
 
         $positionID = $this->ReadPropertyInteger($propName);
         if ($positionID === 0) {
-            return null;
+            return false;
         }
 
         $profile = $this->GetProfileInformation($propName);
         if ($profile === null) {
-            return null;
+            return false;
         }
 
 
@@ -1770,11 +1765,8 @@ class BlindController extends IPSModule
             );
             // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
             $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, time());
-            $this->WriteAttributeString(
-                self::ATTR_LASTMOVE . $propName, json_encode(['timeStamp' => time(), 'percentClose' => $percentClose, 'hint' => $hint])
-            );
 
-            return null;
+            return false;
         }
 
         $this->Logger_Dbg(
@@ -1799,7 +1791,7 @@ class BlindController extends IPSModule
                         )
         );
 
-        $ret = null;
+        $ret = false;
 
         // Wenn sich die aktuelle Position um mehr als 5% von neuer Position unterscheidet
         if (($positionDiffPercentage > 0.05) && ($timeDiffAuto >= $deactivationTimeAuto)) {
@@ -1809,7 +1801,7 @@ class BlindController extends IPSModule
             if (@RequestAction($positionID, $positionNew)) {
 
                 // warten, bis die Zielposition erreicht ist
-                $this->waitUntilBlindLevelIsReached($propName, $percentClose);
+                $this->waitUntilBlindLevelIsReached($propName, $positionNew);
 
                 // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
                 $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, time());
@@ -1821,11 +1813,11 @@ class BlindController extends IPSModule
                                     $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC)
                                 )
                 );
-                $ret = $positionNew;
+                $ret = true;
 
             } else {
                 $this->Logger_Err(sprintf('%s(%s): Fehler beim Setzen der Werte. (Value = %s)', $positionID, $propName, $percentClose));
-                $ret = null;
+                $ret = false;
             }
             $this->Logger_Dbg(__FUNCTION__, sprintf('#%s(%s): %s to %s', $positionID, $propName, $positionAct, $positionNew));
 
@@ -1848,18 +1840,23 @@ class BlindController extends IPSModule
             );
         }
 
+        if ($ret) {
+            $this->WriteInfo($propName, $positionNew, $hint);
+        }
+
         return $ret;
 
     }
 
-    private function waitUntilBlindLevelIsReached(string $propName, int $percentClose)
+    private function waitUntilBlindLevelIsReached(string $propName, $positionNew)
     {
         $levelID = $this->ReadPropertyInteger($propName);
-        if ($levelID === 0) {
-            return;
-        }
 
         $profile = $this->GetProfileInformation($propName);
+        $percentCloseNew = ($positionNew - $profile['MinValue']) / ($profile['MaxValue'] - $profile['MinValue']) * 100;
+        if ($profile['Reversed']) {
+            $percentCloseNew = 100 - $percentCloseNew;
+        }
 
         for ($i = 0; $i < 60; $i++) {
             $percentCloseCurrent = (GetValue($levelID) - $profile['MinValue']) / ($profile['MaxValue'] - $profile['MinValue']) * 100;
@@ -1868,23 +1865,29 @@ class BlindController extends IPSModule
                 $percentCloseCurrent = 100 - $percentCloseCurrent;
             }
 
-            if (abs($percentClose - $percentCloseCurrent) > 5) {
+            if (abs($percentCloseNew - $percentCloseCurrent) > 5) {
                 set_time_limit(30);
                 sleep(1);
             } else {
                 $this->Logger_Dbg(
-                    __FUNCTION__, sprintf('#%s(%s): Position reached (%.2f).', $levelID, $propName, $percentClose - $percentCloseCurrent)
+                    __FUNCTION__, sprintf('#%s(%s): Position reached (Diff: %.2f).', $levelID, $propName, $percentCloseNew - $percentCloseCurrent)
                 );
                 return;
             }
         }
-        $this->Logger_Inf(sprintf('#%s(%s): Position not reached! (%.2f).', $levelID, $propName, $percentClose - $percentCloseCurrent));
+
+        $percentCloseCurrent = (GetValue($levelID) - $profile['MinValue']) / ($profile['MaxValue'] - $profile['MinValue']) * 100;
+
+        if ($profile['Reversed']) {
+            $percentCloseCurrent = 100 - $percentCloseCurrent;
+        }
+        $this->Logger_Inf(sprintf('#%s(%s): Position not reached! (Diff: %.2f).', $levelID, $propName, $percentCloseNew - $percentCloseCurrent));
 
     }
 
-    private function WriteInfo(float $rLevelneu, string $hint, bool $isBlind): void
+    private function WriteInfo(string $propName, float $rLevelneu, string $hint): void
     {
-        if ($isBlind) {
+        if ($propName === self::PROP_BLINDLEVELID) {
             if ($rLevelneu === (float) $this->profileBlindLevel['LevelClosed']) {
                 $logMessage = sprintf('\'%s\' wurde geschlossen.', $this->objectName);
             } else if ($rLevelneu === (float) $this->profileBlindLevel['LevelOpened']) {
