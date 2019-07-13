@@ -2038,7 +2038,6 @@ class BlindController extends IPSModule
             $this->Logger_Dbg(__FUNCTION__, sprintf('BedTime: %s', $heute_ab));
         }
 
-
         return true;
     }
 
