@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 /** @noinspection AutoloadingIssuesInspection */
-
 class BlindControlGroupMaster extends IPSModule
 {
     public function Create()
@@ -105,7 +104,6 @@ class BlindControlGroupMaster extends IPSModule
                     'add'     => true,
                     'edit'    => ['type' => 'CheckBox', 'caption' => 'selected']]],
             'values'   => $this->GetListValues()];
-
 
         $form['actions'] = [
             ['type' => 'Label', 'caption' => 'The following function can be used to determine a property of the selected blinds.'],
@@ -234,9 +232,7 @@ class BlindControlGroupMaster extends IPSModule
                     return false;
                 }
 
-
-            }
-            catch(Exception $e) {
+            } catch (Exception $e) {
                 return false;
             }
         }
