@@ -1,8 +1,10 @@
-<?php /** @noinspection AutoloadingIssuesInspection */
+<?php
+
+declare(strict_types=1);
+/** @noinspection AutoloadingIssuesInspection */
 
 class BlindControlGroupMaster extends IPSModule
 {
-
     public function Create()
     {
         //Never delete this line!
@@ -40,7 +42,6 @@ class BlindControlGroupMaster extends IPSModule
             }
         }
     }
-
 
     public function GetConfigurationForm()
     {
@@ -195,7 +196,7 @@ class BlindControlGroupMaster extends IPSModule
                 } else {
                     $arr[] = [
                         'instanceID' => $blind['InstanceID'],
-                        'Location'   => 'Not found!',];
+                        'Location'   => 'Not found!'];
                 }
             }
         }
