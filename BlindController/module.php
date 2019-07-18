@@ -2182,7 +2182,7 @@ class BlindController extends IPSModule
             $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, $tsAutomaticAttribute);
         }
 
-        if (($tsAutomaticVariable > $tsBlindChanged) && ($tsAutomaticAttribute !== $tsBlindChanged) && $this->GetValue(self::VAR_IDENT_ACTIVATED)) {
+        if (($tsAutomaticVariable > $tsBlindChanged) && ($tsAutomaticAttribute !== $tsBlindChanged)) {
             // .. dann Timestamp Automatik mit Timestamp des Rollladens gleichsetzen
             $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, $tsBlindChanged);
             $this->Logger_Inf(sprintf('\'%s\' bewegt sich nun wieder automatisch.', $this->objectName));
