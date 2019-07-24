@@ -88,6 +88,7 @@ class BlindController extends IPSModule
     private const ATTR_MANUALMOVEMENT      = 'manualMovement';
     private const ATTR_LASTMOVE            = 'lastMovement';
     private const ATTR_TIMESTAMP_AUTOMATIC = 'TimeStampAutomatic';
+    private const ATTR_CONTACT_OPEN = 'AttrContactOpen';
 
     //variable names
     private const VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
@@ -337,6 +338,7 @@ class BlindController extends IPSModule
                            '+ ' . $deactivationManualMovement . ' minutes', $lastManualMovement['timeStamp']
                        ) > time())) {
                 $positionsNew['BlindLevel'] = $lastManualMovement['blindLevel'];
+                $positionsNew['SlatsLevel'] = $lastManualMovement['slatsLevel'];
             } else {
                 /** @noinspection NestedPositiveIfStatementsInspection */
                 if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
@@ -450,7 +452,7 @@ class BlindController extends IPSModule
             //im Notfall wird die Automatik deaktiviert
             $bEmergency = true;
 
-            $this->WriteAttributeBoolean('AttrContactOpen', true);
+            $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
                                 'NOTFALL: Kontakt geöffnet (posActBlindLevel: %s, posNewBlindLevel: %s)', $positionsAct['BlindLevel'],
@@ -483,7 +485,7 @@ class BlindController extends IPSModule
                 $Hinweis                    = 'Kontakt offen';
             }
 
-            $this->WriteAttributeBoolean('AttrContactOpen', true);
+            $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
                                 'Kontakt geöffnet (posActBlindLevel: %s, posNewBlindLevel: %s, posActSlatsLevel: %s, posNewSlatsLevel: %s)',
@@ -517,7 +519,7 @@ class BlindController extends IPSModule
                 $Hinweis                    = 'Kontakt offen';
             }
 
-            $this->WriteAttributeBoolean('AttrContactOpen', true);
+            $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
                                 'Kontakt geöffnet (posActBlindLevel: %s, posNewBlindLevel: %s, posActSlatsLevel: %s, posNewSlatsLevel: %s)',
@@ -526,10 +528,10 @@ class BlindController extends IPSModule
                             )
             );
 
-        } elseif ($this->ReadAttributeBoolean('AttrContactOpen')) {
+        } elseif ($this->ReadAttributeBoolean(self::ATTR_CONTACT_OPEN)) {
             // wenn die Rollladenposition noch auf Kontakt offen Position steht
             $deactivationTimeAuto = 0;
-            $this->WriteAttributeBoolean('AttrContactOpen', false);
+            $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, false);
         }
 
         if (!$bNoMove) {
@@ -753,7 +755,7 @@ class BlindController extends IPSModule
         $this->RegisterAttributeString(self::ATTR_MANUALMOVEMENT, json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null]));
         $this->RegisterAttributeInteger('AttrTimeStampIsDayChange', 0);
         $this->RegisterAttributeBoolean('AttrIsDay', false);
-        $this->RegisterAttributeBoolean('AttrContactOpen', false);
+        $this->RegisterAttributeBoolean(self::ATTR_CONTACT_OPEN, false);
         $this->RegisterAttributeString(
             self::ATTR_LASTMOVE . self::PROP_BLINDLEVELID, json_encode(['timeStamp' => null, 'percentClose' => null, 'hint' => null])
         );
@@ -1731,7 +1733,7 @@ class BlindController extends IPSModule
             $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
             $moveSlatsOk             = $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClosed, $deactivationTimeAuto, $hint);
 
-            return $moveBladeOk && $moveSlatsOk;
+            return $moveBladeOk || $moveSlatsOk;
         }
 
         return $moveBladeOk;
@@ -1812,7 +1814,6 @@ class BlindController extends IPSModule
 
             } else {
                 $this->Logger_Err(sprintf('%s(%s): Fehler beim Setzen der Werte. (Value = %s)', $positionID, $propName, $percentClose));
-                $ret = false;
             }
             $this->Logger_Dbg(__FUNCTION__, sprintf('#%s(%s): %s to %s', $positionID, $propName, $positionAct, $positionNew));
 
