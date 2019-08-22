@@ -61,6 +61,7 @@ class BlindController extends IPSModule
     private const PROP_CONTACTOPENSLATSLEVEL2                      = 'ContactOpenSlatsLevel2';
     private const PROP_EMERGENCYCONTACTID                          = 'EmergencyContactID';
     private const PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY           = 'ContactsToCloseHaveHigherPriority';
+    private const PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION           = 'ActivatorIDShadowingBySunPosition';
     private const PROP_AZIMUTHID                                   = 'AzimuthID';
     private const PROP_ALTITUDEID                                  = 'AltitudeID';
     private const PROP_AZIMUTHFROM                                 = 'AzimuthFrom';
@@ -88,7 +89,7 @@ class BlindController extends IPSModule
     private const ATTR_MANUALMOVEMENT      = 'manualMovement';
     private const ATTR_LASTMOVE            = 'lastMovement';
     private const ATTR_TIMESTAMP_AUTOMATIC = 'TimeStampAutomatic';
-    private const ATTR_CONTACT_OPEN = 'AttrContactOpen';
+    private const ATTR_CONTACT_OPEN        = 'AttrContactOpen';
 
     //variable names
     private const VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
@@ -136,9 +137,7 @@ class BlindController extends IPSModule
             case self::VAR_IDENT_ACTIVATED:
                 if ($Value) {
                     //reset manual movement
-                    $this->WriteAttributeString(
-                        self::ATTR_MANUALMOVEMENT, json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null])
-                    );
+                    $this->resetManualMovement();
 
                 } else {
                     $this->Logger_Inf(sprintf('\'%s\' wurde deaktiviert.', IPS_GetObject($this->InstanceID)['ObjectName']));
@@ -202,7 +201,7 @@ class BlindController extends IPSModule
                     $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
                     $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
                     $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
-                    $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition')], true
+                    $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION)], true
                 )
             );
         }
@@ -290,8 +289,8 @@ class BlindController extends IPSModule
             $isDay = time() < strtotime($dayEnd);
         }
 
-        //Zeitpunkt der letzten Rollladenbewegung
-        $tsBlindLastMovement = $this->GetBlindLastTimeStampAndCheckAutomatic($blindLevelId, $slatsLevelId);
+        //Zeitpunkt der letzten Rollladenbewegung (Höhe oder Lamellen)
+        $tsBlindLastMovement = $this->GetBlindLastTimeStamp($blindLevelId, $slatsLevelId);
 
         // Attribut TimestampAutomatik auslesen
         $tsAutomatik = $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
@@ -563,6 +562,18 @@ class BlindController extends IPSModule
         return true;
     }
 
+    private function resetManualMovement(): void
+    {
+        $this->WriteAttributeString(
+            self::ATTR_MANUALMOVEMENT, json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null])
+        );
+
+        // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
+        $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, time());
+
+        $this->Logger_Inf(sprintf('\'%s\' bewegt sich nun wieder automatisch.', IPS_GetObject($this->InstanceID)['ObjectName']));
+    }
+
     private function RegisterProperties(): void
     {
         $this->RegisterPropertyInteger(self::PROP_BLINDLEVELID, 0);
@@ -614,7 +625,7 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger(self::PROP_EMERGENCYCONTACTID, 0);
 
         //shadowing according to sun position
-        $this->RegisterPropertyInteger('ActivatorIDShadowingBySunPosition', 0);
+        $this->RegisterPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION, 0);
         $this->RegisterPropertyInteger(self::PROP_AZIMUTHID, 0);
         $this->RegisterPropertyInteger(self::PROP_ALTITUDEID, 0);
         $this->RegisterPropertyFloat(self::PROP_AZIMUTHFROM, 0);
@@ -675,7 +686,7 @@ class BlindController extends IPSModule
             $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID),
             $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
 
-            $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition'),
+            $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION),
             $this->ReadPropertyInteger(self::PROP_AZIMUTHID),
             $this->ReadPropertyInteger(self::PROP_ALTITUDEID),
             $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION),
@@ -711,7 +722,7 @@ class BlindController extends IPSModule
             self::PROP_CONTACTOPEN1ID                              => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID),
             self::PROP_CONTACTOPEN2ID                              => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID),
             self::PROP_EMERGENCYCONTACTID                          => $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
-            'ActivatorIDShadowingBySunPosition'                    => $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition'),
+            self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION           => $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION),
             self::PROP_AZIMUTHID                                   => $this->ReadPropertyInteger(self::PROP_AZIMUTHID),
             self::PROP_ALTITUDEID                                  => $this->ReadPropertyInteger(self::PROP_ALTITUDEID),
             self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION          => $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION),
@@ -878,7 +889,7 @@ class BlindController extends IPSModule
         }
 
         if ($ret = $this->checkVariableId(
-            'ActivatorIDShadowingBySunPosition', true, [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION, true, [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
             self::STATUS_INST_ACTIVATORIDSHADOWINGBYSUNPOSITION_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -886,7 +897,7 @@ class BlindController extends IPSModule
         }
 
         if ($ret = $this->checkVariableId(
-            self::PROP_AZIMUTHID, $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0, [VARIABLETYPE_FLOAT],
+            self::PROP_AZIMUTHID, $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION) === 0, [VARIABLETYPE_FLOAT],
             self::STATUS_INST_AZIMUTHID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -894,7 +905,7 @@ class BlindController extends IPSModule
         }
 
         if ($ret = $this->checkVariableId(
-            self::PROP_ALTITUDEID, $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition') === 0, [VARIABLETYPE_FLOAT],
+            self::PROP_ALTITUDEID, $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION) === 0, [VARIABLETYPE_FLOAT],
             self::STATUS_INST_ALTITUDEID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1339,7 +1350,7 @@ class BlindController extends IPSModule
     private function getPositionsOfShadowingBySunPosition(float $levelAct): ?array
     {
 
-        $activatorID = $this->ReadPropertyInteger('ActivatorIDShadowingBySunPosition');
+        $activatorID = $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION);
 
         if (($activatorID === 0) || !GetValue($activatorID)) {
             // keine Beschattung nach Sonnenstand gewünscht bzw. nicht notwendig
@@ -1606,8 +1617,8 @@ class BlindController extends IPSModule
     private function isMovementLocked($blindLevelAct, $slatsLevelAct, int $tsBlindLastMovement, bool $isDay, int $tsIsDayChanged, int $tsAutomatik,
                                       float $blindLevelClosed, float $blindLevelOpened, ?float $slatsLevelClosed, ?float $slatsLevelOpened): bool
     {
-        //zuerst prüfen, ob der Rollladen nach der letzten aut. Bewegung (+60sec) manuell bewegt wurde
-        if ($tsBlindLastMovement <= strtotime('+1 minute', $tsAutomatik)) {
+        //zuerst prüfen, ob der Rollladen nach der letzten aut. Bewegung manuell bewegt wurde
+        if ($tsBlindLastMovement <= $tsAutomatik) {
             return false;
         }
 
@@ -1642,6 +1653,7 @@ class BlindController extends IPSModule
                     $this->Logger_Inf(sprintf('\'%s\' wurde manuell auf %.0f%% gefahren.', $this->objectName, 100 * $blindLevelPercent));
                 }
             } else {
+                /** @noinspection NestedPositiveIfStatementsInspection */
                 if (($blindLevelAct === $blindLevelClosed) && ($slatsLevelAct === $slatsLevelClosed)) {
                     $this->Logger_Inf(sprintf('\'%s\' wurde manuell geschlossen.', $this->objectName));
                 } elseif (($blindLevelAct === $blindLevelOpened) && ($slatsLevelAct === $slatsLevelOpened)) {
@@ -1685,6 +1697,8 @@ class BlindController extends IPSModule
                                     time() - $tsBlindLastMovement, $deactivationTimeManuSecs
                                 )
                 );
+            } else if ($tsManualMovement !== null) {
+                $this->resetManualMovement();
             }
 
         } elseif (!$isDay && ($tsManualMovement > $tsIsDayChanged)) {
@@ -2167,26 +2181,12 @@ class BlindController extends IPSModule
     }
 
     //-----------------------------------------------
-    private function GetBlindLastTimeStampAndCheckAutomatic(int $idBlindLevel, int $idSlatsLevel): int
+    private function GetBlindLastTimeStamp(int $idBlindLevel, int $idSlatsLevel): int
     {
         $tsBlindChanged = IPS_GetVariable($idBlindLevel)['VariableChanged'];
 
         if ($idSlatsLevel !== 0) {
             $tsBlindChanged = max($tsBlindChanged, IPS_GetVariable($idSlatsLevel)['VariableChanged']);
-        }
-
-        //prüfen, ob Automatik nach der letzten Rollladenbewegung eingestellt wurde.
-        $tsAutomaticVariable  = IPS_GetVariable(IPS_GetObjectIDByIdent(self::VAR_IDENT_ACTIVATED, $this->InstanceID))['VariableChanged'];
-        $tsAutomaticAttribute = $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
-        if ($tsAutomaticAttribute === 0) {
-            $tsAutomaticAttribute = $tsBlindChanged;
-            $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, $tsAutomaticAttribute);
-        }
-
-        if (($tsAutomaticVariable > $tsBlindChanged) && ($tsAutomaticAttribute !== $tsBlindChanged)) {
-            // .. dann Timestamp Automatik mit Timestamp des Rollladens gleichsetzen
-            $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, $tsBlindChanged);
-            $this->Logger_Inf(sprintf('\'%s\' bewegt sich nun wieder automatisch.', $this->objectName));
         }
         return $tsBlindChanged;
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 /** @noinspection AutoloadingIssuesInspection */
 class BlindControlGroupMaster extends IPSModule
 {
+    /** @noinspection PhpUnused */
     public function Create()
     {
         //Never delete this line!
@@ -16,6 +17,7 @@ class BlindControlGroupMaster extends IPSModule
 
     }
 
+    /** @noinspection PhpUnused */
     public function ApplyChanges()
     {
         //Never delete this line!
@@ -42,6 +44,7 @@ class BlindControlGroupMaster extends IPSModule
         }
     }
 
+    /** @noinspection PhpUnused */
     public function GetConfigurationForm()
     {
         $allBlindInstances = IPS_GetInstanceListByModuleID('{538F6461-5410-4F4C-91D3-B39122152D56}');
@@ -201,6 +204,7 @@ class BlindControlGroupMaster extends IPSModule
         return $arr;
     }
 
+    /** @noinspection PhpUnused */
     public function SetPropertyOfBlinds(string $Property, $Value): bool
     {
         $this->LogMessage(__CLASS__ . '::' . __FUNCTION__ . ': ' . $this->InstanceID . ' ' . $Property . ' ' . $Value, KL_DEBUG);
@@ -239,6 +243,7 @@ class BlindControlGroupMaster extends IPSModule
         return true;
     }
 
+    /** @noinspection PhpUnused */
     public function GetPropertyOfBlinds(string $Property): ?array
     {
         $this->LogMessage(__CLASS__ . '::' . __FUNCTION__ . ': ' . $this->InstanceID . ' ' . $Property, KL_DEBUG);
@@ -260,6 +265,7 @@ class BlindControlGroupMaster extends IPSModule
         return $prop;
     }
 
+    /** @noinspection PhpUnused */
     public function SetBlindsActive(bool $active): void
     {
         $this->LogMessage(__CLASS__ . '::' . __FUNCTION__ . ': ' . $this->InstanceID . ' Active' . (int) $active, KL_DEBUG);
