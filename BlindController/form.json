@@ -253,6 +253,8 @@
     {"code": 214, "icon": "error", "caption": "SleepTime ID is not valid"},
     {"code": 215, "icon": "error", "caption": "DayStart ID is not valid"},
     {"code": 216, "icon": "error", "caption": "DayEnd ID is not valid"},
+    {"code": 217, "icon": "error", "caption": "Blind Level may not be emulated"},
+    {"code": 218, "icon": "error", "caption": "Slats Level may not be emulated"},
     {"code": 220, "icon": "error", "caption": "Shadowing according to sun position: Activator ID is not valid"},
     {"code": 221, "icon": "error", "caption": "Shadowing according to sun position: Azimuth ID is not valid"},
     {"code": 222, "icon": "error", "caption": "Shadowing according to sun position: Altitude ID is not valid"},

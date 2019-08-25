@@ -116,6 +116,8 @@
       "WakeUpTime ID is not valid":                                                   "'Aufstehzeit ID' ist ungültig",
       "SleepTime ID is not valid":                                                    "'Schlafenszeit ID' ist ungültig",
       "DayStart ID is not valid":                                                     "'Tagesanfangszeit ID' ist ungültig",
+      "Blind Level may not be emulated":                                              "Die Variable 'Rollladen Level ID' darf nicht emuliert werden. Bitte Instanz der Variablen prüfen!",
+      "Slats Level may not be emulated":                                              "Die Variable 'Lamellen Level ID' darf nicht emuliert werden. Bitte Instanz der Variablen prüfen!",
       "DayEnd ID is not valid":                                                       "'Tagesendezeit ID' ist ungültig",
       "Shadowing according to sun position: Activator ID is not valid":               "'Beschattung nach Sonnenstand': 'Aktivierung ID' ist ungültig",
       "Shadowing according to sun position: Azimuth ID is not valid":                 "'Beschattung nach Sonnenstand': 'Sonnenrichtung (Azimuth) ID' ist ungültig",

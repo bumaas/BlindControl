@@ -47,7 +47,9 @@ Zusätzlich kann zur leichteren Verwaltung mehrerer Rollläden/Jalousien ein Gru
  
  - Es werden alle Aktoren unterstützt, die über eine Statusvariable verfügen und sich über RequestAction steuern lassen.
 Die Statusvariable muss vom Typ Integer oder Float sein und ein Profil mit einem korrekten Minimal- und Maximalwert besitzen. Bei einem Rollladen, der beim Minimalwert 
-geschlossen und beim Maximalwert geöffnet ist (z.B. typischerweise bei Homematic), ist ein Profil mit der Namensendung ".Reversed" zu verwenden.  
+geschlossen und beim Maximalwert geöffnet ist (z.B. typischerweise bei Homematic), ist ein Profil mit der Namensendung ".Reversed" zu verwenden.<br>
+Zudem dürfen die Statusvariablen nicht emuliert werden. Dies ist wichtig, um manuell ausgelöste Bewegungen eindeutig von automatisch ausgeführten Bewegungen unterscheiden zu können.
+<br>  
 Zur Steuerung von Lamellen bei Jalousien ist eine eigene Statusvariable notwendig, über die die Stellung der Lamellen gesteuert werden kann. Für sie gelten die gleichen Vorausetzungen.
 
 ## 3. Installation

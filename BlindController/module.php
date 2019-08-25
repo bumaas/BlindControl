@@ -26,6 +26,8 @@ class BlindController extends IPSModule
     private const STATUS_INST_SLEEPTIME_ID_IS_INVALID                                = 214;
     private const STATUS_INST_DAYSTART_ID_IS_INVALID                                 = 215;
     private const STATUS_INST_DAYEND_ID_IS_INVALID                                   = 216;
+    private const STATUS_INST_BLIND_LEVEL_IS_EMULATED                                = 217;
+    private const STATUS_INST_SLATS_LEVEL_IS_EMULATED                                = 218;
     private const STATUS_INST_ACTIVATORIDSHADOWINGBYSUNPOSITION_IS_INVALID           = 220;
     private const STATUS_INST_AZIMUTHID_IS_INVALID                                   = 221;
     private const STATUS_INST_ALTITUDEID_IS_INVALID                                  = 222;
@@ -799,6 +801,11 @@ class BlindController extends IPSModule
             return;
         }
 
+        if (!$this->checkEmulateStatusOfVariableAction(self::PROP_BLINDLEVELID)) {
+            $this->SetStatus(self::STATUS_INST_BLIND_LEVEL_IS_EMULATED);
+            return;
+        }
+
         if ($ret = $this->checkVariableId(
             self::PROP_SLATSLEVELID, true, [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT], self::STATUS_INST_SLATSLEVEL_ID_IS_INVALID
         )) {
@@ -806,9 +813,15 @@ class BlindController extends IPSModule
             return;
         }
 
-        if (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) && !$this->checkActionOfStatusVariable(self::PROP_SLATSLEVELID)) {
-            $this->SetStatus(self::STATUS_INST_SLATSLEVEL_ID_IS_INVALID);
-            return;
+        if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+            if (!$this->checkActionOfStatusVariable(self::PROP_SLATSLEVELID)) {
+                $this->SetStatus(self::STATUS_INST_SLATSLEVEL_ID_IS_INVALID);
+                return;
+            }
+            if (!$this->checkEmulateStatusOfVariableAction(self::PROP_SLATSLEVELID)) {
+                $this->SetStatus(self::STATUS_INST_SLATS_LEVEL_IS_EMULATED);
+                return;
+            }
         }
 
         if ($ret = $this->checkEventId('WeeklyTimeTableEventID', false, EVENTTYPE_SCHEDULE, self::STATUS_INST_TIMETABLE_ID_IS_INVALID)) {
@@ -1108,6 +1121,21 @@ class BlindController extends IPSModule
 
         return ($var['VariableAction'] || $var['VariableCustomAction']) && ($var['VariableCustomProfile'] || $var['VariableProfile']);
 
+    }
+
+    private function checkEmulateStatusOfVariableAction(string $proName): bool
+    {
+        $var = IPS_GetVariable($this->ReadPropertyInteger($proName));
+
+        if ($var['VariableAction'] !== 0){
+            $configuration = json_decode(IPS_GetConfiguration($var['VariableAction']), true);
+
+            if (isset($configuration['EmulateStatus'])){
+                return !$configuration['EmulateStatus'];
+            }
+        }
+
+        return true;
     }
 
     private function checkEventId(string $propName, bool $optional, int $eventType, int $errStatus): int
@@ -1617,6 +1645,15 @@ class BlindController extends IPSModule
     private function isMovementLocked($blindLevelAct, $slatsLevelAct, int $tsBlindLastMovement, bool $isDay, int $tsIsDayChanged, int $tsAutomatik,
                                       float $blindLevelClosed, float $blindLevelOpened, ?float $slatsLevelClosed, ?float $slatsLevelOpened): bool
     {
+
+        $this->Logger_Dbg(
+            __FUNCTION__, sprintf(
+                            'Parameter: blindLevelAct: %s, slatsLevelAct: %s, tsBlindLastMovement: %s, isDay: %s, tsIsDayChanged: %s, tsAutomatik: %s,
+                                      blindLevelClosed: %s, blindLevelOpened: %s, slatsLevelClosed: %s, slatsLevelOpened: %s',
+                            $blindLevelAct, $slatsLevelAct??'null', $this->FormatTimeStamp($tsBlindLastMovement), (int) $isDay, $this->FormatTimeStamp($tsIsDayChanged),
+                            $this->FormatTimeStamp($tsAutomatik), $blindLevelClosed, $blindLevelOpened, $slatsLevelClosed??'null', $slatsLevelOpened??'null')
+        ); //todo: sollte wieder entfernt werden
+
         //zuerst prüfen, ob der Rollladen nach der letzten aut. Bewegung manuell bewegt wurde
         if ($tsBlindLastMovement <= $tsAutomatik) {
             return false;
@@ -1632,10 +1669,16 @@ class BlindController extends IPSModule
                                          )
             );
 
+            if ($slatsLevelAct === null){
+                $txtSlatsLevelAct = 'null';
+            } else {
+                $txtSlatsLevelAct = sprintf('%.2f', $slatsLevelAct);
+            }
+
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf(
-                                'Rollladen wurde manuell gesetzt. blindLevelAct: %.2f, slatsLevelAct: %.2f, TimestampAutomatic: %s, TimestampManual: %s, deactivationTimeManuSecs: %s/%s',
-                                $blindLevelAct, $slatsLevelAct ?? 'null', $this->FormatTimeStamp($tsAutomatik),
+                                'Rollladen wurde manuell gesetzt. blindLevelAct: %.2f, slatsLevelAct: %s, TimestampAutomatic: %s, TimestampManual: %s, deactivationTimeManuSecs: %s/%s',
+                                $blindLevelAct, $txtSlatsLevelAct, $this->FormatTimeStamp($tsAutomatik),
                                 $this->FormatTimeStamp(json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true)['timeStamp']),
                                 time() - $tsBlindLastMovement, $deactivationTimeManuSecs
                             )
@@ -1697,7 +1740,7 @@ class BlindController extends IPSModule
                                     time() - $tsBlindLastMovement, $deactivationTimeManuSecs
                                 )
                 );
-            } else if ($tsManualMovement !== null) {
+            } elseif ($tsManualMovement !== null) {
                 $this->resetManualMovement();
             }
 
