@@ -1659,8 +1659,9 @@ class BlindController extends IPSModule
                         )
         ); //todo: sollte wieder entfernt werden
 
-        //zuerst prüfen, ob der Rollladen nach der letzten aut. Bewegung manuell bewegt wurde
-        if ($tsBlindLastMovement <= $tsAutomatik) {
+        //zuerst prüfen, ob der Rollladen nach der letzten aut. Bewegung (+ 5 Sekunden) manuell bewegt wurde
+        //die Karenzzeit von 5 Sekunden ermöglicht ein eventuelles Nachführen der Levelvariablen (z.B. beim HmIP-BROLL)
+        if ($tsBlindLastMovement <= strtotime('+5 sec', $tsAutomatik)) {
             return false;
         }
 
