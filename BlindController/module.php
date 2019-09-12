@@ -134,6 +134,8 @@ class BlindController extends IPSModule
     public function RequestAction($Ident, $Value): bool
     {
 
+        $this->Logger_Dbg(__FUNCTION__, sprintf('Ident: %s, Value: %s', $Ident, $Value));
+
         /** @noinspection DegradedSwitchInspection */
         switch ($Ident) {
             case self::VAR_IDENT_ACTIVATED:
@@ -1127,11 +1129,13 @@ class BlindController extends IPSModule
     {
         $var = IPS_GetVariable($this->ReadPropertyInteger($proName));
 
-        if ($var['VariableAction'] !== 0){
-            $configuration = json_decode(IPS_GetConfiguration($var['VariableAction']), true);
-
-            if (isset($configuration['EmulateStatus'])){
-                return !$configuration['EmulateStatus'];
+        if ($var['VariableAction'] !== 0) {
+            $configuration = IPS_GetConfiguration($var['VariableAction']);
+            if ($configuration !== false) {
+                $arrConfiguration = json_decode($configuration, true);
+                if (isset($arrConfiguration['EmulateStatus'])) {
+                    return !$arrConfiguration['EmulateStatus'];
+                }
             }
         }
 
@@ -1648,10 +1652,11 @@ class BlindController extends IPSModule
 
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'Parameter: blindLevelAct: %s, slatsLevelAct: %s, tsBlindLastMovement: %s, isDay: %s, tsIsDayChanged: %s, tsAutomatik: %s,
-                                      blindLevelClosed: %s, blindLevelOpened: %s, slatsLevelClosed: %s, slatsLevelOpened: %s',
-                            $blindLevelAct, $slatsLevelAct??'null', $this->FormatTimeStamp($tsBlindLastMovement), (int) $isDay, $this->FormatTimeStamp($tsIsDayChanged),
-                            $this->FormatTimeStamp($tsAutomatik), $blindLevelClosed, $blindLevelOpened, $slatsLevelClosed??'null', $slatsLevelOpened??'null')
+                            'Parameter: blindLevelAct: %s, slatsLevelAct: %s, tsBlindLastMovement: %s, isDay: %s, tsIsDayChanged: %s, tsAutomatik: %s, blindLevelClosed: %s, blindLevelOpened: %s, slatsLevelClosed: %s, slatsLevelOpened: %s',
+                            $blindLevelAct, $slatsLevelAct ?? 'null', $this->FormatTimeStamp($tsBlindLastMovement), (int) $isDay,
+                            $this->FormatTimeStamp($tsIsDayChanged), $this->FormatTimeStamp($tsAutomatik), $blindLevelClosed, $blindLevelOpened,
+                            $slatsLevelClosed ?? 'null', $slatsLevelOpened ?? 'null'
+                        )
         ); //todo: sollte wieder entfernt werden
 
         //zuerst prüfen, ob der Rollladen nach der letzten aut. Bewegung manuell bewegt wurde
@@ -1669,7 +1674,7 @@ class BlindController extends IPSModule
                                          )
             );
 
-            if ($slatsLevelAct === null){
+            if ($slatsLevelAct === null) {
                 $txtSlatsLevelAct = 'null';
             } else {
                 $txtSlatsLevelAct = sprintf('%.2f', $slatsLevelAct);
@@ -1908,7 +1913,8 @@ class BlindController extends IPSModule
         }
 
         for ($i = 0; $i < 90; $i++) { //wir warten maximal 90 Sekunden
-            $percentCloseCurrent = (GetValue($levelID) - $profile['MinValue']) / ($profile['MaxValue'] - $profile['MinValue']) * 100;
+            $currentValue = GetValue($levelID);
+            $percentCloseCurrent = ($currentValue - $profile['MinValue']) / ($profile['MaxValue'] - $profile['MinValue']) * 100;
 
             if ($profile['Reversed']) {
                 $percentCloseCurrent = 100 - $percentCloseCurrent;
@@ -1919,7 +1925,7 @@ class BlindController extends IPSModule
                 sleep(1);
             } else {
                 $this->Logger_Dbg(
-                    __FUNCTION__, sprintf('#%s(%s): Position reached (Diff: %.2f).', $levelID, $propName, $percentCloseNew - $percentCloseCurrent)
+                    __FUNCTION__, sprintf('#%s(%s): Position reached (Value: %s, Diff: %.2f).', $levelID, $propName, $currentValue, $percentCloseNew - $percentCloseCurrent)
                 );
                 return true;
             }

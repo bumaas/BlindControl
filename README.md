@@ -252,12 +252,12 @@ und nicht ein Wert von 100 für "geschlossen".
 | ActivatorIDShadowingBrightness | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Helligkeit aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
 | BrightnessIDShadowingBrightness| integer   | 0 | Indikatorvariable, die die Helligkeit zur Beschattung nach Helligkeit angibt
 | BrightnessAvgMinutesShadowingBrightness| integer   | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt bei der Beschattung nach Helligkeit gebildet werden soll
-| ThresholdIDHighBrightness      | integer   | 0 | Indikatorvariable, die den hohen Helligkeitsschwellwert Zur Steuerung nach Helligkeit zur Verfügung stellt
-| BlindLevelHighBrightnessShadowingBrightness      | float   | 0 | RollladenLevel, der bei erreichen der hohen Helligkeit angefahren werden soll
-| SlatsLevelHighBrightnessShadowingBrightness      | float   | 0 | LamellenLevel, der bei erreichen der hohen Helligkeit angefahren werden soll
-| ThresholdIDLessBrightness      | integer   | 0 | Indikatorvariable, die den niedrigen Helligkeitsschwellwert Zur Steuerung nach Helligkeit zur Verfügung stellt
-| BlindLevelLessBrightnessShadowingBrightness      | float   | 0 | RollladenLevel, der bei erreichen der niedrigeren Helligkeit angefahren werden soll
-| SlatsLevelLessBrightnessShadowingBrightness      | float   | 0 | LamellenLevel, der bei erreichen der niedrigeren Helligkeit angefahren werden soll
+| ThresholdIDHighBrightness      | integer   | 0 | Indikatorvariable, die den hohen Helligkeitsschwellwert zur Steuerung nach Helligkeit zur Verfügung stellt
+| BlindLevelHighBrightnessShadowingBrightness      | float   | 0 | RollladenLevel, der bei Erreichen der hohen Helligkeit angefahren werden soll
+| SlatsLevelHighBrightnessShadowingBrightness      | float   | 0 | LamellenLevel, der bei Erreichen der hohen Helligkeit angefahren werden soll
+| ThresholdIDLessBrightness      | integer   | 0 | Indikatorvariable, die den niedrigen Helligkeitsschwellwert zur Steuerung nach Helligkeit zur Verfügung stellt
+| BlindLevelLessBrightnessShadowingBrightness      | float   | 0 | RollladenLevel, der bei Erreichen der niedrigeren Helligkeit angefahren werden soll
+| SlatsLevelLessBrightnessShadowingBrightness      | float   | 0 | LamellenLevel, der bei Erreichen der niedrigeren Helligkeit angefahren werden soll
 | <br>**Kontakte**     |  | |  | |
 | ContactOpen1ID, ContactOpen2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Mindesthöhe gefahren
 | ContactOpenLevel1, ContactOpenLevel2           | float   | 0 | Höhe, auf die der Rollladen mindestens gefahren wird, wenn der zugehörige Kontakt offen ist.
@@ -271,7 +271,7 @@ und nicht ein Wert von 100 für "geschlossen".
 | <br>**Experteneinstellungen**     |  | |  | |
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
 | DeactivationAutomaticMovement | integer | 20| legt fest, wie lange am Tag nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird. <br>Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|
-| DeactivationManualMovement | integer | 120  | legt fest, wie lange am Tag nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll.<br>Ist kein Wert gesetzt (=0), so gilt die Zeit bis zum nächsten Tag/Nacht Wechsel.<br>Ausnahmen: Die Zeit wird nicht berücksichtigt bei Kontakten: hier wird sofort gefahren. Auch wird die Zeit nicht berücksichtigt, wenn ein Rollladen manuell ganz geschlossen wurde: hier bleibt der Rollladen geschlossen.|
+| DeactivationManualMovement | integer | 120  | legt fest, wie lange am Tag nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll.<br>Ist kein Wert gesetzt (=0), so gilt die Rollladenposition bis zum nächsten Tag/Nacht Wechsel.<br>Ausnahmen: Die Zeit wird nicht berücksichtigt bei Kontakten: hier wird sofort gefahren. Auch wird die Zeit nicht berücksichtigt, wenn ein Rollladen manuell ganz geschlossen wurde: hier bleibt der Rollladen geschlossen.|
 | WriteLogInformationToIPSLogger | boolean | false  | legt fest, ob die Log Informationen zusätzlich zum Standard Logfile auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 | WriteDebugInformationToIPSLogger | boolean | false  | legt fest, ob die Debug Informationen zusätzlich zum Debugger auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 | WriteDebugInformationToLogfile | boolean | false  | legt fest, ob die Debug Informationen zusätzlich in das Standard Logfile geschrieben werden sollen. Wichtig: dazu muss der Symcon Spezialschalter 'LogfileVerbose' aktiviert sein
