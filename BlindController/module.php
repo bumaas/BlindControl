@@ -117,12 +117,21 @@ class BlindController extends IPSModule
         $this->RegisterAttributes();
 
         $this->RegisterTimer('Update', 0, 'BLC_ControlBlind(' . $this->InstanceID . ', true);');
+
     }
 
     public function ApplyChanges()
     {
+        //we will wait until the kernel is ready
+        $this->RegisterMessage(0, IPS_KERNELMESSAGE);
+
         //Never delete this line!
         parent::ApplyChanges();
+
+        if (IPS_GetKernelRunlevel() !== KR_READY) {
+            return;
+        }
+
 
         $this->RegisterReferences();
         $this->RegisterMessages();
@@ -192,22 +201,34 @@ class BlindController extends IPSModule
                         )
         );
 
-        $this->SetInstanceStatusAndTimerEvent();
+        switch ($Message) {
+            case IPS_KERNELMESSAGE:
+                if ($Data[0] === KR_READY) {
+                    $this->ApplyChanges();
+                }
+                break;
 
-        if ($this->GetValue(self::VAR_IDENT_ACTIVATED)) {
-            // controlBlind mit Prüfung, ob der Rollladen sofort bewegt werden soll
-            $this->ControlBlind(
-                !in_array(
-                    $SenderID, [
-                    $this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID),
-                    $this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID),
-                    $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID),
-                    $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
-                    $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
-                    $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
-                    $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION)], true
-                )
-            );
+            case EM_UPDATE:
+            case VM_UPDATE:
+                $this->SetInstanceStatusAndTimerEvent();
+
+                if ($this->GetValue(self::VAR_IDENT_ACTIVATED)) {
+                    // controlBlind mit Prüfung, ob der Rollladen sofort bewegt werden soll
+                    $this->ControlBlind(
+                        !in_array(
+                            $SenderID, [
+                            $this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID),
+                            $this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID),
+                            $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID),
+                            $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
+                            $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
+                            $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
+                            $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION)], true
+                        )
+                    );
+                }
+
+                break;
         }
     }
 
@@ -1914,7 +1935,7 @@ class BlindController extends IPSModule
         }
 
         for ($i = 0; $i < 90; $i++) { //wir warten maximal 90 Sekunden
-            $currentValue = GetValue($levelID);
+            $currentValue        = GetValue($levelID);
             $percentCloseCurrent = ($currentValue - $profile['MinValue']) / ($profile['MaxValue'] - $profile['MinValue']) * 100;
 
             if ($profile['Reversed']) {
@@ -1926,7 +1947,10 @@ class BlindController extends IPSModule
                 sleep(1);
             } else {
                 $this->Logger_Dbg(
-                    __FUNCTION__, sprintf('#%s(%s): Position reached (Value: %s, Diff: %.2f).', $levelID, $propName, $currentValue, $percentCloseNew - $percentCloseCurrent)
+                    __FUNCTION__, sprintf(
+                                    '#%s(%s): Position reached (Value: %s, Diff: %.2f).', $levelID, $propName, $currentValue,
+                                    $percentCloseNew - $percentCloseCurrent
+                                )
                 );
                 return true;
             }
