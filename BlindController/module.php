@@ -232,6 +232,31 @@ class BlindController extends IPSModule
         }
     }
 
+    public function GetConfigurationForm()
+    {
+        $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+
+        if (IPS_GetKernelVersion() < '5.20'){
+            $elements[] = [
+                'type'  => 'RowLayout',
+                'items' => [
+                    ['type'    => 'Label',
+                     'caption' => 'In this instance, all parameters for controlling a single blind are stored. The description of the individual parameters can be found in the documentation.'],
+                    ['type'    => 'Button',
+                     'caption' => 'Show Documentation',
+                     'onClick' => 'echo \'https://github.com/bumaas/BlindControl/blob/master/README.md\';',
+                     'link'    => true]]];
+        } else {
+            $elements[] = [
+                    'type'    => 'Label',
+                     'caption' => 'In this instance, all parameters for controlling a single blind are stored.'];
+        }
+
+        $form['elements'] = array_merge($elements, $form['elements']);
+        $this->SendDebug('Form', json_encode($form), 0);
+        return json_encode($form);
+    }
+
     /**
      * Die folgenden Funktionen stehen automatisch zur Verfügung, wenn das Modul über die "Module Control" eingefügt wurden.
      * Die Funktionen werden, mit dem selbst eingerichteten Prefix, in PHP und JSON-RPC zur Verfügung gestellt.

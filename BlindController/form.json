@@ -1,11 +1,5 @@
 {
   "elements": [
-    {
-      "type": "RowLayout", "items": [
-      {"type": "Label", "caption": "In this instance, all parameters for controlling a single blind are stored. The description of the individual parameters can be found in the documentation."},
-      {"type": "Button", "caption": "Show Documentation", "onClick": "echo 'https://github.com/bumaas/BlindControl/blob/master/README.md';", "link": true}
-    ]
-    },
     {"type": "SelectVariable", "name": "BlindLevelID", "caption": "Blind Level ID"},
     {"type": "SelectVariable", "name": "SlatsLevelID", "caption": "Slats Level ID (optional)"},
     {
@@ -65,7 +59,7 @@
         {
           "type": "RowLayout", "items": [
           {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
-          {"type": "NumberSpinner", "name": "BrightnessAvgMinutes", "caption": "Average of the last minutes", "suffix": "Minutes"},
+          {"type": "NumberSpinner", "name": "BrightnessAvgMinutes", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0},
           {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
         ]
         },
@@ -88,21 +82,21 @@
         {"type": "Label", "caption": "Define the range of azimuth and altitude for shadowing:"},
         {
           "type": "RowLayout", "items": [
-          {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1"},
-          {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1"}
+          {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1", "minimum": 0, "maximum": 360},
+          {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1", "minimum": 0, "maximum": 360}
         ]
         },
         {
           "type": "RowLayout", "items": [
-          {"type": "NumberSpinner", "name": "AltitudeFrom", "caption": "From Altitude", "digits": "1"},
-          {"type": "NumberSpinner", "name": "AltitudeTo", "caption": "To Altitude", "digits": "1"}
+          {"type": "NumberSpinner", "name": "AltitudeFrom", "caption": "From Altitude", "digits": "1", "minimum": -90, "maximum": 90},
+          {"type": "NumberSpinner", "name": "AltitudeTo", "caption": "To Altitude", "digits": "1", "minimum": -90, "maximum": 90}
         ]
         },
         {"type": "Label", "caption": "Define a brightness sensor and a threshold if the brightness should be considered"},
         {
           "type": "RowLayout", "items": [
           {"type": "SelectVariable", "name": "BrightnessIDShadowingBySunPosition", "caption": "Brightness ID"},
-          {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBySunPosition", "caption": "Average of the last minutes", "suffix": "Minutes"},
+          {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBySunPosition", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0},
           {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "caption": "Brightness Threshold ID"}
         ]
         },
@@ -114,14 +108,14 @@
             {"type": "Label", "caption": "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate roller shutter height is calculated to the current altitude."},
             {
               "type": "RowLayout", "items": [
-              {"type": "NumberSpinner", "name": "LowSunPositionAltitude", "caption": "Low Sun Position (Altitude)", "digits": "1"},
+              {"type": "NumberSpinner", "name": "LowSunPositionAltitude", "caption": "Low Sun Position (Altitude)", "digits": "1", "minimum": 0, "maximum": 90},
               {"type": "NumberSpinner", "name": "LowSunPositionBlindLevel", "caption": "Low Sun Position (Blind Level)", "digits": "2"},
               {"type": "NumberSpinner", "name": "LowSunPositionSlatsLevel", "caption": "Low Sun Position (Slats Level)", "digits": "2"}
             ]
             },
             {
               "type": "RowLayout", "items": [
-              {"type": "NumberSpinner", "name": "HighSunPositionAltitude", "caption": "High Sun Position (Altitude)", "digits": "1"},
+              {"type": "NumberSpinner", "name": "HighSunPositionAltitude", "caption": "High Sun Position (Altitude)", "digits": "1", "minimum": 0, "maximum": 90},
               {"type": "NumberSpinner", "name": "HighSunPositionBlindLevel", "caption": "High Sun Position (Blind Level)", "digits": "2"},
               {"type": "NumberSpinner", "name": "HighSunPositionSlatsLevel", "caption": "High Sun Position (Slats Level)", "digits": "2"}
             ]
@@ -138,7 +132,7 @@
         {
           "type": "RowLayout", "items": [
           {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "caption": "Brightness ID"},
-          {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBrightness", "caption": "Average of the last minutes", "suffix": "Minutes"}
+          {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBrightness", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0}
         ]
         },
         {"type": "Label", "caption": "Define up to two different levels"},
@@ -214,9 +208,9 @@
     {
       "type":  "ExpansionPanel", "caption": "Expert Parameters",
       "items": [
-        {"type": "NumberSpinner", "name": "UpdateInterval", "caption": "Update Interval", "suffix": "Minutes"},
-        {"type": "NumberSpinner", "name": "DeactivationAutomaticMovement", "caption": "Deactivation Time after automatic Movement", "suffix": "Minutes"},
-        {"type": "NumberSpinner", "name": "DeactivationManualMovement", "caption": "Deactivation Time after manual Movement", "suffix": "Minutes"},
+        {"type": "NumberSpinner", "name": "UpdateInterval", "caption": "Update Interval", "suffix": "Minutes", "minimum": 0},
+        {"type": "NumberSpinner", "name": "DeactivationAutomaticMovement", "caption": "Deactivation Time after automatic Movement", "suffix": "Minutes", "minimum": 0},
+        {"type": "NumberSpinner", "name": "DeactivationManualMovement", "caption": "Deactivation Time after manual Movement", "suffix": "Minutes", "minimum": 0},
         {"type": "CheckBox", "name": "WriteLogInformationToIPSLogger", "caption": "Log and Error Information are written to the logfile of IPSLibrary instead of standard logfile"},
         {"type": "CheckBox", "name": "WriteDebugInformationToLogfile", "caption": "Debug information are written additionally to standard logfile"},
         {"type": "CheckBox", "name": "WriteDebugInformationToIPSLogger", "caption": "Debug information are written additionally to the logfile of IPSLibrary"}
@@ -228,8 +222,8 @@
     {
       "type":  "RowLayout",
       "items": [
-        {"type": "NumberSpinner", "name": "BlindLevel", "caption": "BlindLevel: Percentage from 0 (open) to 100 (close)"},
-        {"type": "NumberSpinner", "name": "SlatsLevel", "caption": "SlatsLevel: Percentage from 0 (open) to 100 (close)"},
+        {"type": "NumberSpinner", "name": "BlindLevel", "caption": "BlindLevel: Percentage from 0 (open) to 100 (close)", "minimum": 0, "maximum": 100},
+        {"type": "NumberSpinner", "name": "SlatsLevel", "caption": "SlatsLevel: Percentage from 0 (open) to 100 (close)", "minimum": 0, "maximum": 100},
         {"type": "Button", "caption": "Move Blind", "onClick": "$module = new IPSModule($id);if (BLC_MoveBlind($id, $BlindLevel, $SlatsLevel, 0, '')){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"}
       ]
     },
