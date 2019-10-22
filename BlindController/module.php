@@ -236,20 +236,22 @@ class BlindController extends IPSModule
     {
         $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
 
-        if (IPS_GetKernelVersion() < '5.20'){
+        if (IPS_GetKernelVersion() < '5.20') {
             $elements[] = [
                 'type'  => 'RowLayout',
                 'items' => [
-                    ['type'    => 'Label',
-                     'caption' => 'In this instance, all parameters for controlling a single blind are stored. The description of the individual parameters can be found in the documentation.'],
-                    ['type'    => 'Button',
-                     'caption' => 'Show Documentation',
-                     'onClick' => 'echo \'https://github.com/bumaas/BlindControl/blob/master/README.md\';',
-                     'link'    => true]]];
+                    [
+                        'type'    => 'Label',
+                        'caption' => 'In this instance, all parameters for controlling a single blind are stored. The description of the individual parameters can be found in the documentation.'],
+                    [
+                        'type'    => 'Button',
+                        'caption' => 'Show Documentation',
+                        'onClick' => 'echo \'https://github.com/bumaas/BlindControl/blob/master/README.md\';',
+                        'link'    => true]]];
         } else {
             $elements[] = [
-                    'type'    => 'Label',
-                     'caption' => 'In this instance, all parameters for controlling a single blind are stored.'];
+                'type'    => 'Label',
+                'caption' => 'In this instance, all parameters for controlling a single blind are stored.'];
         }
 
         $form['elements'] = array_merge($elements, $form['elements']);
@@ -828,8 +830,8 @@ class BlindController extends IPSModule
 
     private function RegisterVariables(): void
     {
-        $this->RegisterVariableBoolean(self::VAR_IDENT_ACTIVATED, 'Activated', '~Switch');
-        $this->RegisterVariableString(self::VAR_IDENT_LAST_MESSAGE, 'Last Message');
+        $this->RegisterVariableBoolean(self::VAR_IDENT_ACTIVATED, $this->Translate('Activated'), '~Switch');
+        $this->RegisterVariableString(self::VAR_IDENT_LAST_MESSAGE, $this->Translate('Last Message'));
 
         $this->EnableAction(self::VAR_IDENT_ACTIVATED);
     }

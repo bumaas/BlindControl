@@ -104,8 +104,8 @@ class BlindControlGroupMaster extends IPSModule
                     'width'   => '250px',
                     'add'     => $defaultInstance,
                     'edit'    => ['type' => 'Select', 'options' => $options]],
-                ['caption' => 'ObjectID', 'name' => 'ObjectID', 'width' => '60px', 'add' => ''],
-                ['caption' => 'Location', 'name' => 'Location', 'width' => '400px', 'add' => ''],
+                ['caption' => 'ObjectID', 'name' => 'ObjectID', 'width' => '70px', 'add' => ''],
+                ['caption' => 'Location', 'name' => 'Location', 'width' => '450px', 'add' => ''],
                 [
                     'caption' => 'selected',
                     'name'    => 'Selected',

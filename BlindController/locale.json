@@ -1,6 +1,8 @@
 {
   "translations": {
     "de": {
+      "Activated": "Aktiviert",
+      "Last Message": "Letzte Nachricht",
       "In this instance, all parameters for controlling a single blind are stored. The description of the individual parameters can be found in the documentation.": "In dieser Instanz werden alle Parameter zur Steuerung eines einzelnen Rollladens hinterlegt. Die Beschreibung der einzelnen Parameter ist in der Dokumentation zu finden.",
       "In this instance, all parameters for controlling a single blind are stored.": "In dieser Instanz werden alle Parameter zur Steuerung eines einzelnen Rollladens hinterlegt.",
       "Show Documentation": "Dokumentation anzeigen",

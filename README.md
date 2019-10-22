@@ -54,15 +54,15 @@ Zur Steuerung von Lamellen bei Jalousien ist eine eigene Statusvariable notwendi
 
 ## 3. Installation
 
-### a. Laden des Moduls
+### 3.1 Laden des Moduls
 
 Das Modul wird über den Modul Store installiert.
 
-### b. Anlegen einer Rollladen Instanz
+### 3.2 Anlegen einer Rollladen Instanz
 
 In Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Blind Controller` auswählen. Es wird eine Rollladeninstanz angelegt, in der die Eigenschaften zur Steuerung eines einzelnen Rollladens gesetzt werden.
 
-### c. Anlegen eines Gruppen Masters
+### 3.3 Anlegen eines Gruppen Masters
 
 In Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Blind Control Group Master` auswählen. Es wird ein Gruppen Master angelegt, in dem Rollläden zu Bearbeitungszwecken (nicht zu Steuerungszwecken!) zusammengefasst werden können.
 Hierüber wird es ermöglicht, eine Eigenschaft für mehrere Rollläden in einem Schritt auszulesen oder zu setzen.
@@ -115,7 +115,7 @@ Setzt die Statusvariable 'Activated' auf den gegebenen Wert $active bei allen Ro
 
 ## 5. Konfiguration
 
-### Überprüfen, ob der zu steuernde Rollladen korrekt in IP-Symcon eingerichtet ist
+### 5.1 Überprüfen, ob der zu steuernde Rollladen korrekt in IP-Symcon eingerichtet ist
 
 Damit das Modul korrekt arbeiten kann, ist eine richtige und vollständige Einrichtung des zu steuernden Rollladens in IP-Symcon Voraussetzung. Es muss sichergestellt sein, dass der Rollladen sich korrekt positionieren lässt (offen, geschlossen und in Zwischenstufen) und die Laufrichtung richtig erkannt wird.
 Dies lässt sich am einfachsten überprüfen, indem die zu steuernde Positions Variable (bei Homematic z.B. LEVEL genannt) mit einem adaptiven Icon (z.B. "Jalousie") versehen wird und das Webfront eingebunden wird.
@@ -133,7 +133,7 @@ Diese Positionsvariable ist im Modul als 'Rollladen Level ID' anzugeben.
 Das gleiche Vorgehen empfiehlt sich auch für die Überprüfung der Lamellenpositionierung bei Jalousien.
 
 
-### Einrichtung des Wochenplans
+### 5.2 Einrichtung des Wochenplans
 Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstellungen:
  
 ![image](docs/Wochenplan.jpg)
@@ -148,7 +148,7 @@ Das Modul holt aus dem Wochenplan ausschließlich die Aktionszeiten und den Akti
 
 Über den Wochenplan werden die Grundfahrzeiten (morgens hoch/ abends runter) definiert.
 
-### Tagerkennung (optional)
+### 5.3 Tagerkennung (optional)
 Als Ergänzung zum Wochenplan kann eine zusätzliche Tagerkennung eingerichtet werden. Sie kommt zum Einsatz, wenn neben den Fahrzeiten gemäß Wochenplan auch die Helligkeit berücksichtigt werden soll.
 
 Beispiel:
@@ -167,12 +167,12 @@ dann ist die Anzahl der Minuten anzugeben, über die der Durchschnitt gebildet w
 
 ![image](docs/Helligkeitsschwellwert.jpg)
 
-#### Übersteuernde Tagesanfang- und Endezeiten (optional)
+#### 5.3.1 Übersteuernde Tagesanfang- und Endezeiten (optional)
 Als zusätzliche Option kann auch eine übersteuernde feste Tagesanfangszeit und/oder Tagesendezeit angegeben werden. Dazu ist auf eine Variable zu verweisen, die die entsprechende Zeit im Format 'HH:MM' beinhaltet.
 Die Zeiten übersteuern die in der Tagerkennung ermittelten Zeiten.
  
 
-### Beschattung nach Sonnenstand (optional)
+### 5.4 Beschattung nach Sonnenstand (optional)
 Es sind die Variablen anzugeben, aus denen der Sonnenstand (Azimuth = Sonnenrichtung, Altitude = Sonnenhöhe) geholt werden soll. Hier bieten sich die gleichnamigen Variablen des Location Moduls an.
 
 Des weiteren ist der Bereich (Azimuth von/bis) der Sonnenrichtung anzugeben, in dem die Beschattung stattfinden soll.
@@ -187,7 +187,7 @@ Behanghöhe in Abhängigkeit von der Sonnenhöhe errechnet. Die Werte sind am be
 
 Durch eine korrekte Einmessung wird erreicht, dass der Schatten des Rollladens immer gleich weit im Raum steht und somit eine gleichmäßige Beschattung stattfindet.
 
-### Beschattung nach Helligkeit (optional)
+### 5.5 Beschattung nach Helligkeit (optional)
 Es sind die Variablen anzugeben, die zur Helligkeitsbestimmung herangezogen werden sollen. Wenn der Helligkeitswert überschritten wird, dann wird der Rollladen auf die vorgegebene Position gefahren. Es stehen zwei Paare an Helligkeitsschwellwert und Rollladenposition zur Verfügung.
 Die Beschattung nach Helligkeit übersteuert die Beschattung nach Sonnenstand.
 
@@ -196,7 +196,7 @@ Die Regel wird über eine Aktivierungsvariable aktiviert/deaktiviert.
 Praktisches Beispielszenario:
 Im Normalfall wird nach Sonnenstand beschattet. Wenn jedoch der Fernseher eingeschaltet wird, dann soll je nach Helligkeit stärker oder schwächer abgedunkelt werden.
 
-### Erkennung von Kontakten (optional)
+### 5.6 Erkennung von Kontakten (optional)
 Um auf offene Fenster/Türen oder auch Regen/Sturm reagieren zu können, können bis zu vier Kontakte angegeben werden. Ein Kontakt wird als offen erkannt, wenn der Wert >0 ist. Bei Kontakten, die im geöffneten Zustand den Wert 0 haben, ist ein 'Reversed'-Profil zu verwenden.
 
 Je zwei Kontakte dienen dem Öffnen (Fenster/Tür) sowie dem Schließen (Regen/Wind) eines Rollladens.
@@ -205,7 +205,7 @@ Wird ein Kontakt als offen erkannt, dann wird sofort auf die gewünschte Positio
 
 Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des Rollladens erkannt (z.B. die Tür ist offen und es regnet), dann erhalten die Kontakte zum Öffnen Vorrang. 
  
-### Blind Controller
+### 5.7 Blind Controller
 
 **Hinweis**: Als Werte sind immer die Originalwerte und nicht die umgerechneten Werte anzugeben. Beispiel: wenn die referierte Levelvariable einen Wertebereich von 0-255 hat, so ist bei allen Properties, die sich auf das Level beziehen, ebenfalls ein Wert von 0-255 anzugeben.
 und nicht ein Wert von 100 für "geschlossen".
