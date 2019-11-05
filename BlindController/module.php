@@ -132,7 +132,6 @@ class BlindController extends IPSModule
             return;
         }
 
-
         $this->RegisterReferences();
         $this->RegisterMessages();
         $this->RegisterVariables();
@@ -1371,18 +1370,23 @@ class BlindController extends IPSModule
     private function isContactOpen(string $propName): bool
     {
         $contactId = $this->ReadPropertyInteger($propName);
+        if ($contactId === 0) {
+            return false;
+        }
+
         if ($prof = $this->GetProfileInformation($propName)) {
             $reversed = $prof['Reversed'];
         } else {
             $reversed = false;
         }
 
-        if ($contactId !== 0) {
-            return GetValue($contactId) || ($reversed && !GetValue($contactId));
+        $this->Logger_Dbg(__FUNCTION__, sprintf('Property: %s(#%s), Value: %s, reversed: %s', $propName, $contactId, (int) GetValue($contactId), (int) $reversed));
+
+        if ($reversed){
+            return !GetValue($contactId);
         }
 
-        return false;
-
+        return (bool) GetValue($contactId);
     }
 
     private function getLevelEmergencyContact(): ?float
@@ -1535,7 +1539,12 @@ class BlindController extends IPSModule
         if ($brightnessAvgMinutes > 0) {
             $archiveId = IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}')[0];
             if (AC_GetLoggingStatus($archiveId, $brightnessID)) {
-                $werte = AC_GetAggregatedValues($archiveId, $brightnessID, 6, strtotime('-' . $brightnessAvgMinutes . ' minutes'), time(), 0);
+                $werte = @AC_GetAggregatedValues($archiveId, $brightnessID, 6, strtotime('-' . $brightnessAvgMinutes . ' minutes'), time(), 0);
+                if (count($werte) === 0){
+                    //bei der Sommer auf Winterzeitumstellung gab es eine Warning'EndTime is before StartTime) um kurz vor 3
+                    return (float) GetValue($brightnessID);
+                }
+
                 $sum   = 0;
                 foreach ($werte as $wert) {
                     $sum += $wert['Avg'];
@@ -1924,7 +1933,7 @@ class BlindController extends IPSModule
                 );
 
             } else {
-                $this->Logger_Err(sprintf('%s(%s): Fehler beim Setzen der Werte. (Value = %s)', $positionID, $propName, $percentClose));
+                $this->Logger_Err(sprintf('#%s (%s): Fehler beim Setzen der Werte. (Value = %s).', $positionID, $propName, $percentClose));
             }
             $this->Logger_Dbg(__FUNCTION__, sprintf('#%s(%s): %s to %s', $positionID, $propName, $positionAct, $positionNew));
 
@@ -2250,7 +2259,7 @@ class BlindController extends IPSModule
             return null;
         }
 
-        $reversed = strcasecmp('reversed', end($profileNameParts)) === 0;
+        $reversed = strcasecmp('reversed', end($profileNameParts)) === 0; //Groß-/Kleinschreibung wird ignoriert
         switch ($propName) {
             case self::PROP_BLINDLEVELID:
             case self::PROP_SLATSLEVELID:
