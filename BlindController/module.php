@@ -213,18 +213,17 @@ class BlindController extends IPSModule
 
                 if ($this->GetValue(self::VAR_IDENT_ACTIVATED)) {
                     // controlBlind mit Prüfung, ob der Rollladen sofort bewegt werden soll
-                    $this->ControlBlind(
-                        !in_array(
-                            $SenderID, [
-                            $this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID),
-                            $this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID),
-                            $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID),
-                            $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
-                            $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
-                            $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
-                            $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION)], true
-                        )
+                    $considerDeactivationTimeAuto = !in_array(
+                        $SenderID, [
+                        $this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID),
+                        $this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID),
+                        $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID),
+                        $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
+                        $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
+                        $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
+                        $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION)], true
                     );
+                    IPS_RunScriptText(sprintf('BLC_ControlBlind(%s, %s);', $this->InstanceID, $considerDeactivationTimeAuto ? 'true' : 'false'));
                 }
 
                 break;
@@ -1380,9 +1379,11 @@ class BlindController extends IPSModule
             $reversed = false;
         }
 
-        $this->Logger_Dbg(__FUNCTION__, sprintf('Property: %s(#%s), Value: %s, reversed: %s', $propName, $contactId, (int) GetValue($contactId), (int) $reversed));
+        $this->Logger_Dbg(
+            __FUNCTION__, sprintf('Property: %s(#%s), Value: %s, reversed: %s', $propName, $contactId, (int) GetValue($contactId), (int) $reversed)
+        );
 
-        if ($reversed){
+        if ($reversed) {
             return !GetValue($contactId);
         }
 
@@ -1540,12 +1541,12 @@ class BlindController extends IPSModule
             $archiveId = IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}')[0];
             if (AC_GetLoggingStatus($archiveId, $brightnessID)) {
                 $werte = @AC_GetAggregatedValues($archiveId, $brightnessID, 6, strtotime('-' . $brightnessAvgMinutes . ' minutes'), time(), 0);
-                if (count($werte) === 0){
+                if (count($werte) === 0) {
                     //bei der Sommer auf Winterzeitumstellung gab es eine Warning'EndTime is before StartTime) um kurz vor 3
                     return (float) GetValue($brightnessID);
                 }
 
-                $sum   = 0;
+                $sum = 0;
                 foreach ($werte as $wert) {
                     $sum += $wert['Avg'];
                 }
@@ -1940,7 +1941,7 @@ class BlindController extends IPSModule
         } elseif (!$positionDiffPercentage) {
             $this->Logger_Dbg(__FUNCTION__, sprintf('#%s(%s): No Movement! Position %s already reached.', $positionID, $propName, $positionAct));
 
-        } elseif ($positionDiffPercentage <= 0.05) {
+        } elseif ($positionDiffPercentage < 0.05) {
             $this->Logger_Dbg(
                 __FUNCTION__, sprintf('#%s(%s): No Movement! Movement less than 5 percent (%.2f).', $positionID, $propName, $positionDiffPercentage)
             );
