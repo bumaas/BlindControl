@@ -223,7 +223,12 @@ class BlindController extends IPSModule
                         $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
                         $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION)], true
                     );
-                    IPS_RunScriptText(sprintf('BLC_ControlBlind(%s, %s);', $this->InstanceID, $considerDeactivationTimeAuto ? 'true' : 'false'));
+
+                    if (IPS_GetKernelRunlevel() === KR_READY) {
+                        //Skripte können nur gestartet werden, wenn der Kernel ready ist
+                        IPS_RunScriptText(sprintf('BLC_ControlBlind(%s, %s);', $this->InstanceID, $considerDeactivationTimeAuto ? 'true' : 'false'));
+                    }
+
                 }
 
                 break;
@@ -1451,7 +1456,7 @@ class BlindController extends IPSModule
 
         $brightness =
             $this->GetBrightness(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION, 'BrightnessAvgMinutesShadowingBySunPosition', $levelAct, true);
-        if ($brightness) {
+        if (isset($brightness)) {
             $thresholdBrightness = $this->getBrightnessThreshold(
                 $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION), $levelAct, $temperature
             );
@@ -1470,7 +1475,7 @@ class BlindController extends IPSModule
         /** @noinspection ProperNullCoalescingOperatorUsageInspection */
         $this->Logger_Dbg(
             __FUNCTION__, sprintf(
-                            'active: %d, brightness: %.1f/%.1f, azimuth: %.1f (%.1f - %.1f), altitude: %.1f (%.1f - %.1f), temperature: %s',
+                            'active: %d, brightness(act/thresh): %.1f/%.1f, azimuth: %.1f (%.1f - %.1f), altitude: %.1f (%.1f - %.1f), temperature: %s',
                             (int) GetValue($activatorID), $brightness, $thresholdBrightness, $rSunAzimuth, $azimuthFrom, $azimuthTo, $rSunAltitude,
                             $altitudeFrom, $altitudeTo, $temperature ?? 'null'
                         )
@@ -1670,6 +1675,10 @@ class BlindController extends IPSModule
 
         $positions  = null;
         $brightness = $this->GetBrightness('BrightnessIDShadowingBrightness', 'BrightnessAvgMinutesShadowingBrightness', $levelAct, true);
+
+        if (!isset($brightness)){
+            return null;
+        }
 
         if ($thresholdIDHighBrightness > 0) {
             $thresholdLessBrightness = GetValue($thresholdIDHighBrightness);
@@ -1934,7 +1943,7 @@ class BlindController extends IPSModule
                 );
 
             } else {
-                $this->Logger_Err(sprintf('#%s (%s): Fehler beim Setzen der Werte. (Value = %s).', $positionID, $propName, $percentClose));
+                $this->Logger_Err(sprintf('#%s (%s): Fehler beim Setzen des Wertes. (Value = %s, Parent: "%s").', $positionID, $propName, $percentClose, IPS_GetName(IPS_GetParent($positionID))));
             }
             $this->Logger_Dbg(__FUNCTION__, sprintf('#%s(%s): %s to %s', $positionID, $propName, $positionAct, $positionNew));
 

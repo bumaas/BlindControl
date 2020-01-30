@@ -75,12 +75,12 @@ Der Gruppen Master dient zur leichteren Bearbeitung der definierten Rollladen In
 ```php
 BLC_ControlBlind(int $InstanceID, bool $considerDeactvationTimes)
 ```
-Prüft die Rollladenposition gemäß der in der Instanz festgelegten Eigenschaften und fährt den Rollladen auf die ermittelte Position. Wenn $considerDeactivationTimes == true, dann wird DeactivationAutomaticMovement berücksichtigt.
+Prüft die Rollladenposition gemäß der in der Instanz festgelegten Eigenschaften und fährt den Rollladen auf die ermittelte Position. Wenn $considerDeactivationTimes == true, dann wird DeactivationAutomaticMovement berücksichtigt. Die Funktion dient nur zu Testzwecken. 
 
 ```php
 BLC_MoveBlind(int $InstanceID, int $percentBlindClose, int $percentSlatsClosed, int $deactivationTimeAuto, string $hint): bool
 ```
-Fährt den Rollladen/die Jalousie auf die gewünschte Position.
+Fährt den Rollladen/die Jalousie auf die gewünschte Position. Die Funktion dient nur zu Testzwecken.
 
 $percentBlindClose: 0 - 100
 Angabe des Schließungsgrades des Behangs (Höhe) (0=geöffnet, 100 = geschlossen)
@@ -246,7 +246,7 @@ und nicht ein Wert von 100 für "geschlossen".
 | BrightnessIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable, die die Helligkeit zur Beschattung nach Sonnenposition angibt
 | BrightnessAvgMinutesShadowingBySunPosition      | integer   | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll 
 | BrightnessThresholdIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable, die den Schwellwert zur Beschattung nach Sonnenposition zur Verfügung stellt
-| TemperatureIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable die einen Temperatursensor (Außentemperatur) wiedergibt. 
+| TemperatureIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable die einen Temperatursensor (Außentemperatur) wiedergibt. Bei Temperaturen über 24°C wird der Helligkeitsschwellwert verringert, um eine frühere Beschattung zu erreichen. Bei Temperaturen unter 10°C wird der Helligkleitsschwellwert heraufgesetzt, um die Sonne erst später 'auszusperren'.
 | LowSunPositionAltitude<br>HighSunPositionAltitude<br>LowSunPositionBlindLevel<br>HighSunPositionBlindLevel | float   | 0 | Aus diesen möglichst weit auseinanderliegenden Wertepaaren wird die Behanghöhe in Abhängigkeit von der Sonnenhöhe errechnet  
 | <br>**Beschattung nach Helligkeit**     |  | |  | |
 | ActivatorIDShadowingBrightness | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Helligkeit aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
