@@ -105,7 +105,7 @@ class BlindController extends IPSModule
 
     private $profileSlatsLevel;
 
-    // Überschreibt die interne IPS_Create($id) Funktion
+    // die folgenden Funktionen überschreiben die interne IPS_() Funktionen
     public function Create()
     {
         // Diese Zeile nicht löschen.
@@ -277,6 +277,14 @@ class BlindController extends IPSModule
         return json_encode($form);
     }
 
+    public function ReceiveData($JSONString)
+    {
+        trigger_error(sprintf ('Fatal error: no ReceiveData expected. (%s)', $JSONString));
+
+        return parent::ReceiveData($JSONString);
+    }
+
+
     /**
      * Die folgenden Funktionen stehen automatisch zur Verfügung, wenn das Modul über die "Module Control" eingefügt wurden.
      * Die Funktionen werden, mit dem selbst eingerichteten Prefix, in PHP und JSON-RPC zur Verfügung gestellt.
@@ -322,6 +330,7 @@ class BlindController extends IPSModule
             $this->profileSlatsLevel    = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
             $positionsAct['SlatsLevel'] = (float)GetValue($slatsLevelId);
         } else {
+            $this->profileSlatsLevel = null;
             $positionsAct['SlatsLevel'] = null;
         }
 
@@ -386,8 +395,8 @@ class BlindController extends IPSModule
                 $tsAutomatik,
                 $this->profileBlindLevel['LevelClosed'],
                 $this->profileBlindLevel['LevelOpened'],
-                $this->profileSlatsLevel['LevelClosed'],
-                $this->profileSlatsLevel['LevelOpened']
+                $this->profileSlatsLevel['LevelClosed'] ?? null,
+                $this->profileSlatsLevel['LevelOpened'] ?? null
             );
         }
 
@@ -433,7 +442,7 @@ class BlindController extends IPSModule
             if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
                 $positionsNew['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_DAYSLATSLEVEL);
             } else {
-                $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelOpened'];
+                $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelOpened'] ?? null;
             }
             $Hinweis = 'Tag';
         } else { //it is night
@@ -444,7 +453,7 @@ class BlindController extends IPSModule
                 $Hinweis                    = 'Nachtposition';
             } else {
                 $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelClosed'];
-                $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelClosed'];
+                $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelClosed'] ?? null;
                 $Hinweis                    = 'Nacht';
             }
         }
@@ -555,14 +564,16 @@ class BlindController extends IPSModule
                 $Hinweis                    = 'Kontakt offen';
             }
 
-            if ($this->profileSlatsLevel['Reversed']) {
-                if ($positionsContactOpenBlind['SlatsLevel'] > $positionsNew['SlatsLevel']) {
+            if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+                if ($this->profileSlatsLevel['Reversed']) {
+                    if ($positionsContactOpenBlind['SlatsLevel'] > $positionsNew['SlatsLevel']) {
+                        $positionsNew['SlatsLevel'] = $positionsContactOpenBlind['SlatsLevel'];
+                        $Hinweis                    = 'Kontakt offen';
+                    }
+                } elseif ($positionsContactOpenBlind['SlatsLevel'] < $positionsNew['SlatsLevel']) {
                     $positionsNew['SlatsLevel'] = $positionsContactOpenBlind['SlatsLevel'];
                     $Hinweis                    = 'Kontakt offen';
                 }
-            } elseif ($positionsContactOpenBlind['SlatsLevel'] < $positionsNew['SlatsLevel']) {
-                $positionsNew['SlatsLevel'] = $positionsContactOpenBlind['SlatsLevel'];
-                $Hinweis                    = 'Kontakt offen';
             }
 
             $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
@@ -591,14 +602,16 @@ class BlindController extends IPSModule
                 $Hinweis                    = 'Kontakt offen';
             }
 
-            if ($this->profileSlatsLevel['Reversed']) {
-                if ($positionsContactCloseBlind['SlatsLevel'] < $positionsNew['SlatsLevel']) {
+            if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+                if ($this->profileSlatsLevel['Reversed']) {
+                    if ($positionsContactCloseBlind['SlatsLevel'] < $positionsNew['SlatsLevel']) {
+                        $positionsNew['SlatsLevel'] = $positionsContactCloseBlind['SlatsLevel'];
+                        $Hinweis                    = 'Kontakt offen';
+                    }
+                } elseif ($positionsContactCloseBlind['SlatsLevel'] > $positionsNew['SlatsLevel']) {
                     $positionsNew['SlatsLevel'] = $positionsContactCloseBlind['SlatsLevel'];
                     $Hinweis                    = 'Kontakt offen';
                 }
-            } elseif ($positionsContactCloseBlind['SlatsLevel'] > $positionsNew['SlatsLevel']) {
-                $positionsNew['SlatsLevel'] = $positionsContactCloseBlind['SlatsLevel'];
-                $Hinweis                    = 'Kontakt offen';
             }
 
             $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
