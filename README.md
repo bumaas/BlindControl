@@ -1,3 +1,5 @@
+[![Version](https://img.shields.io/badge/Symcon%20Version-5.1%20%3E-green.svg)](https://www.symcon.de/forum/threads/30857-IP-Symcon-5-1-%28Stable%29-Changelog)
+[![Donate](https://img.shields.io/badge/Donate-Paypal-009cde.svg)](https://www.paypal.me/bumaas)
 # Blind Control
 
 Modul für Symcon ab Version 5.1.
@@ -14,7 +16,9 @@ Steuert einen Rollladen bzw. eine Jalousie nach vorgegebenen Einstellungen.
 4. [Funktionsreferenz](#4-funktionsreferenz)
 5. [Konfiguration](#5-konfiguration)  
 6. [Statusvariablen und Profile](#6-statusvariablen-und-profile)  
-7. [Anhang](#7-anhang)  
+7. [Anhang](#7-anhang)
+    1. [GUIDs der Module](#1-guids-der-module)
+    2. [Spenden](#2-spenden)
 
 ## 1. Funktionsumfang
 
@@ -23,21 +27,18 @@ Das Blind Control Modul dient der Steuerung von Rollläden oder anderweitigen Ab
 Aktuelle Features:
 
 - Hoch-/Runterfahren zu vorgegeben Zeiten
+- Lamellenstellung bei Jalousien
 - Urlaubs- und Feiertagsberücksichtigung
 - Berücksichtigung Sonnenauf- und untergang
-- Sonnenschutz inclusive Nachführen nach Sonnenstand
-- Unterstützung von Kontakten (Fenster-/Tür, Regen, Alarm etc)
-- Deaktivierungsmöglichkeit
 - Berücksichtigung der Helligkeit
+- Sonnenschutz inclusive Nachführen nach Sonnenstand
+- Zufallsfunktion bei Tagesanfang/Tagesende
+- Unterstützung von Kontakten (Fenster-/Tür, Regen, Alarm etc)
 - Hitzeschutz
+- Notfall Sensor
 - Erkennung von manueller Bedienung
 - Aktivierung/Deaktivierung über Statusvariable
-- Notfall Sensor
 - herstellerunabhängig
-- Lamellenstellung bei Jalousien
-
-Noch nicht unterstützt wird:
-- Zufallsfunktion bei Tagesanfang/Tagesende
 
 Zusätzlich kann zur leichteren Verwaltung mehrerer Rollläden/Jalousien ein Gruppen Master definiert werden.
 
@@ -272,6 +273,8 @@ und nicht ein Wert von 100 für "geschlossen".
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
 | DeactivationAutomaticMovement | integer | 20| legt fest, wie lange am Tag nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird. <br>Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|
 | DeactivationManualMovement | integer | 120  | legt fest, wie lange am Tag nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll.<br>Ist kein Wert gesetzt (=0), so gilt die Rollladenposition bis zum nächsten Tag/Nacht Wechsel.<br>Ausnahmen: Die Zeit wird nicht berücksichtigt bei Kontakten: hier wird sofort gefahren. Auch wird die Zeit nicht berücksichtigt, wenn ein Rollladen manuell ganz geschlossen wurde: hier bleibt der Rollladen geschlossen.|
+| DelayTimeDayNightChange | integer | 0  | legt fest, ob und wie lange eine Fahrt beim Tages/Nacht-Wechsel verzögert werden soll|
+| DelayTimeDayNightChangeIsRandomly | boolean | false  | legt fest, ob die Verzögerung zufällig bestimmt werden soll. Es wird ein Zufallswert zwischen 0 und der angegebenen Zeit genommen|
 | WriteLogInformationToIPSLogger | boolean | false  | legt fest, ob die Log Informationen zusätzlich zum Standard Logfile auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 | WriteDebugInformationToIPSLogger | boolean | false  | legt fest, ob die Debug Informationen zusätzlich zum Debugger auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 | WriteDebugInformationToLogfile | boolean | false  | legt fest, ob die Debug Informationen zusätzlich in das Standard Logfile geschrieben werden sollen. Wichtig: dazu muss der Symcon Spezialschalter 'LogfileVerbose' aktiviert sein
@@ -289,18 +292,17 @@ Dann werden im Webfront die Bewegungen in Form eines Logfiles dargestellt.
 
 ## 7. Anhang
 
-###  GUIDs und Datenaustausch
+###  GUIDs der Module
 
-#### Blind Control (Modul)
+|                Modul                |     Typ      |                  GUID                  |
+| :---------------------------------: | :----------: | :------------------------------------: |
+|        Blind Controller         |    Device    | {538F6461-5410-4F4C-91D3-B39122152D56} |
+|         Blind Control Group Master         |    Device    | {1ACD8A0D-5385-6D05-9537-F24C9014FD02} |
 
-GUID: `{7995E8C8-BD15-46A1-8AB6-2B795C33C0C5}` 
+### 3. Spenden  
+  
+  Die Nutzung des Moduls ist kostenfrei. Niemand sollte sich verpflichtet fühlen, aber wenn das Modul gefällt, dann freue ich mich über eine Spende.
 
-#### Blind Controller (Instanz)
-
-GUID: `{538F6461-5410-4F4C-91D3-B39122152D56}` 
-
-#### Blind Control Group Master (Instanz)
-
-GUID: `{1ACD8A0D-5385-6D05-9537-F24C9014FD02}` 
+<a href="https://www.paypal.me/bumaas" target="_blank"><img src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donate_LG.gif" border="0" /></a>
 
 

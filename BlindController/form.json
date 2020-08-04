@@ -211,6 +211,12 @@
         {"type": "NumberSpinner", "name": "UpdateInterval", "caption": "Update Interval", "suffix": "Minutes", "minimum": 0},
         {"type": "NumberSpinner", "name": "DeactivationAutomaticMovement", "caption": "Deactivation Time after automatic Movement", "suffix": "Minutes", "minimum": 0},
         {"type": "NumberSpinner", "name": "DeactivationManualMovement", "caption": "Deactivation Time after manual Movement", "suffix": "Minutes", "minimum": 0},
+        {
+          "type": "RowLayout", "items": [
+          {"type": "NumberSpinner", "name": "DelayTimeDayNightChange", "caption": "Delay Time of Day Night Change", "suffix": "Seconds", "minimum": 0},
+          {"type": "CheckBox", "name": "DelayTimeDayNightChangeIsRandomly", "caption": "Delay Time of Day Night Change is randomly"}
+        ]
+        },
         {"type": "CheckBox", "name": "WriteLogInformationToIPSLogger", "caption": "Log and Error Information are written to the logfile of IPSLibrary instead of standard logfile"},
         {"type": "CheckBox", "name": "WriteDebugInformationToLogfile", "caption": "Debug information are written additionally to standard logfile"},
         {"type": "CheckBox", "name": "WriteDebugInformationToIPSLogger", "caption": "Debug information are written additionally to the logfile of IPSLibrary"}

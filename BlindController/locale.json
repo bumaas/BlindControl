@@ -94,6 +94,8 @@
       "Update Interval": "Steuerungsintervall",
       "Deactivation Time after automatic Movement": "Zeit der Deaktivierung nach automatischer Fahrt",
       "Deactivation Time after manual Movement": "Zeit der Deaktivierung nach manueller Fahrt",
+      "Delay Time of Day Night Change": "Verzögerung beim Tag/Nacht-Wechsel",
+      "Delay Time of Day Night Change is randomly": "Die Verzögerung beim Tag/Nacht-Wechsel ist zufällig",
       "Log and Error Information are written to the logfile of IPSLibrary instead of standard logfile": "Informationen und Fehlermeldungen werden in das Logfile der IPSLibrary anstatt in das Standardlogfile geschrieben",
       "Debug information are written additionally to standard logfile": "Debug Informationen werden zusätzlich in das Standardlogfile geschrieben",
       "Debug information are written additionally to the logfile of IPSLibrary": "Debug Informationen werden zusätzlich in das Logfile der IPSLibrary geschrieben",
