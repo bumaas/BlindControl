@@ -1,154 +1,181 @@
 {
   "elements": [
     {"type": "SelectVariable", "name": "BlindLevelID", "caption": "Blind Level ID"},
-    {"type": "SelectVariable", "name": "SlatsLevelID", "caption": "Slats Level ID (optional)"},
+    {"type": "SelectVariable", "name": "SlatsLevelID", "caption": "Slats Level ID (optional)", "onChange": "IPS_RequestAction($id, 'SlatsLevelID', $SlatsLevelID);"},
     {
-      "type":  "ExpansionPanel", "caption": "Time Schedule",
+      "type":  "ExpansionPanel", "caption": "Change of Night and Day",
       "items": [
-        {"type": "SelectEvent", "name": "WeeklyTimeTableEventID", "caption": "Weekly Timetable Event ID"},
         {
-          "type":  "ExpansionPanel", "caption": "Consider Holiday (optional)",
+          "type":  "ExpansionPanel", "caption": "Time Schedule",
           "items": [
-            {"type": "SelectVariable", "name": "HolidayIndicatorID", "caption": "Holiday Indicator ID"},
+            {"type": "SelectEvent", "name": "WeeklyTimeTableEventID", "caption": "Weekly Timetable Event ID"},
             {
-              "type": "Select", "name": "DayUsedWhenHoliday", "caption": "Used Weekday when Holiday", "options": [
-              {"caption": "- not used -", "value": 0},
-              {"caption": "Monday", "value": 1},
-              {"caption": "Tuesday", "value": 2},
-              {"caption": "Wednesday", "value": 3},
-              {"caption": "Thursday", "value": 4},
-              {"caption": "Friday", "value": 5},
-              {"caption": "Saturday", "value": 6},
-              {"caption": "Sunday", "value": 7}
-            ]
-            }
-          ]
-        },
-        {
-          "type":  "ExpansionPanel", "caption": "Overruling Up and Down Times (optional)",
-          "items": [
-            {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "Wake-Up Time ID"},
-            {"type": "NumberSpinner", "name": "WakeUpTimeOffset", "caption": "Wake-Up Time Offset", "suffix": "Minutes"},
-            {"type": "SelectVariable", "name": "BedTimeID", "caption": "Bedtime ID"},
-            {"type": "NumberSpinner", "name": "BedTimeOffset", "caption": "Bedtime Offset", "suffix": "Minutes"}
-          ]
-        },
-        {"type": "Label", "caption": "If the blind is not to be completely closed at night, a different close position can be specified."},
-        {
-          "type": "RowLayout", "items": [
-          {"type": "CheckBox", "name": "ActivatedIndividualNightLevels"},
-          {"type": "NumberSpinner", "name": "NightBlindLevel", "caption": "Blind Level", "digits": "2"},
-          {"type": "NumberSpinner", "name": "NightSlatsLevel", "caption": "Slats Level", "digits": "2"}
-        ]
-        },
-        {"type": "Label", "caption": "If the blind is not to be completely opened at day, a different open position can be specified."},
-        {
-          "type": "RowLayout", "items": [
-          {"type": "CheckBox", "name": "ActivatedIndividualDayLevels"},
-          {"type": "NumberSpinner", "name": "DayBlindLevel", "caption": "Blind Level", "digits": "2"},
-          {"type": "NumberSpinner", "name": "DaySlatsLevel", "caption": "Slats Level", "digits": "2"}
-        ]
-        }
-      ]
-    },
-    {
-      "type":  "ExpansionPanel", "caption": "Is Day Detection (optional)",
-      "items": [
-        {"type": "SelectVariable", "name": "IsDayIndicatorID", "caption": "Is Day Indicator ID"},
-        {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day is determined by the brightness:"},
-        {
-          "type": "RowLayout", "items": [
-          {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID"},
-          {"type": "NumberSpinner", "name": "BrightnessAvgMinutes", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0},
-          {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
-        ]
-        },
-        {
-          "type":  "ExpansionPanel", "caption": "Overruling Day Start and End Times (optional)",
-          "items": [
-            {"type": "SelectVariable", "name": "DayStartID", "caption": "Start of the day ID"},
-            {"type": "SelectVariable", "name": "DayEndID", "caption": "End of the day ID"}
-          ]
-        }
-      ]
-    },
-    {
-      "type":  "ExpansionPanel", "caption": "Shadowing According to Sun Position (optional)",
-      "items": [
-        {"type": "SelectVariable", "name": "ActivatorIDShadowingBySunPosition", "caption": "Activator ID"},
-        {"type": "Label", "caption": "Define the sun position indicators"},
-        {"type": "SelectVariable", "name": "AzimuthID", "caption": "Azimuth ID"},
-        {"type": "SelectVariable", "name": "AltitudeID", "caption": "Altitude ID"},
-        {"type": "Label", "caption": "Define the range of azimuth and altitude for shadowing:"},
-        {
-          "type": "RowLayout", "items": [
-          {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1", "minimum": 0, "maximum": 360},
-          {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1", "minimum": 0, "maximum": 360}
-        ]
-        },
-        {
-          "type": "RowLayout", "items": [
-          {"type": "NumberSpinner", "name": "AltitudeFrom", "caption": "From Altitude", "digits": "1", "minimum": -90, "maximum": 90},
-          {"type": "NumberSpinner", "name": "AltitudeTo", "caption": "To Altitude", "digits": "1", "minimum": -90, "maximum": 90}
-        ]
-        },
-        {"type": "Label", "caption": "Define a brightness sensor and a threshold if the brightness should be considered"},
-        {
-          "type": "RowLayout", "items": [
-          {"type": "SelectVariable", "name": "BrightnessIDShadowingBySunPosition", "caption": "Brightness ID"},
-          {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBySunPosition", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0},
-          {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "caption": "Brightness Threshold ID"}
-        ]
-        },
-        {"type": "Label", "caption": "Define an additional temperature sensor when the outdoor temperature should be considered"},
-        {"type": "SelectVariable", "name": "TemperatureIDShadowingBySunPosition", "caption": "Temperature ID"},
-        {
-          "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing",
-          "items": [
-            {"type": "Label", "caption": "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate roller shutter height is calculated to the current altitude."},
+              "type":  "ExpansionPanel", "caption": "Consider Holiday (optional)",
+              "items": [
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "SelectVariable", "name": "HolidayIndicatorID", "caption": "Holiday Indicator ID", "onChange": "IPS_RequestAction($id, 'HolidayIndicatorID', $HolidayIndicatorID);"},
+                  {
+                    "type": "Select", "name": "DayUsedWhenHoliday", "caption": "Used Weekday when Holiday", "options": [
+                    {"caption": "- not used -", "value": 0},
+                    {"caption": "Monday", "value": 1},
+                    {"caption": "Tuesday", "value": 2},
+                    {"caption": "Wednesday", "value": 3},
+                    {"caption": "Thursday", "value": 4},
+                    {"caption": "Friday", "value": 5},
+                    {"caption": "Saturday", "value": 6},
+                    {"caption": "Sunday", "value": 7}
+                  ]
+                  }
+                ]
+                }
+              ]
+            },
+            {
+              "type":  "ExpansionPanel", "caption": "Overruling Up and Down Times (optional)",
+              "items": [
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "Wake-Up Time ID", "onChange": "IPS_RequestAction($id,'WakeUpTimeID',$WakeUpTimeID);"},
+                  {"type": "NumberSpinner", "name": "WakeUpTimeOffset", "caption": "Wake-Up Time Offset", "suffix": "Minutes"}
+                ]
+                },
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "SelectVariable", "name": "BedTimeID", "caption": "Bedtime ID", "onChange": "IPS_RequestAction($id,'BedTimeID',$BedTimeID);"},
+                  {"type": "NumberSpinner", "name": "BedTimeOffset", "caption": "Bedtime Offset", "suffix": "Minutes"}
+                ]
+                }
+              ]
+            },
             {
               "type": "RowLayout", "items": [
-              {"type": "NumberSpinner", "name": "LowSunPositionAltitude", "caption": "Low Sun Position (Altitude)", "digits": "1", "minimum": 0, "maximum": 90},
-              {"type": "NumberSpinner", "name": "LowSunPositionBlindLevel", "caption": "Low Sun Position (Blind Level)", "digits": "2"},
-              {"type": "NumberSpinner", "name": "LowSunPositionSlatsLevel", "caption": "Low Sun Position (Slats Level)", "digits": "2"}
+              {"type": "CheckBox", "name": "ActivatedIndividualNightLevels", "caption": "The blind should not be closed completely at night.", "onChange": "IPS_RequestAction($id,'ActivatedIndividualNightLevels',$ActivatedIndividualNightLevels);"},
+              {"type": "NumberSpinner", "name": "NightBlindLevel", "caption": "Blind Level", "digits": "2"},
+              {"type": "NumberSpinner", "name": "NightSlatsLevel", "caption": "Slats Level", "digits": "2"}
             ]
             },
             {
               "type": "RowLayout", "items": [
-              {"type": "NumberSpinner", "name": "HighSunPositionAltitude", "caption": "High Sun Position (Altitude)", "digits": "1", "minimum": 0, "maximum": 90},
-              {"type": "NumberSpinner", "name": "HighSunPositionBlindLevel", "caption": "High Sun Position (Blind Level)", "digits": "2"},
-              {"type": "NumberSpinner", "name": "HighSunPositionSlatsLevel", "caption": "High Sun Position (Slats Level)", "digits": "2"}
+              {"type": "CheckBox", "name": "ActivatedIndividualDayLevels", "caption": "The blind should not be opened completely at day.", "onChange": "IPS_RequestAction($id,'ActivatedIndividualDayLevels',$ActivatedIndividualDayLevels);"},
+              {"type": "NumberSpinner", "name": "DayBlindLevel", "caption": "Blind Level", "digits": "2"},
+              {"type": "NumberSpinner", "name": "DaySlatsLevel", "caption": "Slats Level", "digits": "2"}
             ]
             }
           ]
+        },
+        {
+          "type":  "ExpansionPanel", "caption": "Is Day Detection (optional)",
+          "items": [
+            {"type": "SelectVariable", "name": "IsDayIndicatorID", "caption": "Is Day Indicator ID"},
+            {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day is determined by the brightness:"},
+            {
+              "type": "RowLayout", "items": [
+              {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID", "onChange": "IPS_RequestAction($id,'BrightnessID',$BrightnessID);"},
+              {"type": "NumberSpinner", "name": "BrightnessAvgMinutes", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0},
+              {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
+            ]
+            },
+            {"type": "Label", "caption": "The determined Day Start and/or End Time can also be overridden"},
+            {
+              "type":  "RowLayout", "caption": "Overruling Day Start and/or End Time (optional)",
+              "items": [
+                {"type": "SelectVariable", "name": "DayStartID", "caption": "Start of the day ID"},
+                {"type": "SelectVariable", "name": "DayEndID", "caption": "End of the day ID"}
+              ]
+            }
+          ]
+        },
+        {
+          "type": "RowLayout", "items": [
+          {"type": "NumberSpinner", "name": "DelayTimeDayNightChange", "caption": "Delay Time of Day Night Change", "suffix": "Seconds", "minimum": 0},
+          {"type": "CheckBox", "name": "DelayTimeDayNightChangeIsRandomly", "caption": "Delay Time of Day Night Change is randomly"}
+        ]
         }
       ]
     },
     {
-      "type":  "ExpansionPanel", "caption": "Shadowing According to Brightness (optional)",
+      "type":  "ExpansionPanel", "caption": "Beschattung (optional)",
       "items": [
-        {"type": "SelectVariable", "name": "ActivatorIDShadowingBrightness", "caption": "Activator ID"},
-        {"type": "Label", "caption": "Define the brightness indicator"},
         {
-          "type": "RowLayout", "items": [
-          {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "caption": "Brightness ID"},
-          {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBrightness", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0}
-        ]
+          "type":  "ExpansionPanel", "caption": "Shadowing According to Sun Position (optional)",
+          "items": [
+            {"type": "SelectVariable", "name": "ActivatorIDShadowingBySunPosition", "caption": "Activator ID"},
+            {"type": "Label", "caption": "Define the sun position indicators"},
+            {"type": "SelectVariable", "name": "AzimuthID", "caption": "Azimuth ID"},
+            {"type": "SelectVariable", "name": "AltitudeID", "caption": "Altitude ID"},
+            {"type": "Label", "caption": "Define the range of azimuth and altitude for shadowing:"},
+            {
+              "type": "RowLayout", "items": [
+              {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1", "minimum": 0, "maximum": 360},
+              {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1", "minimum": 0, "maximum": 360}
+            ]
+            },
+            {
+              "type": "RowLayout", "items": [
+              {"type": "NumberSpinner", "name": "AltitudeFrom", "caption": "From Altitude", "digits": "1", "minimum": -90, "maximum": 90},
+              {"type": "NumberSpinner", "name": "AltitudeTo", "caption": "To Altitude", "digits": "1", "minimum": -90, "maximum": 90}
+            ]
+            },
+            {"type": "Label", "caption": "Define a brightness sensor if the brightness should be considered"},
+            {
+              "type": "RowLayout", "items": [
+              {"type": "SelectVariable", "name": "BrightnessIDShadowingBySunPosition", "caption": "Brightness ID", "onChange": "IPS_RequestAction($id,'BrightnessIDShadowingBySunPosition',$BrightnessIDShadowingBySunPosition);"},
+              {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBySunPosition", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0},
+              {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "caption": "Brightness Threshold ID"}
+            ]
+            },
+            {"type": "Label", "caption": "Define an additional temperature sensor when the outdoor temperature should be considered"},
+            {"type": "SelectVariable", "name": "TemperatureIDShadowingBySunPosition", "caption": "Temperature ID"},
+            {
+              "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing",
+              "items": [
+                {"type": "Label", "caption": "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate roller shutter height is calculated to the current altitude."},
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "NumberSpinner", "name": "LowSunPositionAltitude", "caption": "Low Sun Position (Altitude)", "digits": "1", "minimum": 0, "maximum": 90},
+                  {"type": "NumberSpinner", "name": "LowSunPositionBlindLevel", "caption": "Low Sun Position (Blind Level)", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "LowSunPositionSlatsLevel", "caption": "Low Sun Position (Slats Level)", "digits": "2"}
+                ]
+                },
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "NumberSpinner", "name": "HighSunPositionAltitude", "caption": "High Sun Position (Altitude)", "digits": "1", "minimum": 0, "maximum": 90},
+                  {"type": "NumberSpinner", "name": "HighSunPositionBlindLevel", "caption": "High Sun Position (Blind Level)", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "HighSunPositionSlatsLevel", "caption": "High Sun Position (Slats Level)", "digits": "2"}
+                ]
+                }
+              ]
+            }
+          ]
         },
-        {"type": "Label", "caption": "Define up to two different levels"},
         {
-          "type": "RowLayout", "items": [
-          {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "caption": "Threshold less brightness ID"},
-          {"type": "NumberSpinner", "name": "BlindLevelLessBrightnessShadowingBrightness", "caption": "Blind Level at less brightness", "digits": "2"},
-          {"type": "NumberSpinner", "name": "SlatsLevelLessBrightnessShadowingBrightness", "caption": "Slats Level at less brightness", "digits": "2"}
-        ]
-        },
-        {
-          "type": "RowLayout", "items": [
-          {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "caption": "Threshold high brightness ID"},
-          {"type": "NumberSpinner", "name": "BlindLevelHighBrightnessShadowingBrightness", "caption": "Blind Level at high brightness", "digits": "2"},
-          {"type": "NumberSpinner", "name": "SlatsLevelHighBrightnessShadowingBrightness", "caption": "Slats Level at high brightness", "digits": "2"}
-        ]
+          "type":  "ExpansionPanel", "caption": "Shadowing According to Brightness (optional)",
+          "items": [
+            {"type": "SelectVariable", "name": "ActivatorIDShadowingBrightness", "caption": "Activator ID"},
+            {"type": "Label", "caption": "Define the brightness indicator"},
+            {
+              "type": "RowLayout", "items": [
+              {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "caption": "Brightness ID", "onChange": "IPS_RequestAction($id,'BrightnessIDShadowingBrightness',$BrightnessIDShadowingBrightness);"},
+              {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBrightness", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0}
+            ]
+            },
+            {"type": "Label", "caption": "Define up to two different levels"},
+            {
+              "type": "RowLayout", "items": [
+              {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "caption": "Threshold less brightness ID"},
+              {"type": "NumberSpinner", "name": "BlindLevelLessBrightnessShadowingBrightness", "caption": "Blind Level at less brightness", "digits": "2"},
+              {"type": "NumberSpinner", "name": "SlatsLevelLessBrightnessShadowingBrightness", "caption": "Slats Level at less brightness", "digits": "2"}
+            ]
+            },
+            {
+              "type": "RowLayout", "items": [
+              {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "caption": "Threshold high brightness ID"},
+              {"type": "NumberSpinner", "name": "BlindLevelHighBrightnessShadowingBrightness", "caption": "Blind Level at high brightness", "digits": "2"},
+              {"type": "NumberSpinner", "name": "SlatsLevelHighBrightnessShadowingBrightness", "caption": "Slats Level at high brightness", "digits": "2"}
+            ]
+            }
+          ]
         }
       ]
     },
@@ -211,12 +238,7 @@
         {"type": "NumberSpinner", "name": "UpdateInterval", "caption": "Update Interval", "suffix": "Minutes", "minimum": 0},
         {"type": "NumberSpinner", "name": "DeactivationAutomaticMovement", "caption": "Deactivation Time after automatic Movement", "suffix": "Minutes", "minimum": 0},
         {"type": "NumberSpinner", "name": "DeactivationManualMovement", "caption": "Deactivation Time after manual Movement", "suffix": "Minutes", "minimum": 0},
-        {
-          "type": "RowLayout", "items": [
-          {"type": "NumberSpinner", "name": "DelayTimeDayNightChange", "caption": "Delay Time of Day Night Change", "suffix": "Seconds", "minimum": 0},
-          {"type": "CheckBox", "name": "DelayTimeDayNightChangeIsRandomly", "caption": "Delay Time of Day Night Change is randomly"}
-        ]
-        },
+        {"type": "CheckBox", "name": "ShowNotUsedElements", "caption": "Show not used elements"},
         {"type": "CheckBox", "name": "WriteLogInformationToIPSLogger", "caption": "Log and Error Information are written to the logfile of IPSLibrary instead of standard logfile"},
         {"type": "CheckBox", "name": "WriteDebugInformationToLogfile", "caption": "Debug information are written additionally to standard logfile"},
         {"type": "CheckBox", "name": "WriteDebugInformationToIPSLogger", "caption": "Debug information are written additionally to the logfile of IPSLibrary"}

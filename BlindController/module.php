@@ -46,23 +46,31 @@ class BlindController extends IPSModule
     private const STATUS_INST_SLATSLEVEL_ID_PROFILE_MIN_MAX_INVALID                  = 239;
     private const STATUS_INST_SLATSLEVEL_ID_PROFILE_NOT_SET                          = 240;
 
-    //property names
-    private const PROP_BLINDLEVELID                                = 'BlindLevelID';
-    private const PROP_SLATSLEVELID                                = 'SlatsLevelID';
-    private const PROP_CONTACTCLOSE1ID                             = 'ContactClose1ID';
-    private const PROP_CONTACTCLOSE2ID                             = 'ContactClose2ID';
-    private const PROP_CONTACTCLOSELEVEL1                          = 'ContactCloseLevel1';
-    private const PROP_CONTACTCLOSELEVEL2                          = 'ContactCloseLevel2';
-    private const PROP_CONTACTCLOSESLATSLEVEL1                     = 'ContactCloseSlatsLevel1';
-    private const PROP_CONTACTCLOSESLATSLEVEL2                     = 'ContactCloseSlatsLevel2';
-    private const PROP_CONTACTOPEN1ID                              = 'ContactOpen1ID';
-    private const PROP_CONTACTOPEN2ID                              = 'ContactOpen2ID';
-    private const PROP_CONTACTOPENLEVEL1                           = 'ContactOpenLevel1';
-    private const PROP_CONTACTOPENLEVEL2                           = 'ContactOpenLevel2';
-    private const PROP_CONTACTOPENSLATSLEVEL1                      = 'ContactOpenSlatsLevel1';
-    private const PROP_CONTACTOPENSLATSLEVEL2                      = 'ContactOpenSlatsLevel2';
-    private const PROP_EMERGENCYCONTACTID                          = 'EmergencyContactID';
-    private const PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY           = 'ContactsToCloseHaveHigherPriority';
+    // -- property names --
+    private const PROP_BLINDLEVELID                      = 'BlindLevelID';
+    private const PROP_SLATSLEVELID                      = 'SlatsLevelID';
+    private const PROP_HOLIDAYINDICATORID                = 'HolidayIndicatorID';
+    private const PROP_DAYUSEDWHENHOLIDAY                = 'DayUsedWhenHoliday';
+    private const PROP_WAKEUPTIMEID                      = 'WakeUpTimeID';
+    private const PROP_WAKEUPTIMEOFFSET                  = 'WakeUpTimeOffset';
+    private const PROP_BEDTIMEID                         = 'BedTimeID';
+    private const PROP_BEDTIMEOFFSET                     = 'BedTimeOffset';
+    private const PROP_CONTACTCLOSE1ID                   = 'ContactClose1ID';
+    private const PROP_CONTACTCLOSE2ID                   = 'ContactClose2ID';
+    private const PROP_CONTACTCLOSELEVEL1                = 'ContactCloseLevel1';
+    private const PROP_CONTACTCLOSELEVEL2                = 'ContactCloseLevel2';
+    private const PROP_CONTACTCLOSESLATSLEVEL1           = 'ContactCloseSlatsLevel1';
+    private const PROP_CONTACTCLOSESLATSLEVEL2           = 'ContactCloseSlatsLevel2';
+    private const PROP_CONTACTOPEN1ID                    = 'ContactOpen1ID';
+    private const PROP_CONTACTOPEN2ID                    = 'ContactOpen2ID';
+    private const PROP_CONTACTOPENLEVEL1                 = 'ContactOpenLevel1';
+    private const PROP_CONTACTOPENLEVEL2                 = 'ContactOpenLevel2';
+    private const PROP_CONTACTOPENSLATSLEVEL1            = 'ContactOpenSlatsLevel1';
+    private const PROP_CONTACTOPENSLATSLEVEL2            = 'ContactOpenSlatsLevel2';
+    private const PROP_EMERGENCYCONTACTID                = 'EmergencyContactID';
+    private const PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY = 'ContactsToCloseHaveHigherPriority';
+
+    //shadowing according to sun position
     private const PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION           = 'ActivatorIDShadowingBySunPosition';
     private const PROP_AZIMUTHID                                   = 'AzimuthID';
     private const PROP_ALTITUDEID                                  = 'AltitudeID';
@@ -71,17 +79,27 @@ class BlindController extends IPSModule
     private const PROP_ALTITUDEFROM                                = 'AltitudeFrom';
     private const PROP_ALTITUDETO                                  = 'AltitudeTo';
     private const PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION          = 'BrightnessIDShadowingBySunPosition';
+    private const PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION  = 'BrightnessAvgMinutesShadowingBySunPosition';
     private const PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION = 'BrightnessThresholdIDShadowingBySunPosition';
     private const PROP_LOWSUNPOSITIONBLINDLEVEL                    = 'LowSunPositionBlindLevel';
     private const PROP_HIGHSUNPOSITIONBLINDLEVEL                   = 'HighSunPositionBlindLevel';
     private const PROP_LOWSUNPOSITIONSLATSLEVEL                    = 'LowSunPositionSlatsLevel';
     private const PROP_HIGHSUNPOSITIONSLATSLEVEL                   = 'HighSunPositionSlatsLevel';
+
+    //shadowing according to brightness
+    private const PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS             = 'BrightnessIDShadowingBrightness';
+    private const PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS     = 'BrightnessAvgMinutesShadowingBrightness';
+
     private const PROP_ACTIVATEDINDIVIDUALDAYLEVELS                = 'ActivatedIndividualDayLevels';
     private const PROP_DAYBLINDLEVEL                               = 'DayBlindLevel';
     private const PROP_DAYSLATSLEVEL                               = 'DaySlatsLevel';
     private const PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS              = 'ActivatedIndividualNightLevels';
     private const PROP_NIGHTBLINDLEVEL                             = 'NightBlindLevel';
     private const PROP_NIGHTSLATSLEVEL                             = 'NightSlatsLevel';
+    private const PROP_ISDAYINDICATORID                            = 'IsDayIndicatorID';
+    private const PROP_BRIGHTNESSID                                = 'BrightnessID';
+    private const PROP_BRIGHTNESSAVGMINUTES                        = 'BrightnessAvgMinutes';
+    private const PROP_BRIGHTNESSTHRESHOLDID                       = 'BrightnessThresholdID';
     private const PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS = 'BlindLevelLessBrightnessShadowingBrightness';
     private const PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS = 'SlatsLevelLessBrightnessShadowingBrightness';
     private const PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS = 'BlindLevelHighBrightnessShadowingBrightness';
@@ -91,6 +109,7 @@ class BlindController extends IPSModule
     private const PROP_UPDATEINTERVAL                              = 'UpdateInterval';
     private const PROP_DELAYTIMEDAYNIGHTCHANGE                     = 'DelayTimeDayNightChange';
     private const PROP_DELAYTIMEDAYNIGHTCHANGEISRANDOMLY           = 'DelayTimeDayNightChangeIsRandomly';
+    private const PROP_SHOWNOTUSEDELEMENTS                         = 'ShowNotUsedElements';
 
     //attribute names
     private const ATTR_MANUALMOVEMENT      = 'manualMovement';
@@ -130,7 +149,10 @@ class BlindController extends IPSModule
         $this->RegisterAttributes();
 
         $this->RegisterTimer(self::TIMER_UPDATE, 0, 'BLC_ControlBlind(' . $this->InstanceID . ', true);');
-        $this->RegisterTimer(self::TIMER_DELAYED_MOVEMENT,0,'BLC_ControlBlind(' . $this->InstanceID . ', true);'
+        $this->RegisterTimer(
+            self::TIMER_DELAYED_MOVEMENT,
+            0,
+            'BLC_ControlBlind(' . $this->InstanceID . ', true);'
         );
     }
 
@@ -151,6 +173,8 @@ class BlindController extends IPSModule
         $this->RegisterVariables();
 
         $this->SetInstanceStatusAndTimerEvent();
+
+        $this->ShowNotUsedElements($this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS));
     }
 
     public function RequestAction($Ident, $Value): bool
@@ -166,6 +190,147 @@ class BlindController extends IPSModule
                     $this->Logger_Inf(sprintf('\'%s\' wurde deaktiviert.', IPS_GetObject($this->InstanceID)['ObjectName']));
                 }
                 break;
+
+            case self::PROP_SLATSLEVELID:
+                $this->UpdateFormField(
+                    self::PROP_NIGHTSLATSLEVEL,
+                    'visible',
+                    (($Value > 0) && $this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS))
+                    || $this->ReadPropertyBoolean(
+                        self::PROP_SHOWNOTUSEDELEMENTS
+                    )
+                );
+                $this->UpdateFormField(
+                    self::PROP_DAYSLATSLEVEL,
+                    'visible',
+                    (($Value > 0) && $this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS))
+                    || $this->ReadPropertyBoolean(
+                        self::PROP_SHOWNOTUSEDELEMENTS
+                    )
+                );
+                $this->UpdateFormField(
+                    self::PROP_LOWSUNPOSITIONSLATSLEVEL,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                $this->UpdateFormField(
+                    self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                $this->UpdateFormField(
+                    self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                $this->UpdateFormField(
+                    self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                $this->UpdateFormField(
+                    self::PROP_CONTACTCLOSESLATSLEVEL1,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                $this->UpdateFormField(
+                    self::PROP_CONTACTCLOSESLATSLEVEL2,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                $this->UpdateFormField(
+                    self::PROP_CONTACTOPENSLATSLEVEL1,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                $this->UpdateFormField(
+                    self::PROP_CONTACTOPENSLATSLEVEL2,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                return false;
+
+            case self::PROP_HOLIDAYINDICATORID:
+                $this->UpdateFormField(
+                    self::PROP_DAYUSEDWHENHOLIDAY,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                return false;
+
+            case self::PROP_WAKEUPTIMEID:
+                $this->UpdateFormField(
+                    self::PROP_WAKEUPTIMEOFFSET,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                return false;
+
+            case self::PROP_BEDTIMEID:
+                $this->UpdateFormField(
+                    self::PROP_BEDTIMEOFFSET,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                return false;
+
+            case self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS:
+                $this->UpdateFormField(self::PROP_DAYBLINDLEVEL, 'visible', $Value || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS));
+                $this->UpdateFormField(
+                    self::PROP_DAYSLATSLEVEL,
+                    'visible',
+                    (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) && $Value)
+                    || $this->ReadPropertyBoolean(
+                        self::PROP_SHOWNOTUSEDELEMENTS
+                    )
+                );
+                return false;
+
+            case self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS:
+                $this->UpdateFormField(self::PROP_NIGHTBLINDLEVEL, 'visible', $Value || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS));
+                $this->UpdateFormField(
+                    self::PROP_NIGHTSLATSLEVEL,
+                    'visible',
+                    (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) && $Value)
+                    || $this->ReadPropertyBoolean(
+                        self::PROP_SHOWNOTUSEDELEMENTS
+                    )
+                );
+                return false;
+
+            case self::PROP_BRIGHTNESSID:
+                $this->UpdateFormField(
+                    self::PROP_BRIGHTNESSAVGMINUTES,
+                    'visible',
+                    $Value || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                $this->UpdateFormField(
+                    self::PROP_BRIGHTNESSTHRESHOLDID,
+                    'visible',
+                    $Value || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                return false;
+
+            case self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION:
+                $this->UpdateFormField(
+                    self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION,
+                    'visible',
+                    $Value || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                $this->UpdateFormField(
+                    self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION,
+                    'visible',
+                    $Value || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                return false;
+
+            case self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS:
+                $this->UpdateFormField(
+                    self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS,
+                    'visible',
+                    $Value || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                return false;
 
             default:
                 trigger_error(sprintf('Instance %s: Unknown Ident %s', $this->InstanceID, $Ident));
@@ -284,8 +449,135 @@ class BlindController extends IPSModule
         }
 
         $form['elements'] = array_merge($elements, $form['elements']);
+
+        $this->SetVisibilityOfNotUsedElements($form);
+
         $this->SendDebug('Form', json_encode($form), 0);
         return json_encode($form);
+    }
+
+    private function SetVisibilityOfNotUsedElements(array &$form): void
+    {
+        $bShow = $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS);
+
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_DAYUSEDWHENHOLIDAY,
+            'visible',
+            (($this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID) > 0) || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_WAKEUPTIMEOFFSET,
+            'visible',
+            ($this->ReadPropertyInteger(self::PROP_WAKEUPTIMEID) > 0) || $bShow
+        );
+        $form =
+            $this->MyUpdateFormField($form, self::PROP_BEDTIMEOFFSET, 'visible', ($this->ReadPropertyInteger(self::PROP_BEDTIMEID) > 0) || $bShow);
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_NIGHTBLINDLEVEL,
+            'visible',
+            $this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS) || $bShow
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_NIGHTSLATSLEVEL,
+            'visible',
+            ((($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) && $this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS))
+             || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_DAYBLINDLEVEL,
+            'visible',
+            $this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS) || $bShow
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_DAYSLATSLEVEL,
+            'visible',
+            ((($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) && $this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS))
+             || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_BRIGHTNESSAVGMINUTES,
+            'visible',
+            ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID) > 0) || $bShow
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_BRIGHTNESSTHRESHOLDID,
+            'visible',
+            ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID) > 0) || $bShow
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION,
+            'visible',
+            ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION) > 0) || $bShow
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION,
+            'visible',
+            ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION) > 0) || $bShow
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_LOWSUNPOSITIONSLATSLEVEL,
+            'visible',
+            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
+            'visible',
+            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS,
+            'visible',
+            ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS) > 0) || $bShow
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
+            'visible',
+            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
+            'visible',
+            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_CONTACTCLOSESLATSLEVEL1,
+            'visible',
+            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_CONTACTCLOSESLATSLEVEL2,
+            'visible',
+            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_CONTACTOPENSLATSLEVEL1,
+            'visible',
+            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_CONTACTOPENSLATSLEVEL2,
+            'visible',
+            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+        );
     }
 
     public function ReceiveData($JSONString)
@@ -312,7 +604,12 @@ class BlindController extends IPSModule
 
         set_time_limit(35);
         if (!IPS_SemaphoreEnter($this->InstanceID . '- Blind', 30 * 1000)) { //wir warten maximal 30 Sekunden
-            $this->Logger_Inf(sprintf('\'%s\': Semaphore konnte trotz Wartezeit nicht gesetzt werden. Der Steuerungslauf wird abgebrochen.', IPS_GetObject($this->InstanceID)['ObjectName']));
+            $this->Logger_Inf(
+                sprintf(
+                    '\'%s\': Semaphore konnte trotz Wartezeit nicht gesetzt werden. Der Steuerungslauf wird abgebrochen.',
+                    IPS_GetObject($this->InstanceID)['ObjectName']
+                )
+            );
             return false;
         }
 
@@ -475,7 +772,7 @@ class BlindController extends IPSModule
         }
 
         if (isset($isDayByDayDetection, $brightness)) {
-            $Hinweis .= ', ' . $this->GetFormattedValue($this->ReadPropertyInteger('BrightnessID'));
+            $Hinweis .= ', ' . $this->GetFormattedValue($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID));
         }
 
         // am Tag wird überprüft, ob das Fenster beschattet werden soll
@@ -497,9 +794,10 @@ class BlindController extends IPSModule
                     }
                 }
 
-                if ($this->ReadPropertyInteger('BrightnessIDShadowingBrightness') > 0) {
-                    $Hinweis =
-                        'Beschattung nach Sonnenstand,' . $this->GetFormattedValue($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
+                if ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS) > 0) {
+                    $Hinweis = 'Beschattung nach Sonnenstand,' . $this->GetFormattedValue(
+                            $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS)
+                        );
                 } else {
                     $Hinweis = 'Beschattung nach Sonnenstand';
                 }
@@ -522,7 +820,9 @@ class BlindController extends IPSModule
                     }
                 }
 
-                $Hinweis = 'Beschattung nach Helligkeit, ' . $this->GetFormattedValue($this->ReadPropertyInteger('BrightnessIDShadowingBrightness'));
+                $Hinweis = 'Beschattung nach Helligkeit, ' . $this->GetFormattedValue(
+                        $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS)
+                    );
             }
         } else {
             // nachts gilt keine deactivation Time
@@ -695,12 +995,12 @@ class BlindController extends IPSModule
 
         //week plan
         $this->RegisterPropertyInteger('WeeklyTimeTableEventID', 0);
-        $this->RegisterPropertyInteger('HolidayIndicatorID', 0);
-        $this->RegisterPropertyInteger('DayUsedWhenHoliday', 0);
-        $this->RegisterPropertyInteger('WakeUpTimeID', 0);
-        $this->RegisterPropertyInteger('WakeUpTimeOffset', 0);
-        $this->RegisterPropertyInteger('BedTimeID', 0);
-        $this->RegisterPropertyInteger('BedTimeOffset', 0);
+        $this->RegisterPropertyInteger(self::PROP_HOLIDAYINDICATORID, 0);
+        $this->RegisterPropertyInteger(self::PROP_DAYUSEDWHENHOLIDAY, 0);
+        $this->RegisterPropertyInteger(self::PROP_WAKEUPTIMEID, 0);
+        $this->RegisterPropertyInteger(self::PROP_WAKEUPTIMEOFFSET, 0);
+        $this->RegisterPropertyInteger(self::PROP_BEDTIMEID, 0);
+        $this->RegisterPropertyInteger(self::PROP_BEDTIMEOFFSET, 0);
         $this->RegisterPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS, false);
         $this->RegisterPropertyFloat(self::PROP_DAYBLINDLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_DAYSLATSLEVEL, 0);
@@ -709,34 +1009,14 @@ class BlindController extends IPSModule
         $this->RegisterPropertyFloat(self::PROP_NIGHTSLATSLEVEL, 0);
 
         //day detection
-        $this->RegisterPropertyInteger('IsDayIndicatorID', 0);
-        $this->RegisterPropertyInteger('BrightnessID', 0);
-        $this->RegisterPropertyInteger('BrightnessAvgMinutes', 0);
-        $this->RegisterPropertyInteger('BrightnessThresholdID', 0);
+        $this->RegisterPropertyInteger(self::PROP_ISDAYINDICATORID, 0);
+        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSID, 0);
+        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSAVGMINUTES, 0);
+        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID, 0);
 
         //overruling day times
         $this->RegisterPropertyInteger(self::PROP_DAYSTARTID, 0);
         $this->RegisterPropertyInteger(self::PROP_DAYENDID, 0);
-
-        //contacts open
-        $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN1ID, 0);
-        $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN2ID, 0);
-        $this->RegisterPropertyFloat(self::PROP_CONTACTOPENLEVEL1, 0);
-        $this->RegisterPropertyFloat(self::PROP_CONTACTOPENLEVEL2, 0);
-        $this->RegisterPropertyFloat(self::PROP_CONTACTOPENSLATSLEVEL1, 0);
-        $this->RegisterPropertyFloat(self::PROP_CONTACTOPENSLATSLEVEL2, 0);
-
-        //contacts close
-        $this->RegisterPropertyInteger(self::PROP_CONTACTCLOSE1ID, 0);
-        $this->RegisterPropertyInteger(self::PROP_CONTACTCLOSE2ID, 0);
-        $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSELEVEL1, 0);
-        $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSELEVEL2, 0);
-        $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSESLATSLEVEL1, 0);
-        $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSESLATSLEVEL2, 0);
-        $this->RegisterPropertyBoolean(self::PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY, false);
-
-        //emergency contact
-        $this->RegisterPropertyInteger(self::PROP_EMERGENCYCONTACTID, 0);
 
         //shadowing according to sun position
         $this->RegisterPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION, 0);
@@ -747,7 +1027,7 @@ class BlindController extends IPSModule
         $this->RegisterPropertyFloat(self::PROP_ALTITUDEFROM, 0);
         $this->RegisterPropertyFloat(self::PROP_ALTITUDETO, 90);
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION, 0);
-        $this->RegisterPropertyInteger('BrightnessAvgMinutesShadowingBySunPosition', 0);
+        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION, 0);
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION, 0);
         $this->RegisterPropertyInteger('TemperatureIDShadowingBySunPosition', 0);
         $this->RegisterPropertyFloat('LowSunPositionAltitude', 0);
@@ -759,8 +1039,8 @@ class BlindController extends IPSModule
 
         //shadowing according to brightness
         $this->RegisterPropertyInteger('ActivatorIDShadowingBrightness', 0);
-        $this->RegisterPropertyInteger('BrightnessIDShadowingBrightness', 0);
-        $this->RegisterPropertyInteger('BrightnessAvgMinutesShadowingBrightness', 0);
+        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS, 0);
+        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS, 0);
         $this->RegisterPropertyInteger('ThresholdIDLessBrightness', 0);
         $this->RegisterPropertyFloat(self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS, 0);
         $this->RegisterPropertyFloat(self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS, 0);
@@ -768,11 +1048,33 @@ class BlindController extends IPSModule
         $this->RegisterPropertyFloat(self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS, 0);
         $this->RegisterPropertyFloat(self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS, 0);
 
+        //contacts close
+        $this->RegisterPropertyInteger(self::PROP_CONTACTCLOSE1ID, 0);
+        $this->RegisterPropertyInteger(self::PROP_CONTACTCLOSE2ID, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSELEVEL1, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSELEVEL2, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSESLATSLEVEL1, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSESLATSLEVEL2, 0);
+        $this->RegisterPropertyBoolean(self::PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY, false);
+
+        //contacts open
+        $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN1ID, 0);
+        $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN2ID, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTOPENLEVEL1, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTOPENLEVEL2, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTOPENSLATSLEVEL1, 0);
+        $this->RegisterPropertyFloat(self::PROP_CONTACTOPENSLATSLEVEL2, 0);
+
+        //emergency contact
+        $this->RegisterPropertyInteger(self::PROP_EMERGENCYCONTACTID, 0);
+
+
         $this->RegisterPropertyInteger(self::PROP_UPDATEINTERVAL, 1);
         $this->RegisterPropertyInteger('DeactivationAutomaticMovement', 20);
         $this->RegisterPropertyInteger('DeactivationManualMovement', 120);
         $this->RegisterPropertyInteger(self::PROP_DELAYTIMEDAYNIGHTCHANGE, 0);
         $this->RegisterPropertyBoolean(self::PROP_DELAYTIMEDAYNIGHTCHANGEISRANDOMLY, false);
+        $this->RegisterPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS, false);
 
         $this->RegisterPropertyBoolean('WriteLogInformationToIPSLogger', false);
         $this->RegisterPropertyBoolean('WriteDebugInformationToLogfile', false);
@@ -784,14 +1086,13 @@ class BlindController extends IPSModule
         $objectIDs = [
             $this->ReadPropertyInteger(self::PROP_BLINDLEVELID),
             $this->ReadPropertyInteger('WeeklyTimeTableEventID'),
-            $this->ReadPropertyInteger('HolidayIndicatorID'),
-            $this->ReadPropertyInteger('HolidayIndicatorID'),
-            $this->ReadPropertyInteger('WakeUpTimeID'),
-            $this->ReadPropertyInteger('BedTimeID'),
+            $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID),
+            $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEID),
+            $this->ReadPropertyInteger(self::PROP_BEDTIMEID),
 
-            $this->ReadPropertyInteger('IsDayIndicatorID'),
-            $this->ReadPropertyInteger('BrightnessID'),
-            $this->ReadPropertyInteger('BrightnessThresholdID'),
+            $this->ReadPropertyInteger(self::PROP_ISDAYINDICATORID),
+            $this->ReadPropertyInteger(self::PROP_BRIGHTNESSID),
+            $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID),
 
             $this->ReadPropertyInteger(self::PROP_DAYSTARTID),
             $this->ReadPropertyInteger(self::PROP_DAYENDID),
@@ -811,7 +1112,7 @@ class BlindController extends IPSModule
             $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition'),
 
             $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
-            $this->ReadPropertyInteger('BrightnessIDShadowingBrightness'),
+            $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS),
             $this->ReadPropertyInteger('ThresholdIDLessBrightness'),
             $this->ReadPropertyInteger('ThresholdIDHighBrightness')
         ];
@@ -831,10 +1132,10 @@ class BlindController extends IPSModule
     {
         $objectIDs = [
             'WeeklyTimeTableEventID'                               => $this->ReadPropertyInteger('WeeklyTimeTableEventID'),
-            'HolidayIndicatorID'                                   => $this->ReadPropertyInteger('HolidayIndicatorID'),
-            'BrightnessID'                                         => $this->ReadPropertyInteger('BrightnessID'),
-            'BrightnessThresholdID'                                => $this->ReadPropertyInteger('BrightnessThresholdID'),
-            'IsDayIndicatorID'                                     => $this->ReadPropertyInteger('IsDayIndicatorID'),
+            self::PROP_HOLIDAYINDICATORID                          => $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID),
+            self::PROP_BRIGHTNESSID                                => $this->ReadPropertyInteger(self::PROP_BRIGHTNESSID),
+            self::PROP_BRIGHTNESSTHRESHOLDID                       => $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID),
+            self::PROP_ISDAYINDICATORID                            => $this->ReadPropertyInteger(self::PROP_ISDAYINDICATORID),
             self::PROP_CONTACTCLOSE1ID                             => $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID),
             self::PROP_CONTACTCLOSE2ID                             => $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
             self::PROP_CONTACTOPEN1ID                              => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID),
@@ -849,7 +1150,7 @@ class BlindController extends IPSModule
             ),
             'TemperatureIDShadowingBySunPosition'                  => $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition'),
             'ActivatorIDShadowingBrightness'                       => $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
-            'BrightnessIDShadowingBrightness'                      => $this->ReadPropertyInteger('BrightnessIDShadowingBrightness'),
+            self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS             => $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS),
             'ThresholdIDHighBrightness'                            => $this->ReadPropertyInteger('ThresholdIDHighBrightness'),
             'ThresholdIDLessBrightness'                            => $this->ReadPropertyInteger('ThresholdIDLessBrightness')
         ];
@@ -954,23 +1255,24 @@ class BlindController extends IPSModule
             return;
         }
 
-        if ($ret = $this->checkVariableId('WakeUpTimeID', true, [VARIABLETYPE_STRING], self::STATUS_INST_WAKEUPTIME_ID_IS_INVALID)) {
+        if ($ret = $this->checkVariableId(self::PROP_WAKEUPTIMEID, true, [VARIABLETYPE_STRING], self::STATUS_INST_WAKEUPTIME_ID_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
         }
 
-        if ($ret = $this->checkVariableId('BedTimeID', true, [VARIABLETYPE_STRING], self::STATUS_INST_SLEEPTIME_ID_IS_INVALID)) {
+        if ($ret = $this->checkVariableId(self::PROP_BEDTIMEID, true, [VARIABLETYPE_STRING], self::STATUS_INST_SLEEPTIME_ID_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
         }
 
-        if ($ret = $this->checkVariableId('HolidayIndicatorID', true, [VARIABLETYPE_BOOLEAN], self::STATUS_INST_HOLYDAY_INDICATOR_ID_IS_INVALID)) {
+        if ($ret =
+            $this->checkVariableId(self::PROP_HOLIDAYINDICATORID, true, [VARIABLETYPE_BOOLEAN], self::STATUS_INST_HOLYDAY_INDICATOR_ID_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
         }
 
         if ($ret = $this->checkVariableId(
-            'BrightnessID',
+            self::PROP_BRIGHTNESSID,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
             self::STATUS_INST_BRIGHTNESS_ID_IS_INVALID
@@ -1000,7 +1302,7 @@ class BlindController extends IPSModule
         }
 
         if ($ret = $this->checkVariableId(
-            'BrightnessThresholdID',
+            self::PROP_BRIGHTNESSTHRESHOLDID,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
             self::STATUS_INST_BRIGHTNESS_THRESHOLD_ID_IS_INVALID
@@ -1009,7 +1311,8 @@ class BlindController extends IPSModule
             return;
         }
 
-        if ($ret = $this->checkVariableId('IsDayIndicatorID', true, [VARIABLETYPE_BOOLEAN], self::STATUS_INST_ISDAY_INDICATOR_ID_IS_INVALID)) {
+        if ($ret =
+            $this->checkVariableId(self::PROP_ISDAYINDICATORID, true, [VARIABLETYPE_BOOLEAN], self::STATUS_INST_ISDAY_INDICATOR_ID_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
         }
@@ -1115,7 +1418,7 @@ class BlindController extends IPSModule
         }
 
         if ($ret = $this->checkVariableId(
-            'BrightnessIDShadowingBrightness',
+            self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
             self::STATUS_INST_BRIGHTNESSIDSHADOWINGBRIGHTNESS_IS_INVALID
@@ -1357,7 +1660,6 @@ class BlindController extends IPSModule
 
         return 0;
     }
-
 
     private function activateDelayTimer(int $interval): void
     {
@@ -1626,8 +1928,12 @@ class BlindController extends IPSModule
             $temperature = (float)GetValue($temperatureID);
         }
 
-        $brightness =
-            $this->GetBrightness(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION, 'BrightnessAvgMinutesShadowingBySunPosition', $levelAct, true);
+        $brightness = $this->GetBrightness(
+            self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION,
+            self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION,
+            $levelAct,
+            true
+        );
         if (isset($brightness)) {
             $thresholdBrightness = $this->getBrightnessThreshold(
                 $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION),
@@ -1847,7 +2153,7 @@ class BlindController extends IPSModule
             return null;
         }
 
-        $brightnessID = $this->ReadPropertyInteger('BrightnessIDShadowingBrightness');
+        $brightnessID = $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS);
         if ($brightnessID === 0) {
             trigger_error(sprintf('Instance %s: BrightnessIDShadowingBrightness === 0', $this->InstanceID));
             return null;
@@ -1861,7 +2167,8 @@ class BlindController extends IPSModule
         }
 
         $positions  = null;
-        $brightness = $this->GetBrightness('BrightnessIDShadowingBrightness', 'BrightnessAvgMinutesShadowingBrightness', $levelAct, true);
+        $brightness =
+            $this->GetBrightness(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS, self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS, $levelAct, true);
 
         if (!isset($brightness)) {
             return null;
@@ -2251,7 +2558,15 @@ class BlindController extends IPSModule
         if ($profile['Reversed']) {
             $percentCloseCurrent = 100 - $percentCloseCurrent;
         }
-        $this->Logger_Inf(sprintf('#%s(%s): Die Zielposition (%s%% geschlossen) wurde nicht erreicht! (Differenz: %.2f%%).', $levelID, $propName, $percentCloseNew, $percentCloseNew - $percentCloseCurrent));
+        $this->Logger_Inf(
+            sprintf(
+                '#%s(%s): Die Zielposition (%s%% geschlossen) wurde nicht erreicht! (Differenz: %.2f%%).',
+                $levelID,
+                $propName,
+                $percentCloseNew,
+                $percentCloseNew - $percentCloseCurrent
+            )
+        );
 
         return false;
     }
@@ -2335,12 +2650,13 @@ class BlindController extends IPSModule
     {
         $isDayDayDetection = null;
 
-        if (($this->ReadPropertyInteger('IsDayIndicatorID') === 0)
-            && (($this->ReadPropertyInteger('BrightnessID') === 0) || $this->ReadPropertyInteger('BrightnessThresholdID') === 0)) {
+        $isDayIndicatorID = $this->ReadPropertyInteger(self::PROP_ISDAYINDICATORID);
+
+        if (($isDayIndicatorID === 0)
+            && (($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID) === 0) || $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID) === 0)) {
             return null;
         }
 
-        $isDayIndicatorID = $this->ReadPropertyInteger('IsDayIndicatorID');
         if ($isDayIndicatorID > 0) {
             $isDayIndicator = GetValueBoolean($isDayIndicatorID);
             $this->Logger_Dbg(__FUNCTION__, sprintf('DayIndicator (#%s): %d', $isDayIndicatorID, $isDayIndicator));
@@ -2348,11 +2664,11 @@ class BlindController extends IPSModule
         }
 
         //optional Values
-        if ($this->ReadPropertyInteger('BrightnessID')) {
-            $brightness = $this->GetBrightness('BrightnessID', 'BrightnessAvgMinutes', $levelAct, false);
+        if ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID)) {
+            $brightness = $this->GetBrightness(self::PROP_BRIGHTNESSID, self::PROP_BRIGHTNESSAVGMINUTES, $levelAct, false);
         }
 
-        $brightnessThresholdID = $this->ReadPropertyInteger('BrightnessThresholdID');
+        $brightnessThresholdID = $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID);
         if ($brightnessThresholdID) {
             $brightnessThreshold = GetValue($brightnessThresholdID);
         }
@@ -2383,12 +2699,12 @@ class BlindController extends IPSModule
     private function getUpAndDownPoints(?string &$heute_auf, ?string &$heute_ab): bool
     {
         // An Feiertagen und Urlaubstagen können abweichende Tage gelten
-        $holidayIndicatorID = $this->ReadPropertyInteger('HolidayIndicatorID');
-        if (($holidayIndicatorID !== 0) && ($this->ReadPropertyInteger('DayUsedWhenHoliday') !== 0)
+        $holidayIndicatorID = $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID);
+        if (($holidayIndicatorID !== 0) && ($this->ReadPropertyInteger(self::PROP_DAYUSEDWHENHOLIDAY) !== 0)
             && GetValueBoolean(
-                $this->ReadPropertyInteger('HolidayIndicatorID')
+                $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID)
             )) {
-            $weekDay = $this->ReadPropertyInteger('DayUsedWhenHoliday');
+            $weekDay = $this->ReadPropertyInteger(self::PROP_DAYUSEDWHENHOLIDAY);
         } else {
             $weekDay = (int)date('N');
         }
@@ -2399,18 +2715,18 @@ class BlindController extends IPSModule
         }
 
         //gibt es übersteuernde Zeiten?
-        $idWakeUpTime = $this->ReadPropertyInteger('WakeUpTimeID');
+        $idWakeUpTime = $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEID);
         if (($idWakeUpTime > 0) && (GetValueString($idWakeUpTime) !== '')) {
-            $heute_auf = date('H:i', strtotime(GetValueString($idWakeUpTime)) + $this->ReadPropertyInteger('WakeUpTimeOffset') * 60);
+            $heute_auf = date('H:i', strtotime(GetValueString($idWakeUpTime)) + $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEOFFSET) * 60);
             if ($heute_auf === false) {
                 return false;
             }
             $this->Logger_Dbg(__FUNCTION__, sprintf('WakeUpTime found: %s', $heute_auf));
         }
 
-        $idBedTime = $this->ReadPropertyInteger('BedTimeID');
+        $idBedTime = $this->ReadPropertyInteger(self::PROP_BEDTIMEID);
         if (($idBedTime > 0) && (GetValueString($idBedTime) !== '')) {
-            $heute_ab = date('H:i', strtotime(GetValueString($idBedTime)) + $this->ReadPropertyInteger('BedTimeOffset') * 60);
+            $heute_ab = date('H:i', strtotime(GetValueString($idBedTime)) + $this->ReadPropertyInteger(self::PROP_BEDTIMEOFFSET) * 60);
             if ($heute_ab === false) {
                 return false;
             }
@@ -2540,6 +2856,35 @@ class BlindController extends IPSModule
         }
 
         return null;
+    }
+
+    private function ShowNotUsedElements(bool $bShow)
+    {
+        $this->Logger_Dbg(
+            __FUNCTION__,
+            sprintf(
+                'bShow: %s, PROP_HOLIDAYINDICATORID: %s',
+                (int)$bShow,
+                $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID)
+            )
+        );
+    }
+
+    private function MyUpdateFormField(array $form, string $name, string $parameter, $value): array
+    {
+        foreach ($form as $key => &$item) {
+            if ($key === 'elements') {
+                $item = $this->MyUpdateFormField($item, $name, $parameter, $value);
+            } elseif (isset($item['items'])) {
+                $item['items'] = $this->MyUpdateFormField($item['items'], $name, $parameter, $value);
+            } elseif (isset($item['type']) && in_array($item['type'], ['Select', 'NumberSpinner', 'SelectVariable'])) {
+                if ($item['name'] === $name) {
+                    $item[$parameter] = $value;
+                    return $form;
+                }
+            }
+        }
+        return $form;
     }
 
     //-----------------------------------------------

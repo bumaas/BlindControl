@@ -236,6 +236,8 @@ und nicht ein Wert von 100 für "geschlossen".
 | BrightnessThresholdID      | integer | 0 | Indikatorvariable, die den Schwellwert zur Tag/Nacht Bestimmung zur Verfügung stellt |
 | DayStartID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesanfangszeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und kleiner als '12:00' sein|
 | DayEndID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein|
+| DelayTimeDayNightChange | integer | 0  | legt fest, ob und wie lange eine Fahrt beim Tages/Nacht-Wechsel verzögert werden soll|
+| DelayTimeDayNightChangeIsRandomly | boolean | false  | legt fest, ob die Verzögerung zufällig bestimmt werden soll. Es wird ein Zufallswert zwischen 0 und der angegebenen Zeit genommen|
 | <br>**Beschattung nach Sonnenstand**     |  | |  | |
 | ActivatorIDShadowingBySunPosition | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Sonnenstand aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
 | AzimuthID| integer   | 0 | Indikatorvariable, die den aktuellen Sonnenstand (Richtung) wiedergibt.  
@@ -273,8 +275,7 @@ und nicht ein Wert von 100 für "geschlossen".
 | UpdateInterval             | integer | 1 | legt fest, in welchem Intervall die Steuerung durchgeführt wird |
 | DeactivationAutomaticMovement | integer | 20| legt fest, wie lange am Tag nach einer automatischen Rollladenfahrt keine weitere automatische Fahrt mehr stattfinden soll. Das verhindert, dass z.B. bei Helligkeitsschwankungen der Rollladen in zu kleinen Intervallen bewegt wird. <br>Die Zeit wird nicht berücksichtigt bei Kontakten und beim Tag/Nacht Wechsel.|
 | DeactivationManualMovement | integer | 120  | legt fest, wie lange am Tag nach einer Rollladenfahrt, die nicht durch diese Steuerung veranlasst wurde (z.B. nach einer manuelle Betätigung) keine weitere automatische Fahrt mehr stattfinden soll.<br>Ist kein Wert gesetzt (=0), so gilt die Rollladenposition bis zum nächsten Tag/Nacht Wechsel.<br>Ausnahmen: Die Zeit wird nicht berücksichtigt bei Kontakten: hier wird sofort gefahren. Auch wird die Zeit nicht berücksichtigt, wenn ein Rollladen manuell ganz geschlossen wurde: hier bleibt der Rollladen geschlossen.|
-| DelayTimeDayNightChange | integer | 0  | legt fest, ob und wie lange eine Fahrt beim Tages/Nacht-Wechsel verzögert werden soll|
-| DelayTimeDayNightChangeIsRandomly | boolean | false  | legt fest, ob die Verzögerung zufällig bestimmt werden soll. Es wird ein Zufallswert zwischen 0 und der angegebenen Zeit genommen|
+| ShowNotUsedElements | boolean | false  | legt fest, ob im Konfigurationsformular auch die nicht benutzten Eingabemöglichkeiten angezeigt werden sollen. Beispiel: wenn keine ID für Lamellen angegeben ist, dannn sind die Eingabefelder, die sich auf Lamellen beziehen, standardmäßig ausgeblendet.|
 | WriteLogInformationToIPSLogger | boolean | false  | legt fest, ob die Log Informationen zusätzlich zum Standard Logfile auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 | WriteDebugInformationToIPSLogger | boolean | false  | legt fest, ob die Debug Informationen zusätzlich zum Debugger auch an den IPSLogger der IPSLibrary übergeben werden sollen|
 | WriteDebugInformationToLogfile | boolean | false  | legt fest, ob die Debug Informationen zusätzlich in das Standard Logfile geschrieben werden sollen. Wichtig: dazu muss der Symcon Spezialschalter 'LogfileVerbose' aktiviert sein
