@@ -173,7 +173,11 @@ Als zusätzliche Option kann auch eine übersteuernde feste Tagesanfangszeit und
 Die Zeiten übersteuern die in der Tagerkennung ermittelten Zeiten.
  
 
-### 5.4 Beschattung nach Sonnenstand (optional)
+### 5.4 Beschattung (optional)
+
+Es gibt zwei Möglichkeiten der Beschattung: "nach Sonnenstand" und "nach Helligkeit". Beide Varianten können auch gleichzeitig eingesetzt werden. Dann ergibt sich die Beschattungshöhe aus dem Minimum beider Beschattungsarten.
+
+#### 5.4.1 Beschattung nach Sonnenstand (optional)
 Es sind die Variablen anzugeben, aus denen der Sonnenstand (Azimuth = Sonnenrichtung, Altitude = Sonnenhöhe) geholt werden soll. Hier bieten sich die gleichnamigen Variablen des Location Moduls an.
 
 Des weiteren ist der Bereich (Azimuth von/bis) der Sonnenrichtung anzugeben, in dem die Beschattung stattfinden soll.
@@ -188,16 +192,15 @@ Behanghöhe in Abhängigkeit von der Sonnenhöhe errechnet. Die Werte sind am be
 
 Durch eine korrekte Einmessung wird erreicht, dass der Schatten des Rollladens immer gleich weit im Raum steht und somit eine gleichmäßige Beschattung stattfindet.
 
-### 5.5 Beschattung nach Helligkeit (optional)
+### 5.4.2 Beschattung nach Helligkeit (optional)
 Es sind die Variablen anzugeben, die zur Helligkeitsbestimmung herangezogen werden sollen. Wenn der Helligkeitswert überschritten wird, dann wird der Rollladen auf die vorgegebene Position gefahren. Es stehen zwei Paare an Helligkeitsschwellwert und Rollladenposition zur Verfügung.
-Die Beschattung nach Helligkeit übersteuert die Beschattung nach Sonnenstand.
 
 Die Regel wird über eine Aktivierungsvariable aktiviert/deaktiviert.
 
 Praktisches Beispielszenario:
 Im Normalfall wird nach Sonnenstand beschattet. Wenn jedoch der Fernseher eingeschaltet wird, dann soll je nach Helligkeit stärker oder schwächer abgedunkelt werden.
 
-### 5.6 Erkennung von Kontakten (optional)
+### 5.5 Erkennung von Kontakten (optional)
 Um auf offene Fenster/Türen oder auch Regen/Sturm reagieren zu können, können bis zu vier Kontakte angegeben werden. Ein Kontakt wird als offen erkannt, wenn der Wert >0 ist. Bei Kontakten, die im geöffneten Zustand den Wert 0 haben, ist ein 'Reversed'-Profil zu verwenden.
 
 Je zwei Kontakte dienen dem Öffnen (Fenster/Tür) sowie dem Schließen (Regen/Wind) eines Rollladens.
@@ -206,7 +209,7 @@ Wird ein Kontakt als offen erkannt, dann wird sofort auf die gewünschte Positio
 
 Sonderfall: werden sowohl offene Kontakt zum Schließen als auch zum Öffnen des Rollladens erkannt (z.B. die Tür ist offen und es regnet), dann erhalten die Kontakte zum Öffnen Vorrang. 
  
-### 5.7 Blind Controller
+### 5.6 Blind Controller
 
 **Hinweis**: Als Werte sind immer die Originalwerte und nicht die umgerechneten Werte anzugeben. Beispiel: wenn die referierte Levelvariable einen Wertebereich von 0-255 hat, so ist bei allen Properties, die sich auf das Level beziehen, ebenfalls ein Wert von 0-255 anzugeben.
 und nicht ein Wert von 100 für "geschlossen".

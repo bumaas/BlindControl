@@ -95,7 +95,7 @@
       ]
     },
     {
-      "type":  "ExpansionPanel", "caption": "Beschattung (optional)",
+      "type":  "ExpansionPanel", "caption": "Shadowing (optional)",
       "items": [
         {
           "type":  "ExpansionPanel", "caption": "Shadowing According to Sun Position (optional)",

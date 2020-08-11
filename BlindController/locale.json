@@ -42,6 +42,7 @@
       "The determined Day Start and/or End Time can also be overridden": "Die ermittelte Tagesanfang und/oder -ende Zeit kann auch übersteuert werden",
       "Start of the day ID": "Tagesanfangszeit (hh:mm) ID",
       "End of the day ID": "Tagesendezeit (hh:mm) ID",
+      "Shadowing (optional)": "Beschattung (optional)",
       "Shadowing According to Sun Position (optional)": "Beschattung nach Sonnenstand (optional)",
       "Activator ID": "Aktivierung ID",
       "Define the sun position indicators": "Angabe der Sonnenstand Indikatoren",

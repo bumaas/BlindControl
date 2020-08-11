@@ -794,12 +794,14 @@ class BlindController extends IPSModule
                     }
                 }
 
-                if ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS) > 0) {
-                    $Hinweis = 'Beschattung nach Sonnenstand,' . $this->GetFormattedValue(
-                            $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS)
-                        );
-                } else {
-                    $Hinweis = 'Beschattung nach Sonnenstand';
+                if ($positionsNew['BlindLevel'] === $positionsShadowingBySunPosition['BlindLevel']) {
+                    if ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION) > 0) {
+                        $Hinweis = 'Beschattung nach Sonnenstand,' . $this->GetFormattedValue(
+                                $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION)
+                            );
+                    } else {
+                        $Hinweis = 'Beschattung nach Sonnenstand';
+                    }
                 }
             }
 
@@ -820,9 +822,11 @@ class BlindController extends IPSModule
                     }
                 }
 
-                $Hinweis = 'Beschattung nach Helligkeit, ' . $this->GetFormattedValue(
-                        $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS)
-                    );
+                if ($positionsNew['BlindLevel'] === $positionsShadowingBrightness['BlindLevel']){
+                    $Hinweis = 'Beschattung nach Helligkeit, ' . $this->GetFormattedValue(
+                            $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS)
+                        );
+                }
             }
         } else {
             // nachts gilt keine deactivation Time
