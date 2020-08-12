@@ -604,12 +604,16 @@ class BlindController extends IPSModule
 
         set_time_limit(35);
         if (!IPS_SemaphoreEnter($this->InstanceID . '- Blind', 30 * 1000)) { //wir warten maximal 30 Sekunden
+
+            $this->Logger_Dbg(__FUNCTION__, 'Cannot enter semaphore. The waiting time of 30s has expired');
+/*
             $this->Logger_Inf(
                 sprintf(
-                    '\'%s\': Semaphore konnte trotz Wartezeit nicht gesetzt werden. Der Steuerungslauf wird abgebrochen.',
+                    '\'%s\': Es ist bereits ein Steuerungslauf aktiv. Trotz Wartezeit konnte kein weiterer Lauf gestartet werden.',
                     IPS_GetObject($this->InstanceID)['ObjectName']
                 )
             );
+*/
             return false;
         }
 
