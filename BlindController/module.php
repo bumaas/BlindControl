@@ -2333,6 +2333,7 @@ class BlindController extends IPSModule
             if (($blindLevelAct === $blindLevelClosed) && ($slatsLevelAct === $slatsLevelClosed)) {
                 $bNoMove = true;
             } else {
+
                 $bNoMove =
                     ($deactivationTimeManuSecs === 0) || (strtotime('+ ' . $deactivationTimeManuSecs . ' seconds', $tsManualMovement) > time());
             }
@@ -2343,7 +2344,7 @@ class BlindController extends IPSModule
                     sprintf(
                         'Rollladen wurde manuell bewegt (Tag: %s). DeactivationTimeManu: %s/%s',
                         date('H:i:s', $tsManualMovement),
-                        time() - $tsBlindLastMovement,
+                        time() - $tsManualMovement,
                         $deactivationTimeManuSecs
                     )
                 );

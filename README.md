@@ -149,6 +149,9 @@ Das Modul holt aus dem Wochenplan ausschließlich die Aktionszeiten und den Akti
 
 Über den Wochenplan werden die Grundfahrzeiten (morgens hoch/ abends runter) definiert.
 
+Der Verweis auf einen Wochenplan ist zwingend. Wird kein Wochenplan benötigt (z.B. weil die Rollläden) ausschließlich zum Sonnenschutz heruntergefahren werden sollen, dann muss dennoch ein rudimentärer Wochenplan vorhanden sein, der den oben genannten Bedingungen genügt.
+Dies könnte ein Wochenplan sein mit den Aktionen 1 und 2 und nur einer Zeitspanne der ID 2 über 24/7. 
+
 ### 5.3 Tagerkennung (optional)
 Als Ergänzung zum Wochenplan kann eine zusätzliche Tagerkennung eingerichtet werden. Sie kommt zum Einsatz, wenn neben den Fahrzeiten gemäß Wochenplan auch die Helligkeit berücksichtigt werden soll.
 
