@@ -1700,7 +1700,7 @@ class BlindController extends IPSModule
     {
         if ($this->ReadAttributeBoolean('AttrIsDay') !== $isDay) { //Tageswechsel erreicht
 
-            if (time() - $this->ReadPropertyInteger(self::ATTR_TIMESTAMP_AUTOMATIC) <= 1){
+            if ((time() - $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC)) <= 1){
                 //wenn die Automatic gerade erst eingeschaltet worden ist, dann wird die Verzögerungszeit ignoriert
                 $delayTime = 0;
             } else {
