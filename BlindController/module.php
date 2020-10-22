@@ -604,14 +604,6 @@ class BlindController extends IPSModule
         if (!IPS_SemaphoreEnter($this->InstanceID . '- Blind', 30 * 1000)) { //wir warten maximal 30 Sekunden
 
             $this->Logger_Dbg(__FUNCTION__, 'Cannot enter semaphore. The waiting time of 30s has expired');
-/*
-            $this->Logger_Inf(
-                sprintf(
-                    '\'%s\': Es ist bereits ein Steuerungslauf aktiv. Trotz Wartezeit konnte kein weiterer Lauf gestartet werden.',
-                    IPS_GetObject($this->InstanceID)['ObjectName']
-                )
-            );
-*/
             return false;
         }
 
@@ -646,10 +638,10 @@ class BlindController extends IPSModule
             $positionsAct['SlatsLevel'] = null;
         }
 
-        // 'tagsüber' nach Wochenplan ermitteln
+        // -- 'tagsüber' nach Wochenplan ermitteln --
         $isDayByTimeSchedule = $this->getIsDayByTimeSchedule();
 
-        // optionale Tageserkennung auswerten
+        // -- optionale Tageserkennung auswerten --
         $brightness          = null;
         $isDayByDayDetection = $this->getIsDayByDayDetection($brightness, $positionsAct['BlindLevel']);
 
@@ -765,17 +757,32 @@ class BlindController extends IPSModule
             } else {
                 $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelOpened'] ?? null;
             }
-            $Hinweis = 'Tag';
+            if ($isDayByTimeSchedule){
+                $Hinweis = 'WP';
+            }
+            if ($isDayByDayDetection){
+                $Hinweis = 'Tag';
+            }
         } else { //it is night
             /** @noinspection NestedPositiveIfStatementsInspection */
             if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)) {
                 $positionsNew['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_NIGHTBLINDLEVEL);
                 $positionsNew['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_NIGHTSLATSLEVEL);
-                $Hinweis                    = 'Nachtposition';
+                if ($isDayByTimeSchedule === false){
+                    $Hinweis = 'WP, indiv.Pos.';
+                }
+                if ($isDayByDayDetection === false){
+                    $Hinweis = 'Nacht, indiv.Pos.';
+                }
             } else {
                 $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelClosed'];
                 $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelClosed'] ?? null;
-                $Hinweis                    = 'Nacht';
+                if ($isDayByTimeSchedule === false){
+                    $Hinweis = 'WP';
+                }
+                if ($isDayByDayDetection === false){
+                    $Hinweis = 'Nacht';
+                }
             }
         }
 
@@ -783,7 +790,7 @@ class BlindController extends IPSModule
             $Hinweis .= ', ' . $this->GetFormattedValue($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID));
         }
 
-        // am Tag wird überprüft, ob das Fenster beschattet werden soll
+        // -- am Tag wird überprüft, ob das Fenster beschattet werden soll --
         if ($isDay && !$bNoMove) {
             // prüfen, ob Beschattung nach Sonnenstand gewünscht und notwendig
             $positionsShadowingBySunPosition = $this->getPositionsOfShadowingBySunPosition($positionsAct['BlindLevel']);
