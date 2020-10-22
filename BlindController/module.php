@@ -651,32 +651,6 @@ class BlindController extends IPSModule
             $isDay = $isDayByTimeSchedule && $isDayByDayDetection;
         }
 
-        // übersteuernde Tageszeiten auswerten
-        $dayStart_ts = false;
-        $dayEnd_ts   = false;
-
-        if ($this->ReadPropertyInteger(self::PROP_DAYSTARTID) > 0) {
-            $dayStart_ts = strtotime(GetValueString($this->ReadPropertyInteger(self::PROP_DAYSTARTID)));
-            if ($dayStart_ts === false){
-                $this->Logger_Dbg(__FUNCTION__, sprintf('No valid DayStart found: \'%s\' (ignored)', GetValueString($this->ReadPropertyInteger(self::PROP_DAYSTARTID))));
-            }
-        }
-
-        if ($this->ReadPropertyInteger(self::PROP_DAYENDID) > 0) {
-            $dayEnd_ts = strtotime(GetValueString($this->ReadPropertyInteger(self::PROP_DAYENDID)));
-            if ($dayEnd_ts === false){
-                $this->Logger_Dbg(__FUNCTION__, sprintf('No valid DayEnd found: \'%s\' (ignored)', GetValueString($this->ReadPropertyInteger(self::PROP_DAYENDID))));
-            }
-        }
-
-        if ($dayStart_ts && $dayEnd_ts) {
-            $isDay = (time() > $dayStart_ts) && (time() < $dayEnd_ts);
-        } elseif ($dayStart_ts && (time() < strtotime('12:00'))) {
-            $isDay = time() > $dayStart_ts;
-        } elseif ($dayEnd_ts && (time() > strtotime('12:00'))) {
-            $isDay = time() < $dayEnd_ts;
-        }
-
         //Zeitpunkt der letzten Rollladenbewegung (Höhe oder Lamellen)
         $tsBlindLastMovement = $this->GetBlindLastTimeStamp($blindLevelId, $slatsLevelId);
 
@@ -2686,25 +2660,61 @@ class BlindController extends IPSModule
         if ($isDayIndicatorID > 0) {
             $isDayIndicator = GetValueBoolean($isDayIndicatorID);
             $this->Logger_Dbg(__FUNCTION__, sprintf('DayIndicator (#%s): %d', $isDayIndicatorID, $isDayIndicator));
-            return $isDayIndicator;
+            $isDayDayDetection = $isDayIndicator;
+        } else {
+            //optional Values
+            if ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID)) {
+                $brightness = $this->GetBrightness(self::PROP_BRIGHTNESSID, self::PROP_BRIGHTNESSAVGMINUTES, $levelAct, false);
+            }
+
+            $brightnessThresholdID = $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID);
+            if ($brightnessThresholdID) {
+                $brightnessThreshold = GetValue($brightnessThresholdID);
+            }
+
+            if (isset($brightness, $brightnessThreshold)) {
+                $this->Logger_Dbg(__FUNCTION__, sprintf('Brightness: %.1f, Threshold: %.1f', $brightness, $brightnessThreshold));
+                $isDayDayDetection = $brightness > $brightnessThreshold;
+            }
         }
 
-        //optional Values
-        if ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID)) {
-            $brightness = $this->GetBrightness(self::PROP_BRIGHTNESSID, self::PROP_BRIGHTNESSAVGMINUTES, $levelAct, false);
+        if (!isset($isDayDayDetection)){
+            return null;
         }
 
-        $brightnessThresholdID = $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID);
-        if ($brightnessThresholdID) {
-            $brightnessThreshold = GetValue($brightnessThresholdID);
+        // übersteuernde Tageszeiten auswerten
+        $dayStart_ts = false;
+        $dayEnd_ts   = false;
+
+        if ($this->ReadPropertyInteger(self::PROP_DAYSTARTID) > 0) {
+            $dayStart = GetValueString($this->ReadPropertyInteger(self::PROP_DAYSTARTID));
+            $dayStart_ts = strtotime($dayStart);
+            if ($dayStart_ts === false){
+                $this->Logger_Dbg(__FUNCTION__, sprintf('No valid DayStart found: \'%s\' (ignored)', $dayStart));
+            } else {
+                $this->Logger_Dbg(__FUNCTION__, sprintf('DayStart found: %s', $dayStart));
+            }
         }
 
-        if (isset($brightness, $brightnessThreshold)) {
-            $this->Logger_Dbg(__FUNCTION__, sprintf('Brightness: %.1f, Threshold: %.1f', $brightness, $brightnessThreshold));
-            return $brightness > $brightnessThreshold;
+        if ($this->ReadPropertyInteger(self::PROP_DAYENDID) > 0) {
+            $dayEnd = GetValueString($this->ReadPropertyInteger(self::PROP_DAYENDID));
+            $dayEnd_ts = strtotime($dayEnd);
+            if ($dayEnd_ts === false){
+                $this->Logger_Dbg(__FUNCTION__, sprintf('No valid DayEnd found: \'%s\' (ignored)', $dayEnd));
+            } else {
+                $this->Logger_Dbg(__FUNCTION__, sprintf('DayEnd found: %s', $dayEnd));
+            }
         }
 
-        return null;
+        if ($dayStart_ts && $dayEnd_ts) {
+            $isDayDayDetection = (time() > $dayStart_ts) && (time() < $dayEnd_ts);
+        } elseif ($dayStart_ts && (time() < strtotime('12:00'))) {
+            $isDayDayDetection = time() > $dayStart_ts;
+        } elseif ($dayEnd_ts && (time() > strtotime('12:00'))) {
+            $isDayDayDetection = time() < $dayEnd_ts;
+        }
+
+        return $isDayDayDetection;
     }
 
     private function getIsDayByTimeSchedule(): ?bool
