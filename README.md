@@ -188,7 +188,7 @@ Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen He
 dann ist die Anzahl der Minuten anzugeben, über die der Durchschnitt gebildet werden soll. Der Durchschnitt wird aus den archivierten Daten gewonnen. Dazu ist es notwendig, dass für die Variable die Archivierung aktiviert ist.
 
 Zusätzlich kann eine Temperaturvariable angegeben werden, um bei erhöhten Außentemperaturen eine höhere Beschattung zu erreichen, d.h., der Rollladen wird bei höheren Temperaturen weiter heruntergefahren.
-Dies erfolgt in zwei Stufen: Wenn die Temperatur 27°C übersteigt, wird der Rollladen um weitere 15% heruntergefahren, wenn die Temperatur 30°C übersteigt, dann wird der Rollladen auf eine Höhe von 10% heruntergefahren)
+Dies erfolgt in zwei Stufen: Wenn die Temperatur 27°C übersteigt, wird der Rollladen um weitere 15% heruntergefahren, wenn die Temperatur 30°C übersteigt, dann wird der Rollladen auf einen Schließungsgrad (Behanghöhe) von 90% heruntergefahren)
 
 Um den richtige Behanghöhe bei unterschiedlichen Sonnenhöhen zu finden, sind die gewünschten Behanghöhen bei zwei (möglichst extremen) Sonnenhöhen anzugeben. Aus diesen beiden Positionen wird dann die 
 Behanghöhe in Abhängigkeit von der Sonnenhöhe errechnet. Die Werte sind am besten durch Aufzeichnungen in der Mittagszeit/Abendzeit oder im Hochsommer/Winter zu ermitteln.
@@ -223,9 +223,9 @@ und nicht ein Wert von 100 für "geschlossen".
 | SlatsLevelID               | integer | 0 | Statusvariable, der  zu steuernden Lamellen einer Jalousie. Sie muss vom Typ Integer oder Float sein und über ein korrektes Profil verfügen. |
 | <br>**Wochenplan**     |  | |  | |
 | WeeklyTimeTableEventID     | integer | 0 | Verweis auf ein Wochenplanevent, dass die täglichen Grundzeiten für Rollladen rauf und Rollladen runter abbildet.       |                  |
-| WakeUpTimeID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Hochfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein|
+| WakeUpTimeID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Hochfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein.  Eine ungültige Zeitangabe wird ignoriert.|
 | WakeUpTimeOffset               | integer | 0 | Offset zur WakeUpTime in Minuten|
-| BedTimeID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Runterfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein|
+| BedTimeID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Runterfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein.  Eine ungültige Zeitangabe wird ignoriert.|
 | BedTimeOffset               | integer | 0 | Offset zur BedTime in Minuten|
 | HolidayIndicatorID         | integer | 0 | Indikatorvariable, die anzeigt, ob ein Urlaubs-/Feiertag anliegt|
 | DayUsedWhenHoliday         | integer | 0 | legt fest, welcher Wochentag des Wochenplans im Fall eines Urlaubs-/Feiertages herangezogen werden soll|
@@ -240,8 +240,8 @@ und nicht ein Wert von 100 für "geschlossen".
 | BrightnessID               | integer | 0 | Indikatorvariable, die die Helligkeit zur Tag/Nacht Bestimmung abbildet.  |
 | BrightnessAvgMinutes       | integer | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll  |
 | BrightnessThresholdID      | integer | 0 | Indikatorvariable, die den Schwellwert zur Tag/Nacht Bestimmung zur Verfügung stellt |
-| DayStartID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesanfangszeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und kleiner als '12:00' sein|
-| DayEndID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein|
+| DayStartID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesanfangszeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und kleiner als '12:00' sein. Eine ungültige Zeitangabe wird ignoriert.|
+| DayEndID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein.  Eine ungültige Zeitangabe wird ignoriert.|
 | DelayTimeDayNightChange | integer | 0  | legt fest, ob und wie lange eine Fahrt beim Tages/Nacht-Wechsel verzögert werden soll|
 | DelayTimeDayNightChangeIsRandomly | boolean | false  | legt fest, ob die Verzögerung zufällig bestimmt werden soll. Es wird ein Zufallswert zwischen 0 und der angegebenen Zeit genommen|
 | <br>**Beschattung nach Sonnenstand**     |  | |  | |
@@ -306,7 +306,7 @@ Dann werden im Webfront die Bewegungen in Form eines Logfiles dargestellt.
 |        Blind Controller         |    Device    | {538F6461-5410-4F4C-91D3-B39122152D56} |
 |         Blind Control Group Master         |    Device    | {1ACD8A0D-5385-6D05-9537-F24C9014FD02} |
 
-### 3. Spenden  
+### Spenden  
   
   Die Nutzung des Moduls ist kostenfrei. Niemand sollte sich verpflichtet fühlen, aber wenn das Modul gefällt, dann freue ich mich über eine Spende.
 

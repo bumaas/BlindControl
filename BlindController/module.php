@@ -179,7 +179,11 @@ class BlindController extends IPSModule
 
     public function RequestAction($Ident, $Value): bool
     {
-        $this->Logger_Dbg(__FUNCTION__, sprintf('Ident: %s, Value: %s', $Ident, $Value));
+        if (is_bool($Value)) {
+            $this->Logger_Dbg(__FUNCTION__, sprintf('Ident: %s, Value: %s', $Ident, (int)$Value));
+        } else {
+            $this->Logger_Dbg(__FUNCTION__, sprintf('Ident: %s, Value: %s', $Ident, $Value));
+        }
 
         switch ($Ident) {
             case self::VAR_IDENT_ACTIVATED:
@@ -335,12 +339,6 @@ class BlindController extends IPSModule
             default:
                 trigger_error(sprintf('Instance %s: Unknown Ident %s', $this->InstanceID, $Ident));
                 return false;
-        }
-
-        if (is_bool($Value)) {
-            $this->Logger_Dbg(__FUNCTION__, sprintf('Ident: %s, Value: %s', $Ident, (int)$Value));
-        } else {
-            $this->Logger_Dbg(__FUNCTION__, sprintf('Ident: %s, Value: %s', $Ident, $Value));
         }
 
         if ($this->SetValue($Ident, $Value)) {
@@ -662,23 +660,29 @@ class BlindController extends IPSModule
         }
 
         // übersteuernde Tageszeiten auswerten
-        $dayStart = null;
-        $dayEnd   = null;
+        $dayStart_ts = false;
+        $dayEnd_ts   = false;
 
         if ($this->ReadPropertyInteger(self::PROP_DAYSTARTID) > 0) {
-            $dayStart = GetValueString($this->ReadPropertyInteger(self::PROP_DAYSTARTID));
+            $dayStart_ts = strtotime(GetValueString($this->ReadPropertyInteger(self::PROP_DAYSTARTID)));
+            if ($dayStart_ts === false){
+                $this->Logger_Dbg(__FUNCTION__, sprintf('No valid DayStart found: \'%s\' (ignored)', GetValueString($this->ReadPropertyInteger(self::PROP_DAYSTARTID))));
+            }
         }
 
         if ($this->ReadPropertyInteger(self::PROP_DAYENDID) > 0) {
-            $dayEnd = GetValueString($this->ReadPropertyInteger(self::PROP_DAYENDID));
+            $dayEnd_ts = strtotime(GetValueString($this->ReadPropertyInteger(self::PROP_DAYENDID)));
+            if ($dayEnd_ts === false){
+                $this->Logger_Dbg(__FUNCTION__, sprintf('No valid DayEnd found: \'%s\' (ignored)', GetValueString($this->ReadPropertyInteger(self::PROP_DAYENDID))));
+            }
         }
 
-        if (isset($dayStart, $dayEnd)) {
-            $isDay = (time() > strtotime($dayStart)) && (time() < strtotime($dayEnd));
-        } elseif (isset($dayStart) && (time() < strtotime('12:00'))) {
-            $isDay = time() > strtotime($dayStart);
-        } elseif (isset($dayEnd) && (time() > strtotime('12:00'))) {
-            $isDay = time() < strtotime($dayEnd);
+        if ($dayStart_ts && $dayEnd_ts) {
+            $isDay = (time() > $dayStart_ts) && (time() < $dayEnd_ts);
+        } elseif ($dayStart_ts && (time() < strtotime('12:00'))) {
+            $isDay = time() > $dayStart_ts;
+        } elseif ($dayEnd_ts && (time() > strtotime('12:00'))) {
+            $isDay = time() < $dayEnd_ts;
         }
 
         //Zeitpunkt der letzten Rollladenbewegung (Höhe oder Lamellen)
@@ -1870,7 +1874,7 @@ class BlindController extends IPSModule
 
         $this->Logger_Dbg(
             __FUNCTION__,
-            sprintf('Property: %s(#%s), Value: %s, reversed: %s', $propName, $contactId, (int)GetValue($contactId), (int)$reversed)
+            sprintf('%s (#%s): value: %s, reversed: %s', $propName, $contactId, (int)GetValue($contactId), (int)$reversed)
         );
 
         if ($reversed) {
@@ -2444,7 +2448,7 @@ class BlindController extends IPSModule
 
         $this->Logger_Dbg(
             __FUNCTION__,
-            sprintf('#%s(%s): percentClose %s%% after %s s', $positionID, $propName, $percentClose, time() - $lastMove['timeStamp'])
+            sprintf('%s (#%s): percentClose %s%% after %s s', $propName, $positionID, $percentClose, time() - $lastMove['timeStamp'])
         );
 
         $positionNew = $profile['MinValue'] + ($percentClose / 100) * ($profile['MaxValue'] - $profile['MinValue']);
@@ -2726,26 +2730,33 @@ class BlindController extends IPSModule
 
         //Ermitteln, welche Zeiten heute laut Wochenplan gelten
         if (!$this->getUpDownTime($weekDay, $heute_auf, $heute_ab)) {
+            //der Wochenplan ist ungültig
             return false;
         }
 
         //gibt es übersteuernde Zeiten?
         $idWakeUpTime = $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEID);
-        if (($idWakeUpTime > 0) && (GetValueString($idWakeUpTime) !== '')) {
-            $heute_auf = date('H:i', strtotime(GetValueString($idWakeUpTime)) + $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEOFFSET) * 60);
-            if ($heute_auf === false) {
-                return false;
+        if ($idWakeUpTime > 0) {
+            $heute_auf_ts = strtotime(GetValueString($idWakeUpTime)) + $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEOFFSET) * 60;
+            if ($heute_auf_ts === false) {
+                $this->Logger_Dbg(__FUNCTION__, sprintf('No valid WakeUpTime found: \'%s\' (ignored)', GetValueString($idWakeUpTime)));
+            } else {
+                // es wurde eine gültige Zeit gefunden
+                $heute_auf = date('H:i', $heute_auf_ts);
+                $this->Logger_Dbg(__FUNCTION__, sprintf('WakeUpTime found: %s', $heute_auf));
             }
-            $this->Logger_Dbg(__FUNCTION__, sprintf('WakeUpTime found: %s', $heute_auf));
         }
 
         $idBedTime = $this->ReadPropertyInteger(self::PROP_BEDTIMEID);
-        if (($idBedTime > 0) && (GetValueString($idBedTime) !== '')) {
-            $heute_ab = date('H:i', strtotime(GetValueString($idBedTime)) + $this->ReadPropertyInteger(self::PROP_BEDTIMEOFFSET) * 60);
-            if ($heute_ab === false) {
-                return false;
+        if ($idBedTime > 0) {
+            $heute_ab_ts = strtotime(GetValueString($idBedTime)) + $this->ReadPropertyInteger(self::PROP_BEDTIMEOFFSET) * 60;
+            if ($heute_ab_ts === false) {
+                $this->Logger_Dbg(__FUNCTION__, sprintf('No valid BedTime found: \'%s\' (ignored)', GetValueString($idBedTime)));
+            } else {
+                // es wurde eine gültige Zeit gefunden
+                $heute_ab = date('H:i', $heute_ab_ts);
+                $this->Logger_Dbg(__FUNCTION__, sprintf('BedTime: %s', $heute_ab));
             }
-            $this->Logger_Dbg(__FUNCTION__, sprintf('BedTime: %s', $heute_ab));
         }
 
         return true;
