@@ -87,8 +87,8 @@ class BlindController extends IPSModule
     private const PROP_HIGHSUNPOSITIONSLATSLEVEL                   = 'HighSunPositionSlatsLevel';
 
     //shadowing according to brightness
-    private const PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS             = 'BrightnessIDShadowingBrightness';
-    private const PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS     = 'BrightnessAvgMinutesShadowingBrightness';
+    private const PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS         = 'BrightnessIDShadowingBrightness';
+    private const PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS = 'BrightnessAvgMinutesShadowingBrightness';
 
     private const PROP_ACTIVATEDINDIVIDUALDAYLEVELS                = 'ActivatedIndividualDayLevels';
     private const PROP_DAYBLINDLEVEL                               = 'DayBlindLevel';
@@ -112,11 +112,12 @@ class BlindController extends IPSModule
     private const PROP_SHOWNOTUSEDELEMENTS                         = 'ShowNotUsedElements';
 
     //attribute names
-    private const ATTR_MANUALMOVEMENT      = 'manualMovement';
-    private const ATTR_LASTMOVE            = 'lastMovement';
-    private const ATTR_TIMESTAMP_AUTOMATIC = 'TimeStampAutomatic';
-    private const ATTR_CONTACT_OPEN        = 'AttrContactOpen';
-    private const ATTR_DAYTIME_CHANGE_TIME = 'DaytimeChangeTime';
+    private const ATTR_MANUALMOVEMENT           = 'manualMovement';
+    private const ATTR_LASTMOVE                 = 'lastMovement';
+    private const ATTR_TIMESTAMP_AUTOMATIC      = 'TimeStampAutomatic';
+    private const ATTR_CONTACT_OPEN             = 'AttrContactOpen';
+    private const ATTR_DAYTIME_CHANGE_TIME      = 'DaytimeChangeTime';
+    private const ATTR_LAST_ISDAYBYTIMESCHEDULE = 'LastIsDayByTimeSchedule';
 
     //timer names
     private const TIMER_UPDATE           = 'Update';
@@ -690,7 +691,7 @@ class BlindController extends IPSModule
         $this->Logger_Dbg(
             __FUNCTION__,
             sprintf(
-                'tsAutomatik: %s, tsBlind: %s, posActBlindLevel: %.2f,  posActSlatsLevel: %s, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s, dayStart: %s, dayEnd: %s), considerDeactivationTimeAuto: %s',
+                'tsAutomatik: %s, tsBlind: %s, posActBlindLevel: %.2f,  posActSlatsLevel: %s, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s), considerDeactivationTimeAuto: %s',
                 $this->FormatTimeStamp($tsAutomatik),
                 $this->FormatTimeStamp($tsBlindLastMovement),
                 $positionsAct['BlindLevel'],
@@ -699,8 +700,6 @@ class BlindController extends IPSModule
                 (int)$isDay,
                 (int)$isDayByTimeSchedule,
                 (isset($isDayByDayDetection) ? (int)$isDayByDayDetection : 'null'),
-                $dayStart ?? 'null',
-                $dayEnd ?? 'null',
                 (int)$considerDeactivationTimeAuto
             )
         );
@@ -731,32 +730,34 @@ class BlindController extends IPSModule
             } else {
                 $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelOpened'] ?? null;
             }
-            if ($isDayByTimeSchedule){
+
+            if ($isDayByTimeSchedule !== $this->ReadAttributeBoolean(self::ATTR_LAST_ISDAYBYTIMESCHEDULE)) {
                 $Hinweis = 'WP';
-            }
-            if ($isDayByDayDetection){
+            } else {
                 $Hinweis = 'Tag';
             }
+
+            if ($this->ReadAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME) === 0) { //es läuft keine Verzögerung
+                $this->WriteAttributeBoolean(self::ATTR_LAST_ISDAYBYTIMESCHEDULE, $isDayByTimeSchedule);
+            }
         } else { //it is night
-            /** @noinspection NestedPositiveIfStatementsInspection */
+            if ($isDayByTimeSchedule !== $this->ReadAttributeBoolean(self::ATTR_LAST_ISDAYBYTIMESCHEDULE)) {
+                $Hinweis = 'WP';
+            } else {
+                $Hinweis = 'Nacht';
+            }
+
+            if ($this->ReadAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME) === 0) { //es läuft keine Verzögerung
+                $this->WriteAttributeBoolean(self::ATTR_LAST_ISDAYBYTIMESCHEDULE, $isDayByTimeSchedule);
+            }
+
             if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)) {
                 $positionsNew['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_NIGHTBLINDLEVEL);
                 $positionsNew['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_NIGHTSLATSLEVEL);
-                if ($isDayByTimeSchedule === false){
-                    $Hinweis = 'WP, indiv.Pos.';
-                }
-                if ($isDayByDayDetection === false){
-                    $Hinweis = 'Nacht, indiv.Pos.';
-                }
+                $Hinweis                    .= ', indiv.Pos.';
             } else {
                 $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelClosed'];
                 $positionsNew['SlatsLevel'] = $this->profileSlatsLevel['LevelClosed'] ?? null;
-                if ($isDayByTimeSchedule === false){
-                    $Hinweis = 'WP';
-                }
-                if ($isDayByDayDetection === false){
-                    $Hinweis = 'Nacht';
-                }
             }
         }
 
@@ -811,7 +812,7 @@ class BlindController extends IPSModule
                     }
                 }
 
-                if ($positionsNew['BlindLevel'] === $positionsShadowingBrightness['BlindLevel']){
+                if ($positionsNew['BlindLevel'] === $positionsShadowingBrightness['BlindLevel']) {
                     $Hinweis = 'Beschattung nach Helligkeit, ' . $this->GetFormattedValue(
                             $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS)
                         );
@@ -1190,6 +1191,7 @@ class BlindController extends IPSModule
             json_encode(['timeStamp' => null, 'percentClose' => null, 'hint' => null])
         );
         $this->RegisterAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME, 0);
+        $this->RegisterAttributeBoolean(self::ATTR_LAST_ISDAYBYTIMESCHEDULE, false);
     }
 
     private function RegisterVariables(): void
@@ -1685,7 +1687,7 @@ class BlindController extends IPSModule
     {
         if ($this->ReadAttributeBoolean('AttrIsDay') !== $isDay) { //Tageswechsel erreicht
 
-            if ((time() - $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC)) <= 1){
+            if ((time() - $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC)) <= 1) {
                 //wenn die Automatic gerade erst eingeschaltet worden ist, dann wird die Verzögerungszeit ignoriert
                 $delayTime = 0;
             } else {
@@ -2324,7 +2326,6 @@ class BlindController extends IPSModule
             if (($blindLevelAct === $blindLevelClosed) && ($slatsLevelAct === $slatsLevelClosed)) {
                 $bNoMove = true;
             } else {
-
                 $bNoMove =
                     ($deactivationTimeManuSecs === 0) || (strtotime('+ ' . $deactivationTimeManuSecs . ' seconds', $tsManualMovement) > time());
             }
@@ -2678,7 +2679,7 @@ class BlindController extends IPSModule
             }
         }
 
-        if (!isset($isDayDayDetection)){
+        if (!isset($isDayDayDetection)) {
             return null;
         }
 
@@ -2687,9 +2688,9 @@ class BlindController extends IPSModule
         $dayEnd_ts   = false;
 
         if ($this->ReadPropertyInteger(self::PROP_DAYSTARTID) > 0) {
-            $dayStart = GetValueString($this->ReadPropertyInteger(self::PROP_DAYSTARTID));
+            $dayStart    = GetValueString($this->ReadPropertyInteger(self::PROP_DAYSTARTID));
             $dayStart_ts = strtotime($dayStart);
-            if ($dayStart_ts === false){
+            if ($dayStart_ts === false) {
                 $this->Logger_Dbg(__FUNCTION__, sprintf('No valid DayStart found: \'%s\' (ignored)', $dayStart));
             } else {
                 $this->Logger_Dbg(__FUNCTION__, sprintf('DayStart found: %s', $dayStart));
@@ -2697,9 +2698,9 @@ class BlindController extends IPSModule
         }
 
         if ($this->ReadPropertyInteger(self::PROP_DAYENDID) > 0) {
-            $dayEnd = GetValueString($this->ReadPropertyInteger(self::PROP_DAYENDID));
+            $dayEnd    = GetValueString($this->ReadPropertyInteger(self::PROP_DAYENDID));
             $dayEnd_ts = strtotime($dayEnd);
-            if ($dayEnd_ts === false){
+            if ($dayEnd_ts === false) {
                 $this->Logger_Dbg(__FUNCTION__, sprintf('No valid DayEnd found: \'%s\' (ignored)', $dayEnd));
             } else {
                 $this->Logger_Dbg(__FUNCTION__, sprintf('DayEnd found: %s', $dayEnd));
@@ -2901,7 +2902,7 @@ class BlindController extends IPSModule
         return null;
     }
 
-    private function ShowNotUsedElements(bool $bShow)
+    private function ShowNotUsedElements(bool $bShow): void
     {
         $this->Logger_Dbg(
             __FUNCTION__,
