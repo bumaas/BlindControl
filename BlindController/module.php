@@ -392,6 +392,11 @@ class BlindController extends IPSModule
 
             case EM_UPDATE:
             case VM_UPDATE:
+
+                if ($Data[1] === false){
+                    break;
+                }
+
                 $this->SetInstanceStatusAndTimerEvent();
 
                 if ($this->GetValue(self::VAR_IDENT_ACTIVATED)) {
@@ -601,7 +606,10 @@ class BlindController extends IPSModule
             return false;
         }
 
-        set_time_limit(35);
+        if ((int) ini_get('max_execution_time') <= 35){
+            set_time_limit(35);
+        }
+
         if (!IPS_SemaphoreEnter($this->InstanceID . '- Blind', 30 * 1000)) { //wir warten maximal 30 Sekunden
 
             $this->Logger_Dbg(__FUNCTION__, 'Cannot enter semaphore. The waiting time of 30s has expired');
@@ -950,7 +958,7 @@ class BlindController extends IPSModule
             if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
                 $slatsLevel = $positionsNew['SlatsLevel'] / ($this->profileSlatsLevel['MaxValue'] - $this->profileSlatsLevel['MinValue']);
                 if ($this->profileSlatsLevel['Reversed']) {
-                    $slatsLevel = 1 - $positionsNew['SlatsLevel'];
+                    $slatsLevel = 1 - $slatsLevel;
                 }
                 $this->MoveBlind((int)($blindLevel * 100), (int)($slatsLevel * 100), $deactivationTimeAuto, $Hinweis);
             } else {
