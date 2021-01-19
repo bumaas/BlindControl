@@ -1567,19 +1567,19 @@ class BlindController extends IPSModule
         $variableID = $this->ReadPropertyInteger($propName);
 
         if (!$optional && $variableID === 0) {
-            $this->Logger_Err(sprintf('ID nicht gesetzt: %s', $propName));
+            $this->Logger_Err(sprintf('\'%s\': ID nicht gesetzt: %s', IPS_GetObject($this->InstanceID)['ObjectName'], $propName));
             return $errStatus;
         }
 
         if ($variableID !== 0) {
             if (!$variable = @IPS_GetVariable($variableID)) {
-                $this->Logger_Err(sprintf('falsche Variablen ID (#%s) für "%s"', $variableID, $propName));
+                $this->Logger_Err(sprintf('\'%s\': falsche Variablen ID (#%s) für "%s"', IPS_GetObject($this->InstanceID)['ObjectName'], $variableID, $propName));
                 return $errStatus;
             }
 
             if (!in_array($variable['VariableType'], $variableTypes, true)) {
                 $this->Logger_Err(
-                    sprintf('falscher Variablentyp für "%s" - nur %s erlaubt', $propName, implode(', ', $variableTypes))
+                    sprintf('\'%s\': falscher Variablentyp für "%s" - nur %s erlaubt', IPS_GetObject($this->InstanceID)['ObjectName'], $propName, implode(', ', $variableTypes))
                 );
                 return $errStatus;
             }
@@ -1617,18 +1617,18 @@ class BlindController extends IPSModule
         $eventID = $this->ReadPropertyInteger($propName);
 
         if (!$optional && $eventID === 0) {
-            $this->Logger_Err(sprintf('ID nicht gesetzt: %s', $propName));
+            $this->Logger_Err(sprintf('\'%s\': ID nicht gesetzt: %s', IPS_GetObject($this->InstanceID)['ObjectName'], $propName));
             return $errStatus;
         }
 
         if ($eventID !== 0) {
             if (!$variable = @IPS_GetEvent($eventID)) {
-                $this->Logger_Err(sprintf('falsche Event ID #%s', $propName));
+                $this->Logger_Err(sprintf('\'%s\': falsche Event ID #%s', IPS_GetObject($this->InstanceID)['ObjectName'], $propName));
                 return $errStatus;
             }
 
             if ($variable['EventType'] !== $eventType) {
-                $this->Logger_Err(sprintf('falscher Eventtyp - nur %s erlaubt', $eventType));
+                $this->Logger_Err(sprintf('\'%s\': falscher Eventtyp - nur %s erlaubt', IPS_GetObject($this->InstanceID)['ObjectName'], $eventType));
                 return $errStatus;
             }
         }
@@ -1641,7 +1641,7 @@ class BlindController extends IPSModule
         $value = $this->ReadPropertyInteger($propName);
 
         if ($value < $min || $value > $max) {
-            $this->Logger_Err(sprintf('%s: Wert nicht im gültigen Bereich (%s - %s)', $propName, $min, $max));
+            $this->Logger_Err(sprintf('\'%s\': %s: Wert nicht im gültigen Bereich (%s - %s)', IPS_GetObject($this->InstanceID)['ObjectName'], $propName, $min, $max));
             return $errStatus;
         }
 
@@ -1657,7 +1657,7 @@ class BlindController extends IPSModule
         }
 
         if ($value < $min || $value > $max) {
-            $this->Logger_Err(sprintf('%s: Wert (%.2f) nicht im gültigen Bereich (%.2f - %.2f)', $propName, $value, $min, $max));
+            $this->Logger_Err(sprintf('\'%s\': %s: Wert (%.2f) nicht im gültigen Bereich (%.2f - %.2f)', IPS_GetObject($this->InstanceID)['ObjectName'], $propName, $value, $min, $max));
             return $errStatus;
         }
 
@@ -2490,7 +2490,8 @@ class BlindController extends IPSModule
             } else {
                 $this->Logger_Err(
                     sprintf(
-                        '#%s (%s): Fehler beim Setzen des Wertes. (Value = %s, Parent: "%s").',
+                        '\'%s\': #%s (%s): Fehler beim Setzen des Wertes. (Value = %s, Parent: "%s").',
+                        IPS_GetObject($this->InstanceID)['ObjectName'],
                         $positionID,
                         $propName,
                         $percentClose,
