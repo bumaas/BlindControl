@@ -344,7 +344,7 @@ class BlindController extends IPSModule
 
         if ($this->SetValue($Ident, $Value)) {
             $this->SetInstanceStatusAndTimerEvent();
-            $this->ControlBlind(false);
+            IPS_RunScriptText(sprintf('BLC_ControlBlind(%s, %s);', $this->InstanceID, 'false'));
             return true;
         }
 
