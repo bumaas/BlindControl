@@ -131,11 +131,17 @@ class BlindController extends IPSModule
     private $objectName;
 
     private $profileBlindLevel;
-
     private $profileSlatsLevel;
 
 
     // die folgenden Funktionen überschreiben die interne IPS_() Funktionen
+    public function __construct($InstanceID)
+    {
+        $this->objectName = IPS_GetObject($InstanceID)['ObjectName'];
+        //echo $this->objectName . PHP_EOL;
+        parent::__construct($InstanceID);
+    }
+
     public function Create()
     {
         // Diese Zeile nicht löschen.
@@ -617,7 +623,6 @@ class BlindController extends IPSModule
         }
 
         // globale Instanzvariablen setzen
-        $this->objectName        = IPS_GetObject($this->InstanceID)['ObjectName'];
         $this->profileBlindLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
 
         // $deactivationTimeAuto: Zeitraum, in dem das automatisch gesetzte Level
@@ -2384,7 +2389,6 @@ class BlindController extends IPSModule
         }
 
         // globale Instanzvariablen setzen
-        $this->objectName        = IPS_GetObject($this->InstanceID)['ObjectName'];
         $this->profileBlindLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
 
         if ($this->profileBlindLevel === null) {
@@ -2491,7 +2495,7 @@ class BlindController extends IPSModule
                 $this->Logger_Err(
                     sprintf(
                         '\'%s\': #%s (%s): Fehler beim Setzen des Wertes. (Value = %s, Parent: "%s").',
-                        IPS_GetObject($this->InstanceID)['ObjectName'],
+                        $this->objectName,
                         $positionID,
                         $propName,
                         $percentClose,
@@ -3015,7 +3019,7 @@ class BlindController extends IPSModule
     {
         $this->SendDebug($message, $data, 0);
         if (function_exists('IPSLogger_Dbg') && $this->ReadPropertyBoolean('WriteDebugInformationToIPSLogger')) {
-            IPSLogger_Dbg(__CLASS__ . '.' . IPS_GetObject($this->InstanceID)['ObjectName'] . '.' . $message, $data);
+            IPSLogger_Dbg(__CLASS__ . '.' . $this->objectName . '.' . $message, $data);
         }
         if ($this->ReadPropertyBoolean('WriteDebugInformationToLogfile')) {
             $this->LogMessage(sprintf('%s: %s', $message, $data), KL_DEBUG);
