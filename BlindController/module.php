@@ -2550,7 +2550,7 @@ class BlindController extends IPSModule
             }
 
             if (abs($percentCloseNew - $percentCloseCurrent) > 5) {
-                set_time_limit(30);
+                if ((float) IPS_GetKernelVersion() < 5.6) set_time_limit(30);
                 sleep(1);
             } else {
                 $this->Logger_Dbg(
@@ -2742,7 +2742,7 @@ class BlindController extends IPSModule
         if (!$this->getUpAndDownPoints($heute_auf, $heute_ab)) {
             return null;
         }
-
+        $this->SendDebug(__FUNCTION__, sprintf('heute_auf: %s, heute_ab: %s', $heute_auf, $heute_ab), 0);
         return ($heute_auf !== null) && (time() >= strtotime($heute_auf)) && ($heute_ab === null || (time() <= strtotime($heute_ab)));
     }
 
@@ -2790,7 +2790,6 @@ class BlindController extends IPSModule
                 $this->Logger_Dbg(__FUNCTION__, sprintf('BedTime: %s', $heute_ab));
             }
         }
-
         return true;
     }
 
@@ -2802,7 +2801,7 @@ class BlindController extends IPSModule
             trigger_error(sprintf('Instance %s: wrong Event ID #%s', $this->InstanceID, $weeklyTimeTableEventId));
             return false;
         }
-
+        $this->SendDebug(__FUNCTION__, sprintf('event: %s', json_encode($event)), 0);
         if ($event['EventType'] !== EVENTTYPE_SCHEDULE) {
             trigger_error(sprintf('Instance %s: wrong Eventtype %s', $this->InstanceID, $event['EventType']));
             return false;
