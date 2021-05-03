@@ -85,6 +85,15 @@ class BlindController extends IPSModule
     private const PROP_HIGHSUNPOSITIONBLINDLEVEL                   = 'HighSunPositionBlindLevel';
     private const PROP_LOWSUNPOSITIONSLATSLEVEL                    = 'LowSunPositionSlatsLevel';
     private const PROP_HIGHSUNPOSITIONSLATSLEVEL                   = 'HighSunPositionSlatsLevel';
+    private const PROP_DEPTHSUNLIGHT                               = 'DepthSunLight';
+    private const PROP_WINDOWORIENTATION                           = 'WindowOrientation';
+    private const PROP_WINDOWSSLOPE                                = 'WindowsSlope';
+    private const PROP_WINDOWSHEIGHT                               = 'WindowHeight';
+    private const PROP_MINIMUMSHADERELEVANTBLINDLEVEL              = 'MinimumShadeRelevantBlindLevel';
+    private const PROP_MAXIMUMSHADERELEVANTBLINDLEVEL              = 'MaximumShadeRelevantBlindLevel';
+    private const PROP_MINIMUMSHADERELEVANTSLATSLEVEL              = 'MinimumShadeRelevantSlatsLevel';
+    private const PROP_MAXIMUMSHADERELEVANTSLATSLEVEL              = 'MaximumShadeRelevantSlatsLevel';
+
 
     //shadowing according to brightness
     private const PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS         = 'BrightnessIDShadowingBrightness';
@@ -131,6 +140,7 @@ class BlindController extends IPSModule
     private $objectName;
 
     private $profileBlindLevel;
+
     private $profileSlatsLevel;
 
 
@@ -221,6 +231,16 @@ class BlindController extends IPSModule
                 );
                 $this->UpdateFormField(
                     self::PROP_LOWSUNPOSITIONSLATSLEVEL,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                $this->UpdateFormField(
+                    self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
+                    'visible',
+                    ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
+                );
+                $this->UpdateFormField(
+                    self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL,
                     'visible',
                     ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
                 );
@@ -399,7 +419,7 @@ class BlindController extends IPSModule
             case EM_UPDATE:
             case VM_UPDATE:
 
-                if ($Data[1] === false){
+                if ($Data[1] === false) {
                     break;
                 }
 
@@ -548,6 +568,18 @@ class BlindController extends IPSModule
         );
         $form = $this->MyUpdateFormField(
             $form,
+            self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL,
+            'visible',
+            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL,
+            'visible',
+            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
             self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS,
             'visible',
             ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS) > 0) || $bShow
@@ -612,7 +644,7 @@ class BlindController extends IPSModule
             return false;
         }
 
-        if (((int) ini_get('max_execution_time') > 0) && ((int) ini_get('max_execution_time') <= 35)){
+        if (((int)ini_get('max_execution_time') > 0) && ((int)ini_get('max_execution_time') <= 35)) {
             set_time_limit(35);
         }
 
@@ -1043,6 +1075,14 @@ class BlindController extends IPSModule
         $this->RegisterPropertyFloat(self::PROP_HIGHSUNPOSITIONBLINDLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_LOWSUNPOSITIONSLATSLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_HIGHSUNPOSITIONSLATSLEVEL, 0);
+        $this->RegisterPropertyInteger(self::PROP_DEPTHSUNLIGHT, 0);
+        $this->RegisterPropertyInteger(self::PROP_WINDOWORIENTATION, 0);
+        $this->RegisterPropertyInteger(self::PROP_WINDOWSSLOPE, 90);
+        $this->RegisterPropertyInteger(self::PROP_WINDOWSHEIGHT, 0);
+        $this->RegisterPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL, 0);
+        $this->RegisterPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL, 0);
+        $this->RegisterPropertyFloat(self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL, 0);
+        $this->RegisterPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL, 0);
 
         //shadowing according to brightness
         $this->RegisterPropertyInteger('ActivatorIDShadowingBrightness', 0);
@@ -1465,6 +1505,8 @@ class BlindController extends IPSModule
                 self::PROP_CONTACTCLOSELEVEL2,
                 self::PROP_LOWSUNPOSITIONBLINDLEVEL,
                 self::PROP_HIGHSUNPOSITIONBLINDLEVEL,
+                self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL,
+                self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL,
                 self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
                 self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
                 self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
@@ -1505,6 +1547,8 @@ class BlindController extends IPSModule
                 $propertySlatsLevels = [
                     self::PROP_LOWSUNPOSITIONSLATSLEVEL,
                     self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
+                    self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL,
+                    self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL,
                     self::PROP_CONTACTCLOSESLATSLEVEL1,
                     self::PROP_CONTACTCLOSESLATSLEVEL2,
                     self::PROP_CONTACTOPENSLATSLEVEL1,
@@ -1662,7 +1706,9 @@ class BlindController extends IPSModule
         }
 
         if ($value < $min || $value > $max) {
-            $this->Logger_Err(sprintf('\'%s\': %s: Wert (%.2f) nicht im gültigen Bereich (%.2f - %.2f)', $this->objectName, $propName, $value, $min, $max));
+            $this->Logger_Err(
+                sprintf('\'%s\': %s: Wert (%.2f) nicht im gültigen Bereich (%.2f - %.2f)', $this->objectName, $propName, $value, $min, $max)
+            );
             return $errStatus;
         }
 
@@ -1988,16 +2034,31 @@ class BlindController extends IPSModule
         if (($brightness >= $thresholdBrightness) && ($rSunAzimuth >= $azimuthFrom) && ($rSunAzimuth <= $azimuthTo)
             && ($rSunAltitude >= $altitudeFrom)
             && ($rSunAltitude <= $altitudeTo)) {
-            $positions = $this->getBlindPositionsFromSunPosition();
 
-            $this->Logger_Dbg(
-                __FUNCTION__,
-                sprintf(
-                    'BlindLevelFromSunPosition: %.2f, SlatsLevelFromSunPosition: %.2f',
-                    $positions['BlindLevel'],
-                    $positions['SlatsLevel']
-                )
-            );
+            // Simple variant
+            if ($this->ReadPropertyInteger(self::PROP_DEPTHSUNLIGHT) === 0){
+                $positions = $this->getBlindPositionsFromSunPositionSimple($rSunAltitude);
+
+                $this->Logger_Dbg(
+                    __FUNCTION__,
+                    sprintf(
+                        'BlindLevelFromSunPosition(Simple): %.2f, SlatsLevelFromSunPosition(Simple): %.2f',
+                        $positions['BlindLevel'],
+                        $positions['SlatsLevel']
+                    )
+                );
+            } else { //exact variant
+                $positions = $this->getBlindPositionsFromSunPositionExact($rSunAltitude, $rSunAzimuth);
+
+                $this->Logger_Dbg(
+                    __FUNCTION__,
+                    sprintf(
+                        'BlindLevelFromSunPosition(Exact): %.2f, SlatsLevelFromSunPosition(Exact): %.2f',
+                        $positions['BlindLevel'],
+                        $positions['SlatsLevel']
+                    )
+                );
+            }
 
             //wenn zusätzlicher *Hitzeschutz* notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
             if ($this->profileBlindLevel['Reversed']) {
@@ -2116,16 +2177,15 @@ class BlindController extends IPSModule
         return $thresholdBrightness;
     }
 
-    private function getBlindPositionsFromSunPosition(): array
+    // calculates the level according to the profile
+    private function getBlindPositionsFromSunPositionSimple(float $rSunAltitude): array
     {
         $blindPositions = null;
-
-        $rSunAltitude = GetValueFloat($this->ReadPropertyInteger('AltitudeID'));
 
         $blindLevelLow  = $this->ReadPropertyFloat(self::PROP_LOWSUNPOSITIONBLINDLEVEL);
         $blindLevelHigh = $this->ReadPropertyFloat(self::PROP_HIGHSUNPOSITIONBLINDLEVEL);
 
-        $blindPositions['BlindLevel'] = $this->calcPosition($blindLevelLow, $blindLevelHigh, $rSunAltitude);
+        $blindPositions['BlindLevel'] = $this->calcPositionSimple($blindLevelLow, $blindLevelHigh, $rSunAltitude);
 
         if ($this->profileBlindLevel['Reversed']) {
             $blindPositions['BlindLevel'] = min($blindPositions['BlindLevel'], $this->profileBlindLevel['LevelOpened']);
@@ -2135,7 +2195,7 @@ class BlindController extends IPSModule
             $blindPositions['BlindLevel'] = min($blindPositions['BlindLevel'], $this->profileBlindLevel['LevelClosed']);
         }
 
-        $blindPositions['SlatsLevel'] = $this->calcPosition(
+        $blindPositions['SlatsLevel'] = $this->calcPositionSimple(
             $this->ReadPropertyFloat(self::PROP_LOWSUNPOSITIONSLATSLEVEL),
             $this->ReadPropertyFloat(self::PROP_HIGHSUNPOSITIONSLATSLEVEL),
             $rSunAltitude
@@ -2144,7 +2204,7 @@ class BlindController extends IPSModule
         return $blindPositions;
     }
 
-    private function calcPosition(float $lowPosition, float $highPosition, float $sunAltitude): float
+    private function calcPositionSimple(float $lowPosition, float $highPosition, float $sunAltitude): float
     {
         $AltitudeLow  = $this->ReadPropertyFloat('LowSunPositionAltitude');
         $AltitudeHigh = $this->ReadPropertyFloat('HighSunPositionAltitude');
@@ -2157,6 +2217,81 @@ class BlindController extends IPSModule
         }
         return $lowPosition;
     }
+
+    private function getBlindPositionsFromSunPositionExact(float $rSunAltitude, float $rSunAzimuth): array
+    {
+
+        // rad = grad * pi / 180;   grad = rad * 180 /pi;
+
+        $WindowsHeigth = $this->ReadPropertyInteger(self::PROP_WINDOWSHEIGHT);
+        $Windowsslope = $this->ReadPropertyInteger(self::PROP_WINDOWSSLOPE);
+        $WindowOrientation = $this->ReadPropertyInteger(self::PROP_WINDOWORIENTATION);
+        $DepthSunlight = $this->ReadPropertyInteger(self::PROP_DEPTHSUNLIGHT);
+
+        //Sonnenvektor berechnen
+        $Theta = (90 + $rSunAltitude) * (M_PI / 180);
+        $Phi   = $rSunAzimuth * (M_PI / 180);
+
+        $V_Sun[0] = sin($Theta) * sin($Phi);
+        $V_Sun[1] = cos($Theta);
+        $V_Sun[2] = sin($Theta) * cos($Phi) * -1;
+
+        //Rolladenvektor berechnen
+        $Theta = (90 + $Windowsslope) * (M_PI / 180);
+        $Phi   = $WindowOrientation * (M_PI / 180);
+
+        $V_Blind[0] = sin($Theta) * sin($Phi) * -1;
+        $V_Blind[1] = cos($Theta);
+        $V_Blind[2] = sin($Theta) * cos($Phi);
+
+        //Sonnenwinkel auf Fensterfläche berechnen (=Winkel der beiden Vektoren)
+        $angle = acos(
+            ($V_Blind[0] * $V_Sun[0] + $V_Blind[1] * $V_Sun[1] + $V_Blind[2] * $V_Sun[2])
+            / (sqrt($V_Blind[0] ** 2 + $V_Blind[1] ** 2 + $V_Blind[2] ** 2) * sqrt($V_Sun[0] ** 2 + $V_Sun[1] ** 2 + $V_Sun[2] ** 2)));
+
+        // Rollo-Position bestimmen (100 = open)
+        $degreeOfClosing = 1 - ($DepthSunlight / tan($angle)) / $WindowsHeigth;
+
+        $this->Logger_Dbg(
+            __FUNCTION__,
+            sprintf(
+                'WindowsOrientation: %s, Windowsslope: %s, WindowsHeigth: %s, DepthSunLight: %s, => angle: %.1f, degreeOfClosing (100%%=closed): %.0f%%',
+                $WindowOrientation, $Windowsslope, $WindowsHeigth, $DepthSunlight, $angle * 180/M_PI, $degreeOfClosing * 100
+            )
+        );
+
+
+        $blindPositions = null;
+
+        $blindLevelMin  = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL);
+        $blindLevelMax  = $this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL);
+
+        $blindPositions['BlindLevel'] = ($blindLevelMax - $blindLevelMin) * ($degreeOfClosing) + $blindLevelMin;;
+
+        $this->Logger_Dbg(
+            __FUNCTION__,
+            sprintf(
+                'blindLevelMin: %s, blindLevelMax: %s -> BlindLevel: %.2f',
+                $blindLevelMin, $blindLevelMax, $blindPositions['BlindLevel']
+            )
+        );
+
+        if ($this->profileBlindLevel['Reversed']) {
+            $blindPositions['BlindLevel'] = min($blindPositions['BlindLevel'], $this->profileBlindLevel['LevelOpened']);
+            $blindPositions['BlindLevel'] = max($blindPositions['BlindLevel'], $this->profileBlindLevel['LevelClosed']);
+        } else {
+            $blindPositions['BlindLevel'] = max($blindPositions['BlindLevel'], $this->profileBlindLevel['LevelOpened']);
+            $blindPositions['BlindLevel'] = min($blindPositions['BlindLevel'], $this->profileBlindLevel['LevelClosed']);
+        }
+
+        $slatsLevelMin  = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL);
+        $slatsLevelMax  = $this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL);
+
+        $blindPositions['SlatsLevel'] = ($slatsLevelMax - $slatsLevelMin) * $degreeOfClosing + $slatsLevelMin;;
+
+        return $blindPositions;
+    }
+
 
     private function getPositionsOfShadowingByBrightness(float $levelAct): ?array
     {
@@ -2550,7 +2685,9 @@ class BlindController extends IPSModule
             }
 
             if (abs($percentCloseNew - $percentCloseCurrent) > 5) {
-                if ((float) IPS_GetKernelVersion() < 5.6) set_time_limit(30);
+                if ((float)IPS_GetKernelVersion() < 5.6) {
+                    set_time_limit(30);
+                }
                 sleep(1);
             } else {
                 $this->Logger_Dbg(

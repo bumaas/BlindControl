@@ -107,14 +107,14 @@
             {"type": "Label", "caption": "Define the range of azimuth and altitude for shadowing:"},
             {
               "type": "RowLayout", "items": [
-              {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1", "minimum": 0, "maximum": 360},
-              {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1", "minimum": 0, "maximum": 360}
+              {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1", "minimum": 0, "maximum": 360, "suffix": "°"},
+              {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1", "minimum": 0, "maximum": 360, "suffix": "°"}
             ]
             },
             {
               "type": "RowLayout", "items": [
-              {"type": "NumberSpinner", "name": "AltitudeFrom", "caption": "From Altitude", "digits": "1", "minimum": -90, "maximum": 90},
-              {"type": "NumberSpinner", "name": "AltitudeTo", "caption": "To Altitude", "digits": "1", "minimum": -90, "maximum": 90}
+              {"type": "NumberSpinner", "name": "AltitudeFrom", "caption": "From Altitude", "digits": "1", "minimum": -90, "maximum": 90, "suffix": "°"},
+              {"type": "NumberSpinner", "name": "AltitudeTo", "caption": "To Altitude", "digits": "1", "minimum": -90, "maximum": 90, "suffix": "°"}
             ]
             },
             {"type": "Label", "caption": "Define a brightness sensor if the brightness should be considered"},
@@ -127,22 +127,51 @@
             },
             {"type": "Label", "caption": "Define an additional temperature sensor when the outdoor temperature should be considered"},
             {"type": "SelectVariable", "name": "TemperatureIDShadowingBySunPosition", "caption": "Temperature ID"},
+            {"type": "Label", "caption": "Two alternative methods are available for determining the degree of shadowing.\\nThe simple variant calculates the height using the specified minimum and maximum position. It is only suitable for vertical window surfaces.\\nThe more precise variant calculates the height based on the orientation of the window, the inclination of the window and the specified depth that the sun is allowed to shine through the window. It is also suitable for inclined windows."},
             {
-              "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing",
+              "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing - simple variant, only suitable for facade windows (alternative)",
               "items": [
-                {"type": "Label", "caption": "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate roller shutter height is calculated to the current altitude."},
+                {"type": "Label", "caption": "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate shading position is calculated to the current altitude."},
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "NumberSpinner", "name": "LowSunPositionAltitude", "caption": "Low Sun Position (Altitude)", "digits": "1", "minimum": 0, "maximum": 90},
+                  {"type": "NumberSpinner", "name": "LowSunPositionAltitude", "caption": "Low Sun Position (Altitude)", "digits": "1", "minimum": 0, "maximum": 90, "suffix": "°"},
                   {"type": "NumberSpinner", "name": "LowSunPositionBlindLevel", "caption": "Low Sun Position (Blind Level)", "digits": "2"},
                   {"type": "NumberSpinner", "name": "LowSunPositionSlatsLevel", "caption": "Low Sun Position (Slats Level)", "digits": "2"}
                 ]
                 },
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "NumberSpinner", "name": "HighSunPositionAltitude", "caption": "High Sun Position (Altitude)", "digits": "1", "minimum": 0, "maximum": 90},
+                  {"type": "NumberSpinner", "name": "HighSunPositionAltitude", "caption": "High Sun Position (Altitude)", "digits": "1", "minimum": 0, "maximum": 90, "suffix": "°"},
                   {"type": "NumberSpinner", "name": "HighSunPositionBlindLevel", "caption": "High Sun Position (Blind Level)", "digits": "2"},
                   {"type": "NumberSpinner", "name": "HighSunPositionSlatsLevel", "caption": "High Sun Position (Slats Level)", "digits": "2"}
+                ]
+                }
+              ]
+            },
+            {
+              "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing - more precise variant, also suitable for inclined windows (alternative)",
+              "items": [
+                {"type": "Label", "caption": "It has to be specified how deep the sun may shine into the room. The appropriate shading position is then calculated based on the window position, the window height, the minimum and maximum shadow-relevant position and the current sun altitude and azimuth.\n\nThis variant is used when the depth is set."},
+                {"type": "NumberSpinner", "name": "DepthSunLight", "caption": "Maximum depth of sunlight (measured from the roller shutter guide)", "digits": "0", "minimum": 0, "suffix": " cm"},
+                {"type": "Label", "caption": "Window position and height"},
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "NumberSpinner", "name": "WindowOrientation", "caption": "Orientation of the window (South = 180°)", "digits": "0", "minimum": 0, "suffix": "°"},
+                  {"type": "NumberSpinner", "name": "WindowsSlope", "caption": "Slope of the window (vertical = 90°)", "digits": "0", "minimum": 0, "maximum": 90, "suffix": "°"},
+                  {"type": "NumberSpinner", "name": "WindowHeight", "caption": "Height of the window (glass inside the frame)", "digits": "0", "minimum": 0, "suffix": " cm"}
+                ]
+                },
+                {"type": "Label", "caption": "Shading positions"},
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "NumberSpinner", "name": "MinimumShadeRelevantBlindLevel", "caption": "Minimum shade relevant blind level", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "MaximumShadeRelevantBlindLevel", "caption": "Maximum shade relevant blind level", "digits": "2"}
+                ]
+                },
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "NumberSpinner", "name": "MinimumShadeRelevantSlatsLevel", "caption": "Minimum shade relevant slats level", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "MaximumShadeRelevantSlatsLevel", "caption": "Maximum shade relevant slats level", "digits": "2"}
                 ]
                 }
               ]
