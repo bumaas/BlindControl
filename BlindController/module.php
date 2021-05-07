@@ -89,6 +89,7 @@ class BlindController extends IPSModule
     private const PROP_WINDOWORIENTATION                           = 'WindowOrientation';
     private const PROP_WINDOWSSLOPE                                = 'WindowsSlope';
     private const PROP_WINDOWSHEIGHT                               = 'WindowHeight';
+    private const PROP_PARAPETHEIGHT                               = 'ParapetHeight';
     private const PROP_MINIMUMSHADERELEVANTBLINDLEVEL              = 'MinimumShadeRelevantBlindLevel';
     private const PROP_MAXIMUMSHADERELEVANTBLINDLEVEL              = 'MaximumShadeRelevantBlindLevel';
     private const PROP_MINIMUMSHADERELEVANTSLATSLEVEL              = 'MinimumShadeRelevantSlatsLevel';
@@ -1079,6 +1080,7 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger(self::PROP_WINDOWORIENTATION, 0);
         $this->RegisterPropertyInteger(self::PROP_WINDOWSSLOPE, 90);
         $this->RegisterPropertyInteger(self::PROP_WINDOWSHEIGHT, 0);
+        $this->RegisterPropertyInteger(self::PROP_PARAPETHEIGHT, 0);
         $this->RegisterPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL, 0);
@@ -2034,9 +2036,8 @@ class BlindController extends IPSModule
         if (($brightness >= $thresholdBrightness) && ($rSunAzimuth >= $azimuthFrom) && ($rSunAzimuth <= $azimuthTo)
             && ($rSunAltitude >= $altitudeFrom)
             && ($rSunAltitude <= $altitudeTo)) {
-
             // Simple variant
-            if ($this->ReadPropertyInteger(self::PROP_DEPTHSUNLIGHT) === 0){
+            if ($this->ReadPropertyInteger(self::PROP_DEPTHSUNLIGHT) === 0) {
                 $positions = $this->getBlindPositionsFromSunPositionSimple($rSunAltitude);
 
                 $this->Logger_Dbg(
@@ -2218,53 +2219,71 @@ class BlindController extends IPSModule
         return $lowPosition;
     }
 
-    private function getBlindPositionsFromSunPositionExact(float $rSunAltitude, float $rSunAzimuth): array
+    private function getBlindPositionsFromSunPositionExact(float $degSunAltitude, float $degSunAzimuth): array
     {
-
-        // rad = grad * pi / 180;   grad = rad * 180 /pi;
-
-        $WindowsHeigth = $this->ReadPropertyInteger(self::PROP_WINDOWSHEIGHT);
-        $Windowsslope = $this->ReadPropertyInteger(self::PROP_WINDOWSSLOPE);
+        $WindowsHeigth     = $this->ReadPropertyInteger(self::PROP_WINDOWSHEIGHT);
+        $ParapetHeigth     = $this->ReadPropertyInteger(self::PROP_PARAPETHEIGHT);
+        $WindowsSlope      = $this->ReadPropertyInteger(self::PROP_WINDOWSSLOPE);
         $WindowOrientation = $this->ReadPropertyInteger(self::PROP_WINDOWORIENTATION);
-        $DepthSunlight = $this->ReadPropertyInteger(self::PROP_DEPTHSUNLIGHT);
+        $DepthSunlight     = $this->ReadPropertyInteger(self::PROP_DEPTHSUNLIGHT);
+
+        //-- Fenster (und Sonne) auf Ost/West ausrichten
+        $degSunAzimuth_norm = ($degSunAzimuth - $WindowOrientation) + 180;
 
         //Sonnenvektor berechnen
-        $Theta = (90 + $rSunAltitude) * (M_PI / 180);
-        $Phi   = $rSunAzimuth * (M_PI / 180);
+        $V_Sun[0] = sin(deg2rad(90 + $degSunAltitude)) * sin(deg2rad($degSunAzimuth_norm));
+        $V_Sun[1] = cos(deg2rad(90 + $degSunAltitude));
+        $V_Sun[2] = sin(deg2rad(90 + $degSunAltitude)) * cos(deg2rad($degSunAzimuth_norm)) * -1;
 
-        $V_Sun[0] = sin($Theta) * sin($Phi);
-        $V_Sun[1] = cos($Theta);
-        $V_Sun[2] = sin($Theta) * cos($Phi) * -1;
+        //-- Fensterpositionen (Brüstung + Höhe) bestimmen, geneigtes Fenster berücksichtigen
+        $x1 = cos(deg2rad(90 - $WindowsSlope)) * $WindowsHeigth;
+        $x2 = sin(deg2rad(90 - $WindowsSlope)) * $WindowsHeigth;
 
-        //Rolladenvektor berechnen
-        $Theta = (90 + $Windowsslope) * (M_PI / 180);
-        $Phi   = $WindowOrientation * (M_PI / 180);
+        //Stützvektoren H (Heigth) und P (Parapet)
+        $H_Window = [0, $ParapetHeigth + $x1, $x2];
+        $P_Window = [0, $ParapetHeigth, 0];
 
-        $V_Blind[0] = sin($Theta) * sin($Phi) * -1;
-        $V_Blind[1] = cos($Theta);
-        $V_Blind[2] = sin($Theta) * cos($Phi);
+        //-- Schattenpunkte H' und B' bestimmen (siehe https://www.youtube.com/watch?v=QvV-dFlH63c&t=87s)
+        $H_Shadow = $this->Schattenpunkt_X0_X2_Ebene($H_Window, $V_Sun);
+        $P_Shadow = $this->Schattenpunkt_X0_X2_Ebene($P_Window, $V_Sun);
 
-        //Sonnenwinkel auf Fensterfläche berechnen (=Winkel der beiden Vektoren)
-        $angle = acos(
-            ($V_Blind[0] * $V_Sun[0] + $V_Blind[1] * $V_Sun[1] + $V_Blind[2] * $V_Sun[2])
-            / (sqrt($V_Blind[0] ** 2 + $V_Blind[1] ** 2 + $V_Blind[2] ** 2) * sqrt($V_Sun[0] ** 2 + $V_Sun[1] ** 2 + $V_Sun[2] ** 2)));
 
-        // Rollo-Position bestimmen (100 = open)
-        $degreeOfClosing = 1 - ($DepthSunlight / tan($angle)) / $WindowsHeigth;
+        //-- Rollo-Position bestimmen (0 = open, 1 = closed)
+
+        $degreeOfClosing = 0;
+
+        if ($DepthSunlight > $H_Shadow) {
+            $degreeOfClosing = 0;
+        } elseif ($DepthSunlight < $P_Shadow) {
+            $degreeOfClosing = 0;
+        } else {
+            $additionalDepth = 0;
+            if ($P_Shadow < 0) {
+                $additionalDepth = abs($P_Shadow);
+            }
+            $degreeOfClosing = 1 - ($DepthSunlight + $additionalDepth) / ($H_Shadow - $P_Shadow);
+        }
 
         $this->Logger_Dbg(
             __FUNCTION__,
             sprintf(
-                'WindowsOrientation: %s, Windowsslope: %s, WindowsHeigth: %s, DepthSunLight: %s, => angle: %.1f, degreeOfClosing (100%%=closed): %.0f%%',
-                $WindowOrientation, $Windowsslope, $WindowsHeigth, $DepthSunlight, $angle * 180/M_PI, $degreeOfClosing * 100
+                'WindowsOrientation: %s, WindowsSlope: %s, WindowsHeigth: %s, ParapetHeigth: %s, DepthSunLight: %s => H_Shadow: %.0f, P_Shadow: %.0f, degreeOfClosing (100%%=closed): %.0f%%',
+                $WindowOrientation,
+                $WindowsSlope,
+                $WindowsHeigth,
+                $ParapetHeigth,
+                $DepthSunlight,
+                $H_Shadow,
+                $P_Shadow,
+                $degreeOfClosing * 100
             )
         );
 
 
         $blindPositions = null;
 
-        $blindLevelMin  = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL);
-        $blindLevelMax  = $this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL);
+        $blindLevelMin = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL);
+        $blindLevelMax = $this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL);
 
         $blindPositions['BlindLevel'] = ($blindLevelMax - $blindLevelMin) * ($degreeOfClosing) + $blindLevelMin;;
 
@@ -2272,7 +2291,9 @@ class BlindController extends IPSModule
             __FUNCTION__,
             sprintf(
                 'blindLevelMin: %s, blindLevelMax: %s -> BlindLevel: %.2f',
-                $blindLevelMin, $blindLevelMax, $blindPositions['BlindLevel']
+                $blindLevelMin,
+                $blindLevelMax,
+                $blindPositions['BlindLevel']
             )
         );
 
@@ -2284,14 +2305,19 @@ class BlindController extends IPSModule
             $blindPositions['BlindLevel'] = min($blindPositions['BlindLevel'], $this->profileBlindLevel['LevelClosed']);
         }
 
-        $slatsLevelMin  = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL);
-        $slatsLevelMax  = $this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL);
+        $slatsLevelMin = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL);
+        $slatsLevelMax = $this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL);
 
         $blindPositions['SlatsLevel'] = ($slatsLevelMax - $slatsLevelMin) * $degreeOfClosing + $slatsLevelMin;;
 
         return $blindPositions;
     }
 
+    private function Schattenpunkt_X0_X2_Ebene(array $Stuetzvektor, array $Vektor): float
+    {
+        $r = -$Stuetzvektor[1] / $Vektor[1];
+        return $r * $Vektor[2];
+    }
 
     private function getPositionsOfShadowingByBrightness(float $levelAct): ?array
     {

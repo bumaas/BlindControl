@@ -151,14 +151,15 @@
             {
               "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing - more precise variant, also suitable for inclined windows (alternative)",
               "items": [
-                {"type": "Label", "caption": "It has to be specified how deep the sun may shine into the room. The appropriate shading position is then calculated based on the window position, the window height, the minimum and maximum shadow-relevant position and the current sun altitude and azimuth.\n\nThis variant is used when the depth is set."},
-                {"type": "NumberSpinner", "name": "DepthSunLight", "caption": "Maximum depth of sunlight (measured from the roller shutter guide)", "digits": "0", "minimum": 0, "suffix": " cm"},
+                {"type": "Label", "caption": "It has to be specified how deep the sun may shine into the room (measured from the roller shutter guide). The appropriate shading position is then calculated based on the window position, the window height, the minimum and maximum shadow-relevant position and the current sun altitude and azimuth.\n\nThis variant is used when the depth is set."},
+                {"type": "NumberSpinner", "name": "DepthSunLight", "caption": "Maximum depth of sunlight", "digits": "0", "minimum": 0, "suffix": " cm"},
                 {"type": "Label", "caption": "Window position and height"},
                 {
                   "type": "RowLayout", "items": [
                   {"type": "NumberSpinner", "name": "WindowOrientation", "caption": "Orientation of the window (South = 180°)", "digits": "0", "minimum": 0, "suffix": "°"},
                   {"type": "NumberSpinner", "name": "WindowsSlope", "caption": "Slope of the window (vertical = 90°)", "digits": "0", "minimum": 0, "maximum": 90, "suffix": "°"},
-                  {"type": "NumberSpinner", "name": "WindowHeight", "caption": "Height of the window (glass inside the frame)", "digits": "0", "minimum": 0, "suffix": " cm"}
+                  {"type": "NumberSpinner", "name": "WindowHeight", "caption": "Height of the window (glass inside the frame)", "digits": "0", "minimum": 0, "suffix": " cm"},
+                  {"type": "NumberSpinner", "name": "ParapetHeight", "caption": "Height of the Parapet (distance from glas to shadow level)", "digits": "0", "minimum": 0, "suffix": " cm"}
                 ]
                 },
                 {"type": "Label", "caption": "Shading positions"},

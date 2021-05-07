@@ -190,7 +190,7 @@ dann ist die Anzahl der Minuten anzugeben, über die der Durchschnitt gebildet w
 Zusätzlich kann eine Temperaturvariable angegeben werden, um bei erhöhten Außentemperaturen eine höhere Beschattung zu erreichen, d.h., der Rollladen wird bei höheren Temperaturen weiter heruntergefahren.
 Dies erfolgt in zwei Stufen: Wenn die Temperatur 27°C übersteigt, wird der Rollladen um weitere 15% heruntergefahren, wenn die Temperatur 30°C übersteigt, dann wird der Rollladen auf einen Schließungsgrad (Behanghöhe) von 90% heruntergefahren)
 
-Um den richtige Behanghöhe bei unterschiedlichen Sonnenhöhen zu finden gibt es zwei alternative Varianten: eine "einfache" und eine "genauere". Die einfache Variante ist nur für senkrechte (Fassaden-) Fenster geeignet, die genauere dagegen sowohl für senkrechte als auch für geneigte (Dachflächen-) Fenster.
+Um die richtige Behanghöhe bei unterschiedlichen Sonnenhöhen zu finden gibt es zwei alternative Varianten: eine "einfache" und eine "genauere". Die einfache Variante ist nur für senkrechte (Fassaden-) Fenster geeignet, die genauere dagegen sowohl für senkrechte als auch für geneigte (Dachflächen-) Fenster.
 - Bei der einfachen Variante die gewünschten Behanghöhen bei zwei (möglichst extremen) Sonnenhöhen anzugeben. Aus diesen beiden Positionen wird dann die 
 Behanghöhe in Abhängigkeit von der Sonnenhöhe errechnet. Die Werte sind am besten durch Aufzeichnungen in der Mittagszeit/Abendzeit oder im Hochsommer/Winter zu ermitteln.
 Durch eine korrekte Einmessung wird erreicht, dass der Schatten des Rollladens immer gleich weit im Raum steht und somit eine gleichmäßige Beschattung stattfindet.
@@ -258,15 +258,17 @@ und nicht ein Wert von 100 für "geschlossen".
 | BrightnessAvgMinutesShadowingBySunPosition      | integer   | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll 
 | BrightnessThresholdIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable, die den Schwellwert zur Beschattung nach Sonnenposition zur Verfügung stellt
 | TemperatureIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable die einen Temperatursensor (Außentemperatur) wiedergibt. Bei Temperaturen über 24°C wird der Helligkeitsschwellwert verringert, um eine frühere Beschattung zu erreichen. Bei Temperaturen unter 10°C wird der Helligkleitsschwellwert heraufgesetzt, um die Sonne erst später 'auszusperren'.
-| LowSunPositionAltitude<br>HighSunPositionAltitude<br>LowSunPositionBlindLevel<br>HighSunPositionBlindLevel | float   | 0 | Aus diesen möglichst weit auseinanderliegenden Wertepaaren wird die Behanghöhe in Abhängigkeit von der Sonnenhöhe errechnet  
-| DepthSunLight|integer| 0 | |
-| WindowOrientation|integer| 0 | |
-| WindowsSlope|integer| 90 | |
-| WindowHeight|integer| 0 | |
-| MinimumShadeRelevantBlindLevel|float| 0 | |
-| MaximumShadeRelevantBlindLevel|float| 0 | |
-| MinimumShadeRelevantSlatsLevel|float| 0 | |
-| MaximumShadeRelevantSlatsLevel|float| 0 | |
+| ***Bestimmung des Beschattungsgrades - einfache Variante***<br>LowSunPositionAltitude<br>HighSunPositionAltitude<br>LowSunPositionBlindLevel<br>HighSunPositionBlindLevel | float   | 0 | Aus diesen möglichst weit auseinanderliegenden Wertepaaren wird die Behanghöhe und die Lamellenposition in Abhängigkeit von der Sonnenhöhe errechnet  
+| <br>***Bestimmung des Beschattungsgrades - genauere Variante***     |  | |  | 
+| DepthSunLight|integer| 0 |Angabe, wieweit die Sonne in den Raum scheinen darf. Gemessen ab der Beschattungsebene, z.B. Rollladenführung.|
+| WindowOrientation|integer| 0 |Ausrichtung des Fensters (Südfenster = 180°) |
+| WindowsSlope|integer| 90 |Neigung des Fensters (Fassadenfenster: 90°, sonst "Dachneigung")|
+| WindowHeight|integer| 0 |Höhe des Fensters (= Höhe des Glases im Rahmen) |
+| ParapetHeight|integer| 0 |Höhe der Brüstung (= Abstand der unteren Glaskante zur Schattenebene)|
+| MinimumShadeRelevantBlindLevel|float| 0 | Rolladenposition bei der die Beschattung beginnt|
+| MaximumShadeRelevantBlindLevel|float| 0 | Rollladenposition bei der eine vollständige Beschattung der Glasfläche gegeben ist|
+| MinimumShadeRelevantSlatsLevel|float| 0 | Lamellenposition bei der die Beschattung beginnt (waagerechte Position)|
+| MaximumShadeRelevantSlatsLevel|float| 0 | Lamellenposition bei der die maximale Beschattung erreicht ist (geschlossene Position)|
 | <br>**Beschattung nach Helligkeit**     |  | |  | 
 | ActivatorIDShadowingBrightness | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Helligkeit aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
 | BrightnessIDShadowingBrightness| integer   | 0 | Indikatorvariable, die die Helligkeit zur Beschattung nach Helligkeit angibt
