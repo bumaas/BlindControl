@@ -260,13 +260,13 @@ und nicht ein Wert von 100 für "geschlossen".
 | TemperatureIDShadowingBySunPosition      | integer   | 0 | Indikatorvariable die einen Temperatursensor (Außentemperatur) wiedergibt. Bei Temperaturen über 24°C wird der Helligkeitsschwellwert verringert, um eine frühere Beschattung zu erreichen. Bei Temperaturen unter 10°C wird der Helligkleitsschwellwert heraufgesetzt, um die Sonne erst später 'auszusperren'.
 | ***Bestimmung des Beschattungsgrades - einfache Variante***<br>LowSunPositionAltitude<br>HighSunPositionAltitude<br>LowSunPositionBlindLevel<br>HighSunPositionBlindLevel | float   | 0 | Aus diesen möglichst weit auseinanderliegenden Wertepaaren wird die Behanghöhe und die Lamellenposition in Abhängigkeit von der Sonnenhöhe errechnet  
 | <br>***Bestimmung des Beschattungsgrades - genauere Variante***     |  | |  | 
-| DepthSunLight|integer| 0 |Angabe, wieweit die Sonne in den Raum scheinen darf. Gemessen ab der Beschattungsebene, z.B. Rollladenführung.|
+| DepthSunLight|integer| 0 |Angabe, wieweit die Sonne in den Raum scheinen darf. Gemessen auf der horizontalen Ebene unter dem Fenster.|
 | WindowOrientation|integer| 0 |Ausrichtung des Fensters (Südfenster = 180°) |
 | WindowsSlope|integer| 90 |Neigung des Fensters (Fassadenfenster: 90°, sonst "Dachneigung")|
 | WindowHeight|integer| 0 |Höhe des Fensters (= Höhe des Glases im Rahmen) |
 | ParapetHeight|integer| 0 |Höhe der Brüstung (= Abstand der unteren Glaskante zur Schattenebene)|
-| MinimumShadeRelevantBlindLevel|float| 0 | Rolladenposition bei der die Beschattung beginnt|
-| HalfShadeRelevantBlindLevel|float| 0 | Rolladenposition bei der die Beschattung genau die Hälfte des Fensters bedeckt. Diese Angabe ist notwendig, damit der nicht lineare Anteil des Verhältnisses zwischen Fahrzeit und Behanghöhe zu berechnen. Wird der Wert nicht angegeben, dann wird von einem linearen Verhältnis ausgegangen. |
+| MinimumShadeRelevantBlindLevel|float| 0 | Rolladenposition bei der die Beschattung der Glasfläche beginnt. |
+| HalfShadeRelevantBlindLevel|float| 0 | Rolladenposition bei der die Beschattung genau die Hälfte des Fensters bedeckt. Diese Angabe ist notwendig, damit der nicht lineare Anteil des Verhältnisses zwischen Fahrzeit und Behanghöhe berechnet werden kann. Wird der Wert nicht angegeben, dann wird von einem linearen Verhältnis ausgegangen. |
 | MaximumShadeRelevantBlindLevel|float| 0 | Rollladenposition bei der eine vollständige Beschattung der Glasfläche gegeben ist|
 | MinimumShadeRelevantSlatsLevel|float| 0 | Lamellenposition bei der die Beschattung beginnt (waagerechte Position)|
 | MaximumShadeRelevantSlatsLevel|float| 0 | Lamellenposition bei der die maximale Beschattung erreicht ist (geschlossene Position)|
