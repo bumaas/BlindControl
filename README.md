@@ -266,6 +266,7 @@ und nicht ein Wert von 100 für "geschlossen".
 | WindowHeight|integer| 0 |Höhe des Fensters (= Höhe des Glases im Rahmen) |
 | ParapetHeight|integer| 0 |Höhe der Brüstung (= Abstand der unteren Glaskante zur Schattenebene)|
 | MinimumShadeRelevantBlindLevel|float| 0 | Rolladenposition bei der die Beschattung beginnt|
+| HalfShadeRelevantBlindLevel|float| 0 | Rolladenposition bei der die Beschattung genau die Hälfte des Fensters bedeckt. Diese Angabe ist notwendig, damit der nicht lineare Anteil des Verhältnisses zwischen Fahrzeit und Behanghöhe zu berechnen. Wird der Wert nicht angegeben, dann wird von einem linearen Verhältnis ausgegangen. |
 | MaximumShadeRelevantBlindLevel|float| 0 | Rollladenposition bei der eine vollständige Beschattung der Glasfläche gegeben ist|
 | MinimumShadeRelevantSlatsLevel|float| 0 | Lamellenposition bei der die Beschattung beginnt (waagerechte Position)|
 | MaximumShadeRelevantSlatsLevel|float| 0 | Lamellenposition bei der die maximale Beschattung erreicht ist (geschlossene Position)|

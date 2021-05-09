@@ -91,6 +91,7 @@ class BlindController extends IPSModule
     private const PROP_WINDOWSHEIGHT                               = 'WindowHeight';
     private const PROP_PARAPETHEIGHT                               = 'ParapetHeight';
     private const PROP_MINIMUMSHADERELEVANTBLINDLEVEL              = 'MinimumShadeRelevantBlindLevel';
+    private const PROP_HALFSHADERELEVANTBLINDLEVEL                 = 'HalfShadeRelevantBlindLevel';
     private const PROP_MAXIMUMSHADERELEVANTBLINDLEVEL              = 'MaximumShadeRelevantBlindLevel';
     private const PROP_MINIMUMSHADERELEVANTSLATSLEVEL              = 'MinimumShadeRelevantSlatsLevel';
     private const PROP_MAXIMUMSHADERELEVANTSLATSLEVEL              = 'MaximumShadeRelevantSlatsLevel';
@@ -621,6 +622,12 @@ class BlindController extends IPSModule
             'visible',
             (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
         );
+        $form = $this->MyUpdateFormField(
+            $form,
+            'SlatsLevel',
+            'visible',
+            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+        );
     }
 
     public function ReceiveData($JSONString)
@@ -1082,6 +1089,7 @@ class BlindController extends IPSModule
         $this->RegisterPropertyInteger(self::PROP_WINDOWSHEIGHT, 0);
         $this->RegisterPropertyInteger(self::PROP_PARAPETHEIGHT, 0);
         $this->RegisterPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL, 0);
+        $this->RegisterPropertyFloat(self::PROP_HALFSHADERELEVANTBLINDLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL, 0);
@@ -1508,6 +1516,7 @@ class BlindController extends IPSModule
                 self::PROP_LOWSUNPOSITIONBLINDLEVEL,
                 self::PROP_HIGHSUNPOSITIONBLINDLEVEL,
                 self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL,
+                self::PROP_HALFSHADERELEVANTBLINDLEVEL,
                 self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL,
                 self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
                 self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
@@ -2250,12 +2259,10 @@ class BlindController extends IPSModule
 
         //-- Rollo-Position bestimmen (0 = open, 1 = closed)
 
-        $degreeOfClosing = 0;
-
         if ($DepthSunlight > $H_Shadow) {
             $degreeOfClosing = 0;
         } elseif ($DepthSunlight < $P_Shadow) {
-            $degreeOfClosing = 0;
+            $degreeOfClosing = 1;
         } else {
             $additionalDepth = 0;
             if ($P_Shadow < 0) {
@@ -2282,20 +2289,46 @@ class BlindController extends IPSModule
 
         $blindPositions = null;
 
+
         $blindLevelMin = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL);
+        $blindLevelHalf =  $this->ReadPropertyFloat(self::PROP_HALFSHADERELEVANTBLINDLEVEL);
         $blindLevelMax = $this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL);
 
-        $blindPositions['BlindLevel'] = ($blindLevelMax - $blindLevelMin) * ($degreeOfClosing) + $blindLevelMin;;
+        if ($blindLevelHalf === 0.0){
+            //Funktion 1.Grades mit f(x) = a * x + b
+            $b = $blindLevelMin;
+            $a = ($blindLevelMax-$blindLevelMin);
+            $blindPositions['BlindLevel'] = $a * $degreeOfClosing + $b;
 
-        $this->Logger_Dbg(
-            __FUNCTION__,
-            sprintf(
-                'blindLevelMin: %s, blindLevelMax: %s -> BlindLevel: %.2f',
-                $blindLevelMin,
-                $blindLevelMax,
-                $blindPositions['BlindLevel']
-            )
-        );
+            $this->Logger_Dbg(
+                __FUNCTION__,
+                sprintf(
+                    'blindLevelMin: %s, blindLevelMax: %s -> BlindLevel: %.2f',
+                    $blindLevelMin,
+                    $blindLevelMax,
+                    $blindPositions['BlindLevel']
+                )
+            );
+
+        } else {
+            //Funktion 2.Grades mit x(x) = a * x² + b * x + c
+            $c = $blindLevelMin;
+            $b = 4 * $blindLevelHalf - $blindLevelMax - 3 * $blindLevelMin;
+            $a = $blindLevelMax - $blindLevelMin - $b;
+            $blindPositions['BlindLevel'] = $a * $degreeOfClosing**2 + $b * $degreeOfClosing + $c;
+
+            $this->Logger_Dbg(
+                __FUNCTION__,
+                sprintf(
+                    'blindLevelMin: %s, blindLevelHalf: %s, blindLevelMax: %s -> BlindLevel: %.2f',
+                    $blindLevelMin,
+                    $blindLevelHalf,
+                    $blindLevelMax,
+                    $blindPositions['BlindLevel']
+                )
+            );
+
+        }
 
         if ($this->profileBlindLevel['Reversed']) {
             $blindPositions['BlindLevel'] = min($blindPositions['BlindLevel'], $this->profileBlindLevel['LevelOpened']);
@@ -3093,7 +3126,7 @@ class BlindController extends IPSModule
     private function MyUpdateFormField(array $form, string $name, string $parameter, $value): array
     {
         foreach ($form as $key => &$item) {
-            if ($key === 'elements') {
+            if (in_array($key, ['elements', 'actions'])) {
                 $item = $this->MyUpdateFormField($item, $name, $parameter, $value);
             } elseif (isset($item['items'])) {
                 $item['items'] = $this->MyUpdateFormField($item['items'], $name, $parameter, $value);

@@ -166,6 +166,7 @@
                 {
                   "type": "RowLayout", "items": [
                   {"type": "NumberSpinner", "name": "MinimumShadeRelevantBlindLevel", "caption": "Minimum shade relevant blind level", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "HalfShadeRelevantBlindLevel", "caption": "Half shade relevant blind level", "digits": "2"},
                   {"type": "NumberSpinner", "name": "MaximumShadeRelevantBlindLevel", "caption": "Maximum shade relevant blind level", "digits": "2"}
                 ]
                 },

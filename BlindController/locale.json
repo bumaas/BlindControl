@@ -77,6 +77,7 @@
       "Height of the Parapet (distance from glas to shadow level)": "Brüstungshöhe (Abstand vom Glas zur Schattenebene)",
       "Shading positions": "Beschattungspositionen",
       "Minimum shade relevant blind level": "Rollladenposition (minimale Beschattung)",
+      "Half shade relevant blind level": "Rollladenposition (halbe Beschattung)",
       "Maximum shade relevant blind level": "Rollladenposition (maximale Beschattung)",
       "Minimum shade relevant slats level": "Lamellenposition (minimale Beschattung)",
       "Maximum shade relevant slats level": "Lamellenposition (maximale Beschattung)",
