@@ -3126,7 +3126,7 @@ class BlindController extends IPSModule
     private function MyUpdateFormField(array $form, string $name, string $parameter, $value): array
     {
         foreach ($form as $key => &$item) {
-            if (in_array($key, ['elements', 'actions'])) {
+            if ($key === 'elements' || $key === 'actions') {
                 $item = $this->MyUpdateFormField($item, $name, $parameter, $value);
             } elseif (isset($item['items'])) {
                 $item['items'] = $this->MyUpdateFormField($item['items'], $name, $parameter, $value);
