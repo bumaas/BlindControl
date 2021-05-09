@@ -402,7 +402,8 @@ class BlindController extends IPSModule
         $this->Logger_Dbg(
             __FUNCTION__,
             sprintf(
-                'Timestamp: %s, SenderID: %s[%s], Message: %s, Data: %s',
+                'ModuleVersion: %s, Timestamp: %s, SenderID: %s[%s], Message: %s, Data: %s',
+                $this->ReadAttributeString('Version'),
                 $TimeStamp,
                 IPS_GetObject($SenderID)['ObjectName'],
                 $SenderID,
@@ -744,7 +745,8 @@ class BlindController extends IPSModule
         $this->Logger_Dbg(
             __FUNCTION__,
             sprintf(
-                'tsAutomatik: %s, tsBlind: %s, posActBlindLevel: %.2f,  posActSlatsLevel: %s, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s), considerDeactivationTimeAuto: %s',
+                'ModuleVersion: %s, tsAutomatik: %s, tsBlind: %s, posActBlindLevel: %.2f,  posActSlatsLevel: %s, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s), considerDeactivationTimeAuto: %s',
+                $this->ReadAttributeString('Version'),
                 $this->FormatTimeStamp($tsAutomatik),
                 $this->FormatTimeStamp($tsBlindLastMovement),
                 $positionsAct['BlindLevel'],
@@ -1255,6 +1257,10 @@ class BlindController extends IPSModule
         );
         $this->RegisterAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME, 0);
         $this->RegisterAttributeBoolean(self::ATTR_LAST_ISDAYBYTIMESCHEDULE, false);
+
+        $library       = json_decode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'library.json'), true);
+        $moduleVersion = sprintf('%s.%s', $library['version'], $library['build']);
+        $this->RegisterAttributeString('Version', $moduleVersion);
     }
 
     private function RegisterVariables(): void
@@ -2270,6 +2276,8 @@ class BlindController extends IPSModule
             }
             $degreeOfClosing = 1 - ($DepthSunlight + $additionalDepth) / ($H_Shadow - $P_Shadow);
         }
+
+        $degreeOfClosing = max(min($degreeOfClosing, 1), 0);
 
         $this->Logger_Dbg(
             __FUNCTION__,
