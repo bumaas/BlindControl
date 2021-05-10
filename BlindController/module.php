@@ -2295,8 +2295,12 @@ class BlindController extends IPSModule
         );
 
         if ($degreeOfClosing == 0){
-            return [['BlindLevel' =>  $this->profileBlindLevel['LevelOpened']], ['SlatsLevel' => $this->profileSlatsLevel['LevelOpened']]];
+            if (isset($this->profileSlatsLevel)){
+                return ['BlindLevel' =>  $this->profileBlindLevel['LevelOpened'], 'SlatsLevel' => $this->profileSlatsLevel['LevelOpened']];
+            }
+            return ['BlindLevel' =>  $this->profileBlindLevel['LevelOpened'], 'SlatsLevel' => null];
         }
+
 
         $blindPositions = null;
 
