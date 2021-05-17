@@ -265,21 +265,21 @@ und nicht ein Wert von 100 für "geschlossen".
 | WindowsSlope|integer| 90 |Neigung des Fensters (Fassadenfenster: 90°, sonst "Dachneigung")|
 | WindowHeight|integer| 0 |Höhe des Fensters (= Höhe des Glases im Rahmen) |
 | ParapetHeight|integer| 0 |Höhe der Brüstung (= Abstand der unteren Glaskante zur Schattenebene)|
-| MinimumShadeRelevantBlindLevel|float| 0 | Rolladenposition bei der die Beschattung der Glasfläche beginnt. |
-| HalfShadeRelevantBlindLevel|float| 0 | Rolladenposition bei der die Beschattung genau die Hälfte des Fensters bedeckt. Diese Angabe ist notwendig, damit der nicht lineare Anteil des Verhältnisses zwischen Fahrzeit und Behanghöhe berechnet werden kann. Wird der Wert nicht angegeben, dann wird von einem linearen Verhältnis ausgegangen. |
-| MaximumShadeRelevantBlindLevel|float| 0 | Rollladenposition bei der eine vollständige Beschattung der Glasfläche gegeben ist|
-| MinimumShadeRelevantSlatsLevel|float| 0 | Lamellenposition bei der die Beschattung beginnt (waagerechte Position)|
-| MaximumShadeRelevantSlatsLevel|float| 0 | Lamellenposition bei der die maximale Beschattung erreicht ist (geschlossene Position)|
+| MinimumShadeRelevantBlindLevel|float| 0 | Rollladenlevel, bei dem die untere Rollladenkante auf gleicher Höhe mit der oberen Glaskante ist. |
+| HalfShadeRelevantBlindLevel|float| 0 | Rollladenlevel, bei dem der Rollladen genau die Hälfte des Fensters bedeckt. Diese Angabe ist notwendig damit der nicht lineare Anteil des Verhältnisses zwischen Fahrzeit und Behanghöhe berechnet werden kann. Wird der Wert nicht angegeben, dann wird von einem linearen Verhältnis ausgegangen. |
+| MaximumShadeRelevantBlindLevel|float| 0 | Rollladenlevel, bei dem die untere Rollladenkante auf gleicher Höhe mit der unteren Glaskante ist.|
+| MinimumShadeRelevantSlatsLevel|float| 0 | Lamellenlevel, bei dem am meisten Licht durchgelassen wird|
+| MaximumShadeRelevantSlatsLevel|float| 0 | Lamellenlevel, bei dem am wenigsten Licht durchgelassen wird|
 | <br>**Beschattung nach Helligkeit**     |  | |  | 
 | ActivatorIDShadowingBrightness | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Helligkeit aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
 | BrightnessIDShadowingBrightness| integer   | 0 | Indikatorvariable, die die Helligkeit zur Beschattung nach Helligkeit angibt
 | BrightnessAvgMinutesShadowingBrightness| integer   | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt bei der Beschattung nach Helligkeit gebildet werden soll
 | ThresholdIDHighBrightness      | integer   | 0 | Indikatorvariable, die den hohen Helligkeitsschwellwert zur Steuerung nach Helligkeit zur Verfügung stellt
-| BlindLevelHighBrightnessShadowingBrightness      | float   | 0 | RollladenLevel, der bei Erreichen der hohen Helligkeit angefahren werden soll
-| SlatsLevelHighBrightnessShadowingBrightness      | float   | 0 | LamellenLevel, der bei Erreichen der hohen Helligkeit angefahren werden soll
+| BlindLevelHighBrightnessShadowingBrightness      | float   | 0 | Rollladenlevel, der bei Erreichen der hohen Helligkeit angefahren werden soll
+| SlatsLevelHighBrightnessShadowingBrightness      | float   | 0 | Lamellenlevel, der bei Erreichen der hohen Helligkeit angefahren werden soll
 | ThresholdIDLessBrightness      | integer   | 0 | Indikatorvariable, die den niedrigen Helligkeitsschwellwert zur Steuerung nach Helligkeit zur Verfügung stellt
-| BlindLevelLessBrightnessShadowingBrightness      | float   | 0 | RollladenLevel, der bei Erreichen der niedrigeren Helligkeit angefahren werden soll
-| SlatsLevelLessBrightnessShadowingBrightness      | float   | 0 | LamellenLevel, der bei Erreichen der niedrigeren Helligkeit angefahren werden soll
+| BlindLevelLessBrightnessShadowingBrightness      | float   | 0 | Rollladenlevel, der bei Erreichen der niedrigeren Helligkeit angefahren werden soll
+| SlatsLevelLessBrightnessShadowingBrightness      | float   | 0 | Lamellenlevel, der bei Erreichen der niedrigeren Helligkeit angefahren werden soll
 | <br>**Kontakte**     |  | |  | |
 | ContactOpen1ID, ContactOpen2ID       | integer | 0 | Indikatorvariablen: wenn eine der Variablen ungleich 0 ist, dann wird der Rollladen auf die unter 'ContactOpenLevel' angegebene Mindesthöhe gefahren
 | ContactOpenLevel1, ContactOpenLevel2           | float   | 0 | Höhe, auf die der Rollladen mindestens gefahren wird, wenn der zugehörige Kontakt offen ist.

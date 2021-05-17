@@ -2270,11 +2270,7 @@ class BlindController extends IPSModule
         } elseif ($DepthSunlight < $P_Shadow) {
             $degreeOfClosing = 1;
         } else {
-            $additionalDepth = 0;
-            if ($P_Shadow < 0) {
-                $additionalDepth = abs($P_Shadow);
-            }
-            $degreeOfClosing = 1 - ($DepthSunlight + $additionalDepth) / ($H_Shadow - $P_Shadow);
+            $degreeOfClosing = 1 - ($DepthSunlight - $P_Shadow) / ($H_Shadow - $P_Shadow);
         }
 
         $degreeOfClosing = max(min($degreeOfClosing, 1), 0);
