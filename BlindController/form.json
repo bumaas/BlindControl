@@ -286,6 +286,14 @@
         {"type": "Button", "caption": "Move Blind", "onClick": "$module = new IPSModule($id);if (BLC_MoveBlind($id, $BlindLevel, $SlatsLevel, 0, '')){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"}
       ]
     },
+    {
+      "type":  "RowLayout",
+      "items": [
+        {"type": "NumberSpinner", "name": "ShadowingPosition", "caption": "Shadowing Position from 0 (no Shadowing) to 100 (full Shadowing)", "minimum": 0, "maximum": 100},
+        {"type": "Button", "name": "btnMoveBlindToShadowingPosition","caption": "Move Blind", "onClick": "$module = new IPSModule($id);if (IPS_RequestAction($id, 'MoveBlindToShadowingPosition', $ShadowingPosition)){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"}
+      ]
+
+    },
     {"type": "Button", "caption": "Show Configuration", "onClick": "echo IPS_GetObject($id)['ObjectName'] . ' (#' . $id . ')' . PHP_EOL . PHP_EOL; print_r(json_decode(IPS_GetConfiguration ($id), true));"},
     {"type": "Button", "caption": "Steuerungslauf durchführen", "onClick": "$module = new IPSModule($id);if (BLC_ControlBlind($id, true)){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"}
   ],

@@ -365,6 +365,9 @@ class BlindController extends IPSModule
                 );
                 return false;
 
+            case 'MoveBlindToShadowingPosition':
+                return $this->MoveBlindToShadowingPosition((int) $Value);
+
             default:
                 trigger_error(sprintf('Instance %s: Unknown Ident %s', $this->InstanceID, $Ident));
                 return false;
@@ -628,6 +631,12 @@ class BlindController extends IPSModule
             'SlatsLevel',
             'visible',
             (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+        );
+        $form = $this->MyUpdateFormField(
+            $form,
+            'ShadowingPosition',
+            'visible',
+            (($this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL) > 0) || ($this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL) > 0) || $bShow)
         );
     }
 
@@ -2266,19 +2275,19 @@ class BlindController extends IPSModule
         //-- Rollo-Position bestimmen (0 = open, 1 = closed)
 
         if ($DepthSunlight > $H_Shadow) {
-            $degreeOfClosing = 0;
+            $degreeOfShadowing = 0;
         } elseif ($DepthSunlight < $P_Shadow) {
-            $degreeOfClosing = 1;
+            $degreeOfShadowing = 1;
         } else {
-            $degreeOfClosing = 1 - ($DepthSunlight - $P_Shadow) / ($H_Shadow - $P_Shadow);
+            $degreeOfShadowing = 1 - ($DepthSunlight - $P_Shadow) / ($H_Shadow - $P_Shadow);
         }
 
-        $degreeOfClosing = max(min($degreeOfClosing, 1), 0);
+        $degreeOfShadowing = max(min($degreeOfShadowing, 1), 0);
 
         $this->Logger_Dbg(
             __FUNCTION__,
             sprintf(
-                'WindowsOrientation: %s, WindowsSlope: %s, WindowsHeigth: %s, ParapetHeigth: %s, DepthSunLight: %s => H_Shadow: %.0f, P_Shadow: %.0f, degreeOfClosing (100%%=closed): %.0f%%',
+                'WindowsOrientation: %s, WindowsSlope: %s, WindowsHeigth: %s, ParapetHeigth: %s, DepthSunLight: %s => H_Shadow: %.0f, P_Shadow: %.0f, degreeOfShadowing (100%%=closed): %.0f%%',
                 $WindowOrientation,
                 $WindowsSlope,
                 $WindowsHeigth,
@@ -2286,18 +2295,28 @@ class BlindController extends IPSModule
                 $DepthSunlight,
                 $H_Shadow,
                 $P_Shadow,
-                $degreeOfClosing * 100
+                $degreeOfShadowing * 100
             )
         );
 
-        if ($degreeOfClosing == 0){
+        if ($degreeOfShadowing == 0){
             if (isset($this->profileSlatsLevel)){
                 return ['BlindLevel' =>  $this->profileBlindLevel['LevelOpened'], 'SlatsLevel' => $this->profileSlatsLevel['LevelOpened']];
             }
             return ['BlindLevel' =>  $this->profileBlindLevel['LevelOpened'], 'SlatsLevel' => null];
         }
 
+        return $this->GetBlindPositionsFromDegreeOfShadowing($degreeOfShadowing);
+    }
 
+    private function Schattenpunkt_X0_X2_Ebene(array $Stuetzvektor, array $Vektor): float
+    {
+        $r = -$Stuetzvektor[1] / $Vektor[1];
+        return $r * $Vektor[2];
+    }
+
+    private function GetBlindPositionsFromDegreeOfShadowing(float $degreeOfShadowing): array
+    {
         $blindPositions = null;
 
         $blindLevelMin = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL);
@@ -2308,7 +2327,7 @@ class BlindController extends IPSModule
             //Funktion 1.Grades mit f(x) = a * x + b
             $b = $blindLevelMin;
             $a = ($blindLevelMax-$blindLevelMin);
-            $blindPositions['BlindLevel'] = $a * $degreeOfClosing + $b;
+            $blindPositions['BlindLevel'] = $a * $degreeOfShadowing + $b;
 
             $this->Logger_Dbg(
                 __FUNCTION__,
@@ -2325,7 +2344,7 @@ class BlindController extends IPSModule
             $c = $blindLevelMin;
             $b = 4 * $blindLevelHalf - $blindLevelMax - 3 * $blindLevelMin;
             $a = $blindLevelMax - $blindLevelMin - $b;
-            $blindPositions['BlindLevel'] = $a * $degreeOfClosing**2 + $b * $degreeOfClosing + $c;
+            $blindPositions['BlindLevel'] = $a * $degreeOfShadowing ** 2 + $b * $degreeOfShadowing + $c;
 
             $this->Logger_Dbg(
                 __FUNCTION__,
@@ -2351,15 +2370,10 @@ class BlindController extends IPSModule
         $slatsLevelMin = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL);
         $slatsLevelMax = $this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL);
 
-        $blindPositions['SlatsLevel'] = ($slatsLevelMax - $slatsLevelMin) * $degreeOfClosing + $slatsLevelMin;;
+        $blindPositions['SlatsLevel'] = ($slatsLevelMax - $slatsLevelMin) * $degreeOfShadowing + $slatsLevelMin;;
 
         return $blindPositions;
-    }
 
-    private function Schattenpunkt_X0_X2_Ebene(array $Stuetzvektor, array $Vektor): float
-    {
-        $r = -$Stuetzvektor[1] / $Vektor[1];
-        return $r * $Vektor[2];
     }
 
     private function getPositionsOfShadowingByBrightness(float $levelAct): ?array
@@ -2612,6 +2626,49 @@ class BlindController extends IPSModule
         return $moveBladeOk;
     }
 
+    private function MoveBlindToShadowingPosition(int $percentShadowing): bool
+    {
+        if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
+            return false;
+        }
+
+        $this->Logger_Dbg(__FUNCTION__, sprintf('percentClose: %s', $percentShadowing));
+
+        if (($percentShadowing < 0) || ($percentShadowing > 100)) {
+            return false;
+        }
+
+        // globale Instanzvariablen setzen
+        $this->profileBlindLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
+
+        if ($this->profileBlindLevel === null) {
+            return false;
+        }
+
+        $blindPositions = $this->GetBlindPositionsFromDegreeOfShadowing($percentShadowing / 100);
+
+        $percentCloseBlind = $blindPositions['BlindLevel'] / ($this->profileBlindLevel['MaxValue'] - $this->profileBlindLevel['MinValue']);
+        if ($this->profileBlindLevel['Reversed']) {
+            $percentCloseBlind = 1 - $percentCloseBlind;
+        }
+
+        $moveBladeOk = $this->MoveToPosition(self::PROP_BLINDLEVELID, (int) ($percentCloseBlind * 100), 0, sprintf('%s Beschattung', $percentCloseBlind));
+
+        //gibt es Lamellen?
+        if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+            $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
+            $percentCloseSlats = $blindPositions['SlatsLevel'] / ($this->profileSlatsLevel['MaxValue'] - $this->profileSlatsLevel['MinValue']);
+            if ($this->profileSlatsLevel['Reversed']) {
+                $percentCloseSlats = 1 - $percentCloseSlats;
+            }
+            $moveSlatsOk             = $this->MoveToPosition(self::PROP_SLATSLEVELID, (int) ($percentCloseSlats * 100), 0, sprintf('%s Beschattung', $percentCloseSlats));
+
+            return $moveBladeOk || $moveSlatsOk;
+        }
+
+        return $moveBladeOk;
+    }
+
     private function MoveToPosition(string $propName, int $percentClose, int $deactivationTimeAuto, string $hint): bool
     {
         $positionID = $this->ReadPropertyInteger($propName);
@@ -2679,6 +2736,7 @@ class BlindController extends IPSModule
         if (($positionDiffPercentage > 0.05) && ($timeDiffAuto >= $deactivationTimeAuto)) {
             //Position setzen
             //Wert übertragen
+            //$ret = $this->moveAndWait($propName, $positionID, $positionNew);
             if (@RequestAction($positionID, $positionNew)) {
                 // warten, bis die Zielposition erreicht ist
                 $ret = $this->waitUntilBlindLevelIsReached($propName, $positionNew);
