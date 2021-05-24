@@ -149,8 +149,7 @@ class BlindController extends IPSModule
     // die folgenden Funktionen überschreiben die interne IPS_() Funktionen
     public function __construct($InstanceID)
     {
-        $this->objectName = IPS_GetObject($InstanceID)['ObjectName'];
-        //echo $this->objectName . PHP_EOL;
+        $this->objectName = IPS_GetName($InstanceID);
         parent::__construct($InstanceID);
     }
 
@@ -207,12 +206,18 @@ class BlindController extends IPSModule
         switch ($Ident) {
             case self::VAR_IDENT_ACTIVATED:
                 if ($Value) {
-                    //reset manual movement
                     $this->resetManualMovement();
                 } else {
                     $this->Logger_Inf(sprintf('\'%s\' wurde deaktiviert.', IPS_GetObject($this->InstanceID)['ObjectName']));
                 }
-                break;
+
+                if ($this->SetValue($Ident, $Value)) {
+                    $this->SetInstanceStatusAndTimerEvent();
+                    IPS_RunScriptText(sprintf('BLC_ControlBlind(%s, %s);', $this->InstanceID, 'false'));
+                    //todo: kann später mal durch RegisterOnceTimer() ersetzt werden. Setzt aber 5.5 voraus.
+                    return true;
+                }
+                return false;
 
             case self::PROP_SLATSLEVELID:
                 $this->UpdateFormField(
@@ -373,13 +378,7 @@ class BlindController extends IPSModule
                 return false;
         }
 
-        if ($this->SetValue($Ident, $Value)) {
-            $this->SetInstanceStatusAndTimerEvent();
-            IPS_RunScriptText(sprintf('BLC_ControlBlind(%s, %s);', $this->InstanceID, 'false'));
-            return true;
-        }
-
-        return false;
+        trigger_error (sprintf('Error - not expected situation. Ident: %s, Value: %s', $Ident, $Value), E_USER_ERROR);
     }
 
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
@@ -450,6 +449,7 @@ class BlindController extends IPSModule
                     if (IPS_GetKernelRunlevel() === KR_READY) {
                         //Skripte können nur gestartet werden, wenn der Kernel ready ist
                         IPS_RunScriptText(sprintf('BLC_ControlBlind(%s, %s);', $this->InstanceID, $considerDeactivationTimeAuto ? 'true' : 'false'));
+                        //todo: kann später mal durch RegisterOnceTimer() ersetzt werden. Setzt aber 5.5 voraus.
                     }
                 }
 
@@ -850,7 +850,7 @@ class BlindController extends IPSModule
 
                 if ($positionsNew['BlindLevel'] === $positionsShadowingBySunPosition['BlindLevel']) {
                     if ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION) > 0) {
-                        $Hinweis = 'Beschattung nach Sonnenstand,' . $this->GetFormattedValue(
+                        $Hinweis = 'Beschattung nach Sonnenstand, ' . $this->GetFormattedValue(
                                 $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION)
                             );
                     } else {
@@ -1268,8 +1268,8 @@ class BlindController extends IPSModule
         $this->RegisterAttributeBoolean(self::ATTR_LAST_ISDAYBYTIMESCHEDULE, false);
 
         $library       = json_decode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'library.json'), true);
-        $moduleVersion = sprintf('%s.%s', $library['version'], $library['build']);
-        $this->RegisterAttributeString('Version', $moduleVersion);
+        $this->RegisterAttributeString('Version', '');
+        $this->WriteAttributeString('Version', sprintf('%s.%s', $library['version'], $library['build']));
     }
 
     private function RegisterVariables(): void
