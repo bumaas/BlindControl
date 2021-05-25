@@ -192,7 +192,6 @@ class BlindController extends IPSModule
 
         $this->SetInstanceStatusAndTimerEvent();
 
-        $this->ShowNotUsedElements($this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS));
     }
 
     public function RequestAction($Ident, $Value): bool
@@ -2267,8 +2266,8 @@ class BlindController extends IPSModule
         $H_Window = [0, $ParapetHeigth + $x1, $x2];
         $P_Window = [0, $ParapetHeigth, 0];
 
-        //-- Schattenpunkte H' und B' bestimmen (siehe https://www.youtube.com/watch?v=QvV-dFlH63c&t=87s)
-        $H_Shadow = $this->Schattenpunkt_X0_X2_Ebene($H_Window, $V_Sun);
+        //-- Schattenpunkte H' und P' bestimmen (siehe https://www.youtube.com/watch?v=QvV-dFlH63c&t=87s)
+        $H_Shadow = $x2 + $this->Schattenpunkt_X0_X2_Ebene($H_Window, $V_Sun);
         $P_Shadow = $this->Schattenpunkt_X0_X2_Ebene($P_Window, $V_Sun);
 
 
@@ -3177,18 +3176,6 @@ class BlindController extends IPSModule
         }
 
         return null;
-    }
-
-    private function ShowNotUsedElements(bool $bShow): void
-    {
-        $this->Logger_Dbg(
-            __FUNCTION__,
-            sprintf(
-                'bShow: %s, PROP_HOLIDAYINDICATORID: %s',
-                (int)$bShow,
-                $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID)
-            )
-        );
     }
 
     private function MyUpdateFormField(array $form, string $name, string $parameter, $value): array
