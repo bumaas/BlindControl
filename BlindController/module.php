@@ -139,6 +139,8 @@ class BlindController extends IPSModule
     private const VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
     private const VAR_IDENT_ACTIVATED    = 'ACTIVATED';
 
+    private const MIN_MOVEMENT = 0.05;
+
     private $objectName;
 
     private $profileBlindLevel;
@@ -194,6 +196,7 @@ class BlindController extends IPSModule
 
     }
 
+    /** @noinspection PhpUnreachableStatementInspection */
     public function RequestAction($Ident, $Value): bool
     {
         if (is_bool($Value)) {
@@ -639,7 +642,7 @@ class BlindController extends IPSModule
         );
     }
 
-    public function ReceiveData($JSONString)
+    public function ReceiveData($JSONString): bool
     {
         trigger_error(sprintf('Fatal error: no ReceiveData expected. (%s)', $JSONString));
 
@@ -925,14 +928,15 @@ class BlindController extends IPSModule
         } elseif ($positionsContactOpenBlind !== null) {
             // wenn  ein Kontakt geöffnet ist und der Rollladen bzw die Lamellen unter dem ContactOpen Level steht, dann
             // wird die Bewegungssperre aufgehoben und das Level auf das Mindestlevel bei geöffnetem Kontakt gesetzt
-            $deactivationTimeAuto = 0;
             $bNoMove              = false;
             if ($this->profileBlindLevel['Reversed']) {
                 if ($positionsContactOpenBlind['BlindLevel'] > $positionsNew['BlindLevel']) {
+                    $deactivationTimeAuto = 0;
                     $positionsNew['BlindLevel'] = $positionsContactOpenBlind['BlindLevel'];
                     $Hinweis                    = 'Kontakt offen';
                 }
             } elseif ($positionsContactOpenBlind['BlindLevel'] < $positionsNew['BlindLevel']) {
+                $deactivationTimeAuto = 0;
                 $positionsNew['BlindLevel'] = $positionsContactOpenBlind['BlindLevel'];
                 $Hinweis                    = 'Kontakt offen';
             }
@@ -940,10 +944,12 @@ class BlindController extends IPSModule
             if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
                 if ($this->profileSlatsLevel['Reversed']) {
                     if ($positionsContactOpenBlind['SlatsLevel'] > $positionsNew['SlatsLevel']) {
+                        $deactivationTimeAuto = 0;
                         $positionsNew['SlatsLevel'] = $positionsContactOpenBlind['SlatsLevel'];
                         $Hinweis                    = 'Kontakt offen';
                     }
                 } elseif ($positionsContactOpenBlind['SlatsLevel'] < $positionsNew['SlatsLevel']) {
+                    $deactivationTimeAuto = 0;
                     $positionsNew['SlatsLevel'] = $positionsContactOpenBlind['SlatsLevel'];
                     $Hinweis                    = 'Kontakt offen';
                 }
@@ -963,14 +969,15 @@ class BlindController extends IPSModule
         } elseif ($positionsContactCloseBlind !== null) {
             // wenn  ein Kontakt geöffnet ist und der Rollladen bzw. die Lamellen oberhalb dem ContactClose Level steht, dann
             // wird die Bewegungssperre aufgehoben und das Level auf das Mindestlevel bei geöffnetem Kontakt gesetzt
-            $deactivationTimeAuto = 0;
             $bNoMove              = false;
             if ($this->profileBlindLevel['Reversed']) {
                 if ($positionsContactCloseBlind['BlindLevel'] < $positionsNew['BlindLevel']) {
+                    $deactivationTimeAuto = 0;
                     $positionsNew['BlindLevel'] = $positionsContactCloseBlind['BlindLevel'];
                     $Hinweis                    = 'Kontakt offen';
                 }
             } elseif ($positionsContactCloseBlind['BlindLevel'] > $positionsNew['BlindLevel']) {
+                $deactivationTimeAuto = 0;
                 $positionsNew['BlindLevel'] = $positionsContactCloseBlind['BlindLevel'];
                 $Hinweis                    = 'Kontakt offen';
             }
@@ -978,10 +985,12 @@ class BlindController extends IPSModule
             if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
                 if ($this->profileSlatsLevel['Reversed']) {
                     if ($positionsContactCloseBlind['SlatsLevel'] < $positionsNew['SlatsLevel']) {
+                        $deactivationTimeAuto = 0;
                         $positionsNew['SlatsLevel'] = $positionsContactCloseBlind['SlatsLevel'];
                         $Hinweis                    = 'Kontakt offen';
                     }
                 } elseif ($positionsContactCloseBlind['SlatsLevel'] > $positionsNew['SlatsLevel']) {
+                    $deactivationTimeAuto = 0;
                     $positionsNew['SlatsLevel'] = $positionsContactCloseBlind['SlatsLevel'];
                     $Hinweis                    = 'Kontakt offen';
                 }
@@ -1269,6 +1278,7 @@ class BlindController extends IPSModule
         $library       = json_decode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'library.json'), true);
         $this->RegisterAttributeString('Version', '');
         $this->WriteAttributeString('Version', sprintf('%s.%s', $library['version'], $library['build']));
+        IPS_LogMessage('BlindControl', sprintf('%s.%s (%s)', $library['version'], $library['build'], date(DATE_ATOM, $library['date'])));
     }
 
     private function RegisterVariables(): void
@@ -2037,7 +2047,6 @@ class BlindController extends IPSModule
         $altitudeFrom = $this->ReadPropertyFloat(self::PROP_ALTITUDEFROM);
         $altitudeTo   = $this->ReadPropertyFloat(self::PROP_ALTITUDETO);
 
-        /** @noinspection ProperNullCoalescingOperatorUsageInspection */
         $this->Logger_Dbg(
             __FUNCTION__,
             sprintf(
@@ -2369,7 +2378,7 @@ class BlindController extends IPSModule
         $slatsLevelMin = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL);
         $slatsLevelMax = $this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL);
 
-        $blindPositions['SlatsLevel'] = ($slatsLevelMax - $slatsLevelMin) * $degreeOfShadowing + $slatsLevelMin;;
+        $blindPositions['SlatsLevel'] = ($slatsLevelMax - $slatsLevelMin) * $degreeOfShadowing + $slatsLevelMin;
 
         return $blindPositions;
 
@@ -2718,7 +2727,7 @@ class BlindController extends IPSModule
         $this->Logger_Dbg(
             __FUNCTION__,
             sprintf(
-                '#%s(%s): positionAct: %s, positionNew: %s, positionDiffPercentage: %.3f/0,05, timeDiffAuto: %s/%s',
+                '#%s(%s): positionAct: %s, positionNew: %s, positionDiffPercentage: %f/0,05, timeDiffAuto: %s/%s',
                 $positionID,
                 $propName,
                 $positionAct,
@@ -2731,12 +2740,32 @@ class BlindController extends IPSModule
 
         $ret = false;
 
-        // Wenn sich die aktuelle Position um mehr als 5% von neuer Position unterscheidet
-        if (($positionDiffPercentage > 0.05) && ($timeDiffAuto >= $deactivationTimeAuto)) {
+        if ($timeDiffAuto < $deactivationTimeAuto){
+            $this->Logger_Dbg(
+                __FUNCTION__,
+                sprintf(
+                    '#%s(%s): No Movement! DeactivationTimeAuto of %s not reached (%s).',
+                    $positionID,
+                    $propName,
+                    $deactivationTimeAuto,
+                    $timeDiffAuto
+                )
+            );
+        } elseif ($positionDiffPercentage < 0.01) {
+            $this->Logger_Dbg(
+                __FUNCTION__,
+                sprintf('#%s(%s): No Movement! Position %s already reached.', $positionID, $propName, $positionAct)
+            );
+        } elseif (($positionDiffPercentage < self::MIN_MOVEMENT) && !in_array($positionNew, [$profile['MinValue'], $profile['MaxValue']], false)) {
+            $this->Logger_Dbg(
+                __FUNCTION__,
+                sprintf('#%s(%s): No Movement! Movement less than 5 percent (%.2f).', $positionID, $propName, $positionDiffPercentage)
+                );
+        } else {
             //Position setzen
             //Wert übertragen
             //$ret = $this->moveAndWait($propName, $positionID, $positionNew);
-            if (@RequestAction($positionID, $positionNew)) {
+            if (RequestAction($positionID, $positionNew)) {
                 // warten, bis die Zielposition erreicht ist
                 $ret = $this->waitUntilBlindLevelIsReached($propName, $positionNew);
 
@@ -2755,7 +2784,7 @@ class BlindController extends IPSModule
             } else {
                 $this->Logger_Err(
                     sprintf(
-                        '\'%s\': #%s (%s): Fehler beim Setzen des Wertes. (Value = %s, Parent: "%s").',
+                        '\'%s\': ID %s (%s): Fehler beim Setzen des Wertes. (Value = %s, Parent: "%s").',
                         $this->objectName,
                         $positionID,
                         $propName,
@@ -2765,29 +2794,12 @@ class BlindController extends IPSModule
                 );
             }
             $this->Logger_Dbg(__FUNCTION__, sprintf('#%s(%s): %s to %s', $positionID, $propName, $positionAct, $positionNew));
-        } elseif ($positionDiffPercentage < 0.01) {
-            $this->Logger_Dbg(__FUNCTION__, sprintf('#%s(%s): No Movement! Position %s already reached.', $positionID, $propName, $positionAct));
-        } elseif ($positionDiffPercentage < 0.05) {
-            $this->Logger_Dbg(
-                __FUNCTION__,
-                sprintf('#%s(%s): No Movement! Movement less than 5 percent (%.2f).', $positionID, $propName, $positionDiffPercentage)
-            );
-        } else {
-            $this->Logger_Dbg(
-                __FUNCTION__,
-                sprintf(
-                    '#%s(%s): No Movement! DeactivationTimeAuto of %s not reached (%s).',
-                    $positionID,
-                    $propName,
-                    $deactivationTimeAuto,
-                    $timeDiffAuto
-                )
-            );
+
+            if ($ret) {
+                $this->WriteInfo($propName, $positionNew, $hint);
+            }
         }
 
-        if ($ret) {
-            $this->WriteInfo($propName, $positionNew, $hint);
-        }
 
         return $ret;
     }
@@ -2810,7 +2822,7 @@ class BlindController extends IPSModule
                 $percentCloseCurrent = 100 - $percentCloseCurrent;
             }
 
-            if (abs($percentCloseNew - $percentCloseCurrent) > 5) {
+            if (abs($percentCloseNew - $percentCloseCurrent) > (self::MIN_MOVEMENT * 100 - 2)) {
                 if ((float)IPS_GetKernelVersion() < 5.6) {
                     set_time_limit(30);
                 }
@@ -2819,11 +2831,12 @@ class BlindController extends IPSModule
                 $this->Logger_Dbg(
                     __FUNCTION__,
                     sprintf(
-                        '#%s(%s): Position reached (Value: %s, Diff: %.2f).',
+                        '#%s(%s): Position reached (Value: %s, Diff: %.2f) at %s.',
                         $levelID,
                         $propName,
                         $currentValue,
-                        $percentCloseNew - $percentCloseCurrent
+                        $percentCloseNew - $percentCloseCurrent,
+                        $this->FormatTimeStamp(IPS_GetVariable($levelID)['VariableChanged'])
                     )
                 );
                 return true;

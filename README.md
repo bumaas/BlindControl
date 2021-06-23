@@ -202,6 +202,8 @@ Es sind die Variablen anzugeben, die zur Helligkeitsbestimmung herangezogen werd
 
 Die Regel wird über eine Aktivierungsvariable aktiviert/deaktiviert.
 
+Ist sowohl eine Beschattung nach Helligkeit als auch eine Beschattung nach Sonnenstand aktiv, dann wirkt die Beschattung nach Helligkeit zusätzlich zur Beschattung nach Sonnenstand. 
+
 Praktisches Beispielszenario:
 Im Normalfall wird nach Sonnenstand beschattet. Wenn jedoch der Fernseher eingeschaltet wird, dann soll je nach Helligkeit stärker oder schwächer abgedunkelt werden.
 
@@ -221,31 +223,31 @@ und nicht ein Wert von 100 für "geschlossen".
 
 | Eigenschaft | Typ     | Standardwert            | Funktion                                  |
 | :--------- | :-----: | :------------------------| :--------------------------------------- |
-| BlindLevelID               | integer | 0 | Statusvariable, des zu steuernden Rollladens. Sie muss vom Typ Integer oder Float sein und über ein korrektes Profil verfügen. |
-| SlatsLevelID               | integer | 0 | Statusvariable, der  zu steuernden Lamellen einer Jalousie. Sie muss vom Typ Integer oder Float sein und über ein korrektes Profil verfügen. |
+| BlindLevelID               | integer | 0 | (Rollladen Level ID) Statusvariable, des zu steuernden Rollladens. Sie muss vom Typ Integer oder Float sein und über ein korrektes Profil verfügen. |
+| SlatsLevelID               | integer | 0 | (Lamellen Level ID) Statusvariable, der  zu steuernden Lamellen einer Jalousie. Sie muss vom Typ Integer oder Float sein und über ein korrektes Profil verfügen. |
 | <br>**Wochenplan**     |  | |  | |
-| WeeklyTimeTableEventID     | integer | 0 | Verweis auf ein Wochenplanevent, dass die täglichen Grundzeiten für Rollladen rauf und Rollladen runter abbildet.       |                  |
-| WakeUpTimeID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Hochfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein.  Eine ungültige Zeitangabe wird ignoriert.|
-| WakeUpTimeOffset               | integer | 0 | Offset zur WakeUpTime in Minuten|
-| BedTimeID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Runterfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein.  Eine ungültige Zeitangabe wird ignoriert.|
-| BedTimeOffset               | integer | 0 | Offset zur BedTime in Minuten|
-| HolidayIndicatorID         | integer | 0 | Indikatorvariable, die anzeigt, ob ein Urlaubs-/Feiertag anliegt|
-| DayUsedWhenHoliday         | integer | 0 | legt fest, welcher Wochentag des Wochenplans im Fall eines Urlaubs-/Feiertages herangezogen werden soll|
-| ActivatedIndividualDayLevels           | boolean   | false | aktiviert die individuellen Tag Positionen
-| DayBlindLevel           | float   | 0 | Höhe, auf die der Rollladen am Tag gefahren wird, wenn er geöffnet werden soll
-| DaySlatsLevel           | float   | 0 | Position, auf die die Lamellen am Tag gefahren werden, wenn sie geöffnet werden sollen
-| ActivatedIndividualNightLevels           | boolean   | false | aktiviert die individuellen Nacht Positionen
-| NightBlindLevel           | float   | 0 | Höhe, auf die der Rollladen in der Nacht gefahren wird, wenn er geschlossen werden soll
-| NightSlatsLevel           | float   | 0 | Position, auf die die Lamellen in der Nacht gefahren werden, wenn sie geschlossen werden sollen
+| WeeklyTimeTableEventID     | integer | 0 | (Wochenplan Ereignis ID) Verweis auf ein Wochenplanevent, dass die täglichen Grundzeiten für Rollladen rauf und Rollladen runter abbildet.       |                  |
+| WakeUpTimeID               | integer | 0 | (Aufstehzeit ID) Indikatorvariable vom Typ String, die eine übersteuernde Hochfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein.  Eine ungültige Zeitangabe wird ignoriert.|
+| WakeUpTimeOffset               | integer | 0 | (Aufstehzeit Versatz) Offset zur WakeUpTime in Minuten|
+| BedTimeID               | integer | 0 | (Schlafenszeit ID) Indikatorvariable vom Typ String, die eine übersteuernde Runterfahrzeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben sein.  Eine ungültige Zeitangabe wird ignoriert.|
+| BedTimeOffset               | integer | 0 | (Schlafenszeit Versatz) Offset zur BedTime in Minuten|
+| HolidayIndicatorID         | integer | 0 | (Feier-/Urlaubstag ID) Indikatorvariable, die anzeigt, ob ein Urlaubs-/Feiertag anliegt|
+| DayUsedWhenHoliday         | integer | 0 | (zu nutzender Wochentag am Feier-/Urlaubstag) legt fest, welcher Wochentag des Wochenplans im Fall eines Urlaubs-/Feiertages herangezogen werden soll|
+| ActivatedIndividualDayLevels           | boolean   | false | (Der Rollladen soll tagsüber nicht vollständig geschlossen werden) aktiviert die individuellen Tag Positionen
+| DayBlindLevel           | float   | 0 | (Rollladenposition) Höhe, auf die der Rollladen am Tag gefahren wird, wenn er geöffnet werden soll
+| DaySlatsLevel           | float   | 0 | (Lamellenposition) Position, auf die die Lamellen am Tag gefahren werden, wenn sie geöffnet werden sollen
+| ActivatedIndividualNightLevels           | boolean   | false | (Der Rollladen soll nachts nicht vollständig geschlossen werden) aktiviert die individuellen Nacht Positionen
+| NightBlindLevel           | float   | 0 | (Rollladenposition) Höhe, auf die der Rollladen in der Nacht gefahren wird, wenn er geschlossen werden soll
+| NightSlatsLevel           | float   | 0 | (Lamellenposition)Position, auf die die Lamellen in der Nacht gefahren werden, wenn sie geschlossen werden sollen
 | <br>**'Ist es Tag'-Erkennung**     |  | |  | |
-| IsDayIndicatorID           | integer | 0 | Indikatorvariable, die anzeigt, ob es Tag oder Nacht ist. Es kann z.B. die ISDAY Statusvariable des Location Controls genutzt werden.
-| BrightnessID               | integer | 0 | Indikatorvariable, die die Helligkeit zur Tag/Nacht Bestimmung abbildet.  |
-| BrightnessAvgMinutes       | integer | 0 | Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll  |
-| BrightnessThresholdID      | integer | 0 | Indikatorvariable, die den Schwellwert zur Tag/Nacht Bestimmung zur Verfügung stellt |
-| DayStartID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesanfangszeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und kleiner als '12:00' sein. Eine ungültige Zeitangabe wird ignoriert.|
-| DayEndID               | integer | 0 | Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein.  Eine ungültige Zeitangabe wird ignoriert.|
-| DelayTimeDayNightChange | integer | 0  | legt fest, ob und wie lange eine Fahrt beim Tages/Nacht-Wechsel verzögert werden soll|
-| DelayTimeDayNightChangeIsRandomly | boolean | false  | legt fest, ob die Verzögerung zufällig bestimmt werden soll. Es wird ein Zufallswert zwischen 0 und der angegebenen Zeit genommen|
+| IsDayIndicatorID           | integer | 0 | ('Ist es Tag' Indikator ID) Indikatorvariable, die anzeigt, ob es Tag oder Nacht ist. Es kann z.B. die ISDAY Statusvariable des Location Controls genutzt werden.
+| BrightnessID               | integer | 0 | (Helligkeit ID) Indikatorvariable, die die Helligkeit zur Tag/Nacht Bestimmung abbildet.  |
+| BrightnessAvgMinutes       | integer | 0 | (Durchschnitt der letzten Minuten nehmen) Anzahl Minuten über die der Helligkeitsdurchschnitt gebildet werden soll  |
+| BrightnessThresholdID      | integer | 0 | (Grenzwert Helligkeit ID) Indikatorvariable, die den Schwellwert zur Tag/Nacht Bestimmung zur Verfügung stellt |
+| DayStartID               | integer | 0 | (Tagesanfangszeit (hh:mm) ID) Indikatorvariable vom Typ String, die eine übersteuernde Tagesanfangszeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und kleiner als '12:00' sein. Eine ungültige Zeitangabe wird ignoriert.|
+| DayEndID               | integer | 0 | (Tagesendezeit (hh:mm) ID) Indikatorvariable vom Typ String, die eine übersteuernde Tagesendezeit beinhaltet. Die Zeit muss im Format 'HH:MM' angegeben und größer als '12:00' sein.  Eine ungültige Zeitangabe wird ignoriert.|
+| DelayTimeDayNightChange | integer | 0  | (Verzögerung beim Tag/Nacht-Wechsel) legt fest, ob und wie lange eine Fahrt beim Tages/Nacht-Wechsel verzögert werden soll|
+| DelayTimeDayNightChangeIsRandomly | boolean | false  | (Die Verzögerung beim Tag/Nacht-Wechsel ist zufällig) legt fest, ob die Verzögerung zufällig bestimmt werden soll. Es wird ein Zufallswert zwischen 0 und der angegebenen Zeit genommen|
 | <br>**Beschattung nach Sonnenstand**     |  | |  | |
 | ActivatorIDShadowingBySunPosition | integer   | 0 | Indikatorvariable, die die Beschattungssteuerung nach Sonnenstand aktiviert. Wenn der Inhalt der zugewiesenen Variable >0 ist, dann ist die Steuerung aktiv
 | AzimuthID| integer   | 0 | Indikatorvariable, die den aktuellen Sonnenstand (Richtung) wiedergibt.  
