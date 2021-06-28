@@ -2621,12 +2621,13 @@ class BlindController extends IPSModule
             return false;
         }
 
-        $moveBladeOk = $this->MoveToPosition(self::PROP_BLINDLEVELID, $percentBlindClose, $deactivationTimeAuto, $hint);
+        $tsAutomatic = $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
+        $moveBladeOk = $this->MoveToPosition(self::PROP_BLINDLEVELID, $percentBlindClose, $tsAutomatic, $deactivationTimeAuto, $hint);
 
         //gibt es Lamellen?
         if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
             $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
-            $moveSlatsOk             = $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClosed, $deactivationTimeAuto, $hint);
+            $moveSlatsOk             = $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClosed, $tsAutomatic, $deactivationTimeAuto, $hint);
 
             return $moveBladeOk || $moveSlatsOk;
         }
@@ -2660,7 +2661,7 @@ class BlindController extends IPSModule
             $percentCloseBlind = 1 - $percentCloseBlind;
         }
 
-        $moveBladeOk = $this->MoveToPosition(self::PROP_BLINDLEVELID, (int) ($percentCloseBlind * 100), 0, sprintf('%s Beschattung', $percentCloseBlind));
+        $moveBladeOk = $this->MoveToPosition(self::PROP_BLINDLEVELID, (int) ($percentCloseBlind * 100), 0, 0, sprintf('%s Beschattung', $percentCloseBlind));
 
         //gibt es Lamellen?
         if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
@@ -2669,7 +2670,7 @@ class BlindController extends IPSModule
             if ($this->profileSlatsLevel['Reversed']) {
                 $percentCloseSlats = 1 - $percentCloseSlats;
             }
-            $moveSlatsOk             = $this->MoveToPosition(self::PROP_SLATSLEVELID, (int) ($percentCloseSlats * 100), 0, sprintf('%s Beschattung', $percentCloseSlats));
+            $moveSlatsOk             = $this->MoveToPosition(self::PROP_SLATSLEVELID, (int) ($percentCloseSlats * 100), 0, 0, sprintf('%s Beschattung', $percentCloseSlats));
 
             return $moveBladeOk || $moveSlatsOk;
         }
@@ -2677,7 +2678,7 @@ class BlindController extends IPSModule
         return $moveBladeOk;
     }
 
-    private function MoveToPosition(string $propName, int $percentClose, int $deactivationTimeAuto, string $hint): bool
+    private function MoveToPosition(string $propName, int $percentClose, int $tsAutomatic, int $deactivationTimeAuto, string $hint): bool
     {
         $positionID = $this->ReadPropertyInteger($propName);
         if ($positionID === 0) {
@@ -2722,7 +2723,7 @@ class BlindController extends IPSModule
 
         $positionAct            = (float)GetValue($positionID); //integer and float are supported
         $positionDiffPercentage = abs($positionNew - $positionAct) / ($profile['MaxValue'] - $profile['MinValue']);
-        $timeDiffAuto           = time() - $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
+        $timeDiffAuto           = time() - $tsAutomatic;
 
         $this->Logger_Dbg(
             __FUNCTION__,
@@ -2751,7 +2752,7 @@ class BlindController extends IPSModule
                     $timeDiffAuto
                 )
             );
-        } elseif ($positionDiffPercentage < 0.01) {
+        } elseif ($positionDiffPercentage <= 0.01) {
             $this->Logger_Dbg(
                 __FUNCTION__,
                 sprintf('#%s(%s): No Movement! Position %s already reached.', $positionID, $propName, $positionAct)
