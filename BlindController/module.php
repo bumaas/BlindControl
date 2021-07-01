@@ -142,6 +142,7 @@ class BlindController extends IPSModule
     private const MIN_MOVEMENT = 0.05;
 
     private $objectName;
+    private $moduleVersion;
 
     private $profileBlindLevel;
 
@@ -152,6 +153,8 @@ class BlindController extends IPSModule
     public function __construct($InstanceID)
     {
         $this->objectName = IPS_GetName($InstanceID);
+        $this->moduleVersion = $this->getModuleVersion();
+
         parent::__construct($InstanceID);
     }
 
@@ -407,7 +410,7 @@ class BlindController extends IPSModule
             __FUNCTION__,
             sprintf(
                 'ModuleVersion: %s, Timestamp: %s, SenderID: %s[%s], Message: %s, Data: %s',
-                $this->ReadAttributeString('Version'),
+                $this->moduleVersion,
                 $TimeStamp,
                 IPS_GetObject($SenderID)['ObjectName'],
                 $SenderID,
@@ -757,7 +760,7 @@ class BlindController extends IPSModule
             __FUNCTION__,
             sprintf(
                 'ModuleVersion: %s, tsAutomatik: %s, tsBlind: %s, posActBlindLevel: %.2f,  posActSlatsLevel: %s, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s), considerDeactivationTimeAuto: %s',
-                $this->ReadAttributeString('Version'),
+                $this->moduleVersion,
                 $this->FormatTimeStamp($tsAutomatik),
                 $this->FormatTimeStamp($tsBlindLastMovement),
                 $positionsAct['BlindLevel'],
@@ -1041,6 +1044,11 @@ class BlindController extends IPSModule
         return true;
     }
 
+private function getModuleVersion(): string
+{
+    $library       = json_decode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'library.json'), true);
+    return sprintf('%s.%s (%s)', $library['version'], $library['build'], date(DATE_ATOM, $library['date']));
+}
     private function resetManualMovement(): void
     {
         $this->WriteAttributeString(
@@ -1275,10 +1283,6 @@ class BlindController extends IPSModule
         $this->RegisterAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME, 0);
         $this->RegisterAttributeBoolean(self::ATTR_LAST_ISDAYBYTIMESCHEDULE, false);
 
-        $library       = json_decode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'library.json'), true);
-        $this->RegisterAttributeString('Version', '');
-        $this->WriteAttributeString('Version', sprintf('%s.%s', $library['version'], $library['build']));
-        IPS_LogMessage('BlindControl', sprintf('%s.%s (%s)', $library['version'], $library['build'], date(DATE_ATOM, $library['date'])));
     }
 
     private function RegisterVariables(): void
