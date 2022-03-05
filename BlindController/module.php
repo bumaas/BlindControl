@@ -81,6 +81,7 @@ class BlindController extends IPSModule
     private const PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION          = 'BrightnessIDShadowingBySunPosition';
     private const PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION  = 'BrightnessAvgMinutesShadowingBySunPosition';
     private const PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION = 'BrightnessThresholdIDShadowingBySunPosition';
+    private const PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION         = 'TemperatureIDShadowingBySunPosition';
     private const PROP_LOWSUNPOSITIONBLINDLEVEL                    = 'LowSunPositionBlindLevel';
     private const PROP_HIGHSUNPOSITIONBLINDLEVEL                   = 'HighSunPositionBlindLevel';
     private const PROP_LOWSUNPOSITIONSLATSLEVEL                    = 'LowSunPositionSlatsLevel';
@@ -1103,7 +1104,7 @@ private function getModuleVersion(): string
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION, 0);
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION, 0);
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION, 0);
-        $this->RegisterPropertyInteger('TemperatureIDShadowingBySunPosition', 0);
+        $this->RegisterPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION, 0);
         $this->RegisterPropertyFloat('LowSunPositionAltitude', 0);
         $this->RegisterPropertyFloat('HighSunPositionAltitude', 0);
         $this->RegisterPropertyFloat(self::PROP_LOWSUNPOSITIONBLINDLEVEL, 0);
@@ -1193,7 +1194,7 @@ private function getModuleVersion(): string
             $this->ReadPropertyInteger(self::PROP_ALTITUDEID),
             $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION),
             $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION),
-            $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition'),
+            $this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION),
 
             $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
             $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS),
@@ -1232,7 +1233,7 @@ private function getModuleVersion(): string
             self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION => $this->ReadPropertyInteger(
                 self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION
             ),
-            'TemperatureIDShadowingBySunPosition'                  => $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition'),
+            self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION         => $this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION),
             'ActivatorIDShadowingBrightness'                       => $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
             self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS             => $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS),
             'ThresholdIDHighBrightness'                            => $this->ReadPropertyInteger('ThresholdIDHighBrightness'),
@@ -1484,7 +1485,7 @@ private function getModuleVersion(): string
         }
 
         if ($ret = $this->checkVariableId(
-            'TemperatureIDShadowingBySunPosition',
+            self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
             self::STATUS_INST_ROOMTEMPERATUREID_IS_INVALID
@@ -2020,7 +2021,7 @@ private function getModuleVersion(): string
             return null;
         }
 
-        $temperatureID = $this->ReadPropertyInteger('TemperatureIDShadowingBySunPosition');
+        $temperatureID = $this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION);
         if ($temperatureID === 0) {
             $temperature = null;
         } else {
@@ -2192,10 +2193,10 @@ private function getModuleVersion(): string
         $iBrightnessHysteresis = 0.1 * $thresholdBrightness;
 
         if ($temperature !== null) {
-            //bei Temperaturen über 24 Grad soll der Rollladen auch bei geringerer Helligkeit heruntergefahren werden (10% je Grad Temperaturdifferenz zu 24°C)
+            //bei Temperaturen über 24 Grad soll der Rollladen auch bei geringerer Helligkeit heruntergefahren werden (10% Schwellwertverringerung je Grad Temperaturdifferenz zu 24 °C)
             if ($temperature > 24) {
                 $thresholdBrightness -= ($temperature - 24) * 0.10 * $thresholdBrightness;
-            } //bei Temperaturen unter 10 Grad soll der Rollladen auch bei höherer Helligkeit nicht heruntergefahren werden
+            } //bei Temperaturen unter 10 Grad soll der Rollladen auch bei höherer Helligkeit nicht heruntergefahren werden (10% Schwellwerterhöhung je Grad Temperaturdifferenz zu 10 °C)
             elseif ($temperature < 10) {
                 $thresholdBrightness += (10 - $temperature) * 0.10 * $thresholdBrightness;
             }
