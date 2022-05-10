@@ -49,6 +49,7 @@ class BlindController extends IPSModule
     // -- property names --
     private const PROP_BLINDLEVELID                      = 'BlindLevelID';
     private const PROP_SLATSLEVELID                      = 'SlatsLevelID';
+    private const PROP_WEEKLYTIMETABLEEVENTID            = 'WeeklyTimeTableEventID';
     private const PROP_HOLIDAYINDICATORID                = 'HolidayIndicatorID';
     private const PROP_DAYUSEDWHENHOLIDAY                = 'DayUsedWhenHoliday';
     private const PROP_WAKEUPTIMEID                      = 'WakeUpTimeID';
@@ -786,7 +787,6 @@ class BlindController extends IPSModule
                            $lastManualMovement['timeStamp']
                        ) > time())) {
                 $positionsNew['BlindLevel'] = $lastManualMovement['blindLevel'];
-                $positionsNew['SlatsLevel'] = $lastManualMovement['slatsLevel'];
             } else {
                 /** @noinspection NestedPositiveIfStatementsInspection */
                 if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
@@ -795,6 +795,7 @@ class BlindController extends IPSModule
                     $positionsNew['BlindLevel'] = $this->profileBlindLevel['LevelOpened'];
                 }
             }
+
             if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
                 $positionsNew['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_DAYSLATSLEVEL);
             } else {
@@ -1069,7 +1070,7 @@ private function getModuleVersion(): string
         $this->RegisterPropertyInteger(self::PROP_SLATSLEVELID, 0);
 
         //week plan
-        $this->RegisterPropertyInteger('WeeklyTimeTableEventID', 0);
+        $this->RegisterPropertyInteger(self::PROP_WEEKLYTIMETABLEEVENTID, 0);
         $this->RegisterPropertyInteger(self::PROP_HOLIDAYINDICATORID, 0);
         $this->RegisterPropertyInteger(self::PROP_DAYUSEDWHENHOLIDAY, 0);
         $this->RegisterPropertyInteger(self::PROP_WAKEUPTIMEID, 0);
@@ -1170,7 +1171,7 @@ private function getModuleVersion(): string
     {
         $objectIDs = [
             $this->ReadPropertyInteger(self::PROP_BLINDLEVELID),
-            $this->ReadPropertyInteger('WeeklyTimeTableEventID'),
+            $this->ReadPropertyInteger(self::PROP_WEEKLYTIMETABLEEVENTID),
             $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID),
             $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEID),
             $this->ReadPropertyInteger(self::PROP_BEDTIMEID),
@@ -1216,7 +1217,7 @@ private function getModuleVersion(): string
     private function RegisterMessages(): void
     {
         $objectIDs = [
-            'WeeklyTimeTableEventID'                               => $this->ReadPropertyInteger('WeeklyTimeTableEventID'),
+            self::PROP_WEEKLYTIMETABLEEVENTID                      => $this->ReadPropertyInteger(self::PROP_WEEKLYTIMETABLEEVENTID),
             self::PROP_HOLIDAYINDICATORID                          => $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID),
             self::PROP_BRIGHTNESSID                                => $this->ReadPropertyInteger(self::PROP_BRIGHTNESSID),
             self::PROP_BRIGHTNESSTHRESHOLDID                       => $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID),
@@ -1246,21 +1247,11 @@ private function getModuleVersion(): string
             }
         }
 
-        foreach ($objectIDs as $propertyName => $id) {
-            if ($id !== 0) {
-                $objectType = IPS_GetObject($id)['ObjectType'];
-                switch ($objectType) {
-                    case OBJECTTYPE_EVENT:
-                        $this->RegisterMessage($id, EM_UPDATE);
-                        break;
-                    case OBJECTTYPE_VARIABLE:
-                        $this->RegisterMessage($id, VM_UPDATE);
-                        break;
-                    default:
-                        trigger_error(
-                            sprintf('Instance %s, Property %s: unknown ObjectType %s of id %s', $this->InstanceID, $propertyName, $objectType, $id)
-                        );
-                }
+        foreach ($objectIDs as $id) {
+            if (IPS_VariableExists($id)){
+                $this->RegisterMessage($id, VM_UPDATE);
+            } elseif (IPS_EventExists($id)){
+                $this->RegisterMessage($id, EM_UPDATE);
             }
         }
     }
@@ -1337,7 +1328,7 @@ private function getModuleVersion(): string
             }
         }
 
-        if ($ret = $this->checkEventId('WeeklyTimeTableEventID', false, EVENTTYPE_SCHEDULE, self::STATUS_INST_TIMETABLE_ID_IS_INVALID)) {
+        if ($ret = $this->checkEventId(self::PROP_WEEKLYTIMETABLEEVENTID, false, EVENTTYPE_SCHEDULE, self::STATUS_INST_TIMETABLE_ID_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
         }
@@ -2059,10 +2050,10 @@ private function getModuleVersion(): string
                 (int)GetValue($activatorID),
                 $brightness,
                 $thresholdBrightness,
-                $rSunAzimuth,
+                floor($rSunAzimuth*10)/10,
                 $azimuthFrom,
                 $azimuthTo,
-                $rSunAltitude,
+                floor($rSunAltitude*10)/10,
                 $altitudeFrom,
                 $altitudeTo,
                 $temperature ?? 'null'
@@ -2899,7 +2890,7 @@ private function getModuleVersion(): string
 
     private function checkTimeTable(): int
     {
-        $eventScheduleGroups = IPS_GetEvent($this->ReadPropertyInteger('WeeklyTimeTableEventID'))['ScheduleGroups'];
+        $eventScheduleGroups = IPS_GetEvent($this->ReadPropertyInteger(self::PROP_WEEKLYTIMETABLEEVENTID))['ScheduleGroups'];
 
         foreach ($eventScheduleGroups as $scheduleGroup) {
             $countID1 = $this->CountNumberOfPointsWithActionId($scheduleGroup['Points'], 1); //down
@@ -3078,7 +3069,7 @@ private function getModuleVersion(): string
     //-----------------------------------------------
     private function getUpDownTime(int $weekDay, ?string &$auf, ?string &$ab): bool
     {
-        $weeklyTimeTableEventId = $this->ReadPropertyInteger('WeeklyTimeTableEventID');
+        $weeklyTimeTableEventId = $this->ReadPropertyInteger(self::PROP_WEEKLYTIMETABLEEVENTID);
         if (!$event = @IPS_GetEvent($weeklyTimeTableEventId)) {
             trigger_error(sprintf('Instance %s: wrong Event ID #%s', $this->InstanceID, $weeklyTimeTableEventId));
             return false;
