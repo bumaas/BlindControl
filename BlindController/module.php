@@ -699,7 +699,7 @@ class BlindController extends IPSModule
 
         //Slats Level ID ermitteln
         $slatsLevelId = $this->ReadPropertyInteger(self::PROP_SLATSLEVELID);
-        if ($slatsLevelId !== 0) {
+        if (IPS_VariableExists($slatsLevelId)) {
             $this->profileSlatsLevel    = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
             $positionsAct['SlatsLevel'] = (float)GetValue($slatsLevelId);
         } else {
@@ -845,7 +845,7 @@ class BlindController extends IPSModule
                     $positionsNew['BlindLevel'] = max($positionsNew['BlindLevel'], $positionsShadowingBySunPosition['BlindLevel']);
                 }
 
-                if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+                if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
                     if ($this->profileSlatsLevel['Reversed']) {
                         $positionsNew['SlatsLevel'] = min($positionsNew['SlatsLevel'], $positionsShadowingBySunPosition['SlatsLevel']);
                     } else {
@@ -873,7 +873,7 @@ class BlindController extends IPSModule
                     $positionsNew['BlindLevel'] = max($positionsNew['BlindLevel'], $positionsShadowingBrightness['BlindLevel']);
                 }
 
-                if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+                if (IPS_VariableExists(($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)))) {
                     if ($this->profileSlatsLevel['Reversed']) {
                         $positionsNew['SlatsLevel'] = min($positionsNew['SlatsLevel'], $positionsShadowingBrightness['SlatsLevel']);
                     } else {
@@ -944,7 +944,7 @@ class BlindController extends IPSModule
                 $Hinweis                    = 'Kontakt offen';
             }
 
-            if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+            if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
                 if ($this->profileSlatsLevel['Reversed']) {
                     if ($positionsContactOpenBlind['SlatsLevel'] > $positionsNew['SlatsLevel']) {
                         $deactivationTimeAuto = 0;
@@ -985,7 +985,7 @@ class BlindController extends IPSModule
                 $Hinweis                    = 'Kontakt offen';
             }
 
-            if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+            if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
                 if ($this->profileSlatsLevel['Reversed']) {
                     if ($positionsContactCloseBlind['SlatsLevel'] < $positionsNew['SlatsLevel']) {
                         $deactivationTimeAuto = 0;
@@ -1022,7 +1022,7 @@ class BlindController extends IPSModule
                 $blindLevel = 1 - $blindLevel;
             }
 
-            if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+            if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
                 $slatsLevel = $positionsNew['SlatsLevel'] / ($this->profileSlatsLevel['MaxValue'] - $this->profileSlatsLevel['MinValue']);
                 if ($this->profileSlatsLevel['Reversed']) {
                     $slatsLevel = 1 - $slatsLevel;
@@ -1206,7 +1206,7 @@ private function getModuleVersion(): string
         }
 
         foreach ($objectIDs as $id) {
-            if ($id !== 0) {
+            if ($id > 10000) {
                 $this->RegisterReference($id);
             }
         }
@@ -1315,7 +1315,7 @@ private function getModuleVersion(): string
             return;
         }
 
-        if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
             if (!$this->checkActionOfStatusVariable(self::PROP_SLATSLEVELID)) {
                 $this->SetStatus(self::STATUS_INST_SLATSLEVEL_ID_IS_INVALID);
                 return;
@@ -1570,7 +1570,7 @@ private function getModuleVersion(): string
             return;
         }
 
-        if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
             $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
             if ($this->profileSlatsLevel !== null) {
                 $propertySlatsLevels = [
@@ -1649,7 +1649,7 @@ private function getModuleVersion(): string
             return $errStatus;
         }
 
-        if ($variableID !== 0) {
+        if (IPS_VariableExists($variableID)) {
             if (!$variable = @IPS_GetVariable($variableID)) {
                 $this->Logger_Err(sprintf('\'%s\': falsche Variablen ID (#%s) für "%s"', $this->objectName, $variableID, $propName));
                 return $errStatus;
@@ -1657,7 +1657,7 @@ private function getModuleVersion(): string
 
             if (!in_array($variable['VariableType'], $variableTypes, true)) {
                 $this->Logger_Err(
-                    sprintf('\'%s\': falscher Variablentyp für "%s" - nur %s erlaubt', $this->objectName, $propName, implode(', ', $variableTypes))
+                    sprintf('\'%s\': falscher Variablentyp (%s) für "%s" - nur %s erlaubt', $this->objectName, $variable['VariableType'], $propName, implode(', ', $variableTypes))
                 );
                 return $errStatus;
             }
@@ -1699,7 +1699,7 @@ private function getModuleVersion(): string
             return $errStatus;
         }
 
-        if ($eventID !== 0) {
+        if (IPS_EventExists($eventID)) {
             if (!$variable = @IPS_GetEvent($eventID)) {
                 $this->Logger_Err(sprintf('\'%s\': falsche Event ID #%s', $this->objectName, $propName));
                 return $errStatus;
@@ -1810,14 +1810,14 @@ private function getModuleVersion(): string
     {
         $contacts = [];
 
-        if ($this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID) !== 0) {
+        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID))) {
             $contacts[self::PROP_CONTACTOPEN1ID] = [
                 'id'         => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID),
                 'blindlevel' => $this->ReadPropertyFloat(self::PROP_CONTACTOPENLEVEL1),
                 'slatslevel' => $this->ReadPropertyFloat(self::PROP_CONTACTOPENSLATSLEVEL1)
             ];
         }
-        if ($this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID) !== 0) {
+        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID))) {
             $contacts[self::PROP_CONTACTOPEN2ID] = [
                 'id'         => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID),
                 'blindlevel' => $this->ReadPropertyFloat(self::PROP_CONTACTOPENLEVEL2),
@@ -1872,14 +1872,14 @@ private function getModuleVersion(): string
     {
         $contacts = [];
 
-        if ($this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID) !== 0) {
+        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID))) {
             $contacts[self::PROP_CONTACTCLOSE1ID] = [
                 'id'         => $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID),
                 'blindlevel' => $this->ReadPropertyFloat(self::PROP_CONTACTCLOSELEVEL1),
                 'slatslevel' => $this->ReadPropertyFloat(self::PROP_CONTACTCLOSESLATSLEVEL1)
             ];
         }
-        if ($this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID) !== 0) {
+        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID))) {
             $contacts[self::PROP_CONTACTCLOSE2ID] = [
                 'id'         => $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
                 'blindlevel' => $this->ReadPropertyFloat(self::PROP_CONTACTCLOSELEVEL2),
@@ -1959,7 +1959,7 @@ private function getModuleVersion(): string
     {
         $contacts = [];
 
-        if ($this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID) !== 0) {
+        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID))) {
             $contacts[self::PROP_EMERGENCYCONTACTID] = [
                 'id'    => $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
                 'level' => $this->profileBlindLevel['LevelOpened']
@@ -2619,7 +2619,7 @@ private function getModuleVersion(): string
         $moveBladeOk = $this->MoveToPosition(self::PROP_BLINDLEVELID, $percentBlindClose, $tsAutomatic, $deactivationTimeAuto, $hint);
 
         //gibt es Lamellen?
-        if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
             $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
             $moveSlatsOk             = $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClosed, $tsAutomatic, $deactivationTimeAuto, $hint);
 
@@ -2658,7 +2658,7 @@ private function getModuleVersion(): string
         $moveBladeOk = $this->MoveToPosition(self::PROP_BLINDLEVELID, (int) ($percentCloseBlind * 100), 0, 0, sprintf('%s Beschattung', $percentCloseBlind));
 
         //gibt es Lamellen?
-        if ($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) !== 0) {
+        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
             $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
             $percentCloseSlats = $blindPositions['SlatsLevel'] / ($this->profileSlatsLevel['MaxValue'] - $this->profileSlatsLevel['MinValue']);
             if ($this->profileSlatsLevel['Reversed']) {
@@ -3022,7 +3022,7 @@ private function getModuleVersion(): string
     {
         // An Feiertagen und Urlaubstagen können abweichende Tage gelten
         $holidayIndicatorID = $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID);
-        if (($holidayIndicatorID !== 0) && ($this->ReadPropertyInteger(self::PROP_DAYUSEDWHENHOLIDAY) !== 0)
+        if (IPS_VariableExists($holidayIndicatorID) && IPS_VariableExists($this->ReadPropertyInteger(self::PROP_DAYUSEDWHENHOLIDAY))
             && GetValueBoolean(
                 $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID)
             )) {
@@ -3208,7 +3208,7 @@ private function getModuleVersion(): string
     {
         $tsBlindChanged = IPS_GetVariable($idBlindLevel)['VariableChanged'];
 
-        if ($idSlatsLevel !== 0) {
+        if (IPS_VariableExists($idSlatsLevel)) {
             $tsBlindChanged = max($tsBlindChanged, IPS_GetVariable($idSlatsLevel)['VariableChanged']);
         }
         return $tsBlindChanged;
