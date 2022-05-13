@@ -144,7 +144,6 @@ class BlindController extends IPSModule
     private const MIN_MOVEMENT = 0.05;
 
     private $objectName;
-    private $moduleVersion;
 
     private $profileBlindLevel;
 
@@ -155,7 +154,6 @@ class BlindController extends IPSModule
     public function __construct($InstanceID)
     {
         $this->objectName = IPS_GetName($InstanceID);
-        $this->moduleVersion = $this->getModuleVersion();
 
         parent::__construct($InstanceID);
     }
@@ -412,7 +410,7 @@ class BlindController extends IPSModule
             __FUNCTION__,
             sprintf(
                 'ModuleVersion: %s, Timestamp: %s, SenderID: %s[%s], Message: %s, Data: %s',
-                $this->moduleVersion,
+                $this->getModuleVersion(),
                 $TimeStamp,
                 IPS_GetObject($SenderID)['ObjectName'],
                 $SenderID,
@@ -762,7 +760,7 @@ class BlindController extends IPSModule
             __FUNCTION__,
             sprintf(
                 'ModuleVersion: %s, tsAutomatik: %s, tsBlind: %s, posActBlindLevel: %.2f,  posActSlatsLevel: %s, bNoMove: %s, isDay: %s (isDayByTimeSchedule: %s, isDayByDayDetection: %s), considerDeactivationTimeAuto: %s',
-                $this->moduleVersion,
+                $this->getModuleVersion(),
                 $this->FormatTimeStamp($tsAutomatik),
                 $this->FormatTimeStamp($tsBlindLastMovement),
                 $positionsAct['BlindLevel'],
@@ -1646,7 +1644,7 @@ private function getModuleVersion(): string
     {
         $variableID = $this->ReadPropertyInteger($propName);
 
-        if (!$optional && $variableID === 0) {
+        if (!$optional && !IPS_VariableExists($variableID)) {
             $this->Logger_Err(sprintf('\'%s\': ID nicht gesetzt: %s', $this->objectName, $propName));
             return $errStatus;
         }
@@ -1696,7 +1694,7 @@ private function getModuleVersion(): string
     {
         $eventID = $this->ReadPropertyInteger($propName);
 
-        if (!$optional && $eventID === 0) {
+        if (!$optional && !IPS_EventExists($eventID)) {
             $this->Logger_Err(sprintf('\'%s\': ID nicht gesetzt: %s', $this->objectName, $propName));
             return $errStatus;
         }
@@ -1935,7 +1933,7 @@ private function getModuleVersion(): string
     private function isContactOpen(string $propName): bool
     {
         $contactId = $this->ReadPropertyInteger($propName);
-        if ($contactId === 0) {
+        if (!IPS_VariableExists($contactId)) {
             return false;
         }
 
@@ -2007,13 +2005,13 @@ private function getModuleVersion(): string
     {
         $activatorID = $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION);
 
-        if (($activatorID === 0) || !GetValue($activatorID)) {
+        if (!IPS_VariableExists($activatorID) || !GetValue($activatorID)) {
             // keine Beschattung nach Sonnenstand gewünscht bzw. nicht notwendig
             return null;
         }
 
         $temperatureID = $this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION);
-        if ($temperatureID === 0) {
+        if (!IPS_VariableExists($temperatureID)) {
             $temperature = null;
         } else {
             $temperature = (float)GetValue($temperatureID);
@@ -2132,7 +2130,7 @@ private function getModuleVersion(): string
     private function GetBrightness(string $propBrightnessID, string $propBrightnessAvgMinutes, float $levelAct, bool $shadowing): ?float
     {
         $brightnessID = $this->ReadPropertyInteger($propBrightnessID);
-        if ($brightnessID === 0) {
+        if (!IPS_VariableExists($brightnessID)) {
             return null;
         }
         $brightnessAvgMinutes = $this->ReadPropertyInteger($propBrightnessAvgMinutes);
@@ -2384,21 +2382,21 @@ private function getModuleVersion(): string
     {
         $activatorID = $this->ReadPropertyInteger('ActivatorIDShadowingBrightness');
 
-        if (($activatorID === 0) || !GetValue($activatorID)) {
+        if (!IPS_VariableExists($activatorID) || !GetValue($activatorID)) {
             // keine Beschattung bei Helligkeit gewünscht bzw. nicht notwendig
             return null;
         }
 
         $brightnessID = $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS);
-        if ($brightnessID === 0) {
-            trigger_error(sprintf('Instance %s: BrightnessIDShadowingBrightness === 0', $this->InstanceID));
+        if (!IPS_VariableExists($brightnessID)) {
+            trigger_error(sprintf('Instance %s: BrightnessIDShadowingBrightness does not exist', $this->InstanceID));
             return null;
         }
 
         $thresholdIDHighBrightness = $this->ReadPropertyInteger('ThresholdIDHighBrightness');
         $thresholdIDLessBrightness = $this->ReadPropertyInteger('ThresholdIDLessBrightness');
-        if ($thresholdIDHighBrightness === 0 && $thresholdIDLessBrightness === 0) {
-            trigger_error(sprintf('Instance %s: ThresholdIDHighBrightness === 0 and ThresholdIDLowBrightness === 0', $this->InstanceID));
+        if (!IPS_VariableExists($thresholdIDHighBrightness) && !IPS_VariableExists($thresholdIDLessBrightness)) {
+            trigger_error(sprintf('Instance %s: Neither ThresholdIDHighBrightness nor ThresholdIDLowBrightness exist', $this->InstanceID));
             return null;
         }
 
@@ -2677,7 +2675,7 @@ private function getModuleVersion(): string
     private function MoveToPosition(string $propName, int $percentClose, int $tsAutomatic, int $deactivationTimeAuto, string $hint): bool
     {
         $positionID = $this->ReadPropertyInteger($propName);
-        if ($positionID === 0) {
+        if (!IPS_VariableExists($positionID)) {
             return false;
         }
 
@@ -2940,12 +2938,12 @@ private function getModuleVersion(): string
 
         $isDayIndicatorID = $this->ReadPropertyInteger(self::PROP_ISDAYINDICATORID);
 
-        if (($isDayIndicatorID === 0)
-            && (($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID) === 0) || $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID) === 0)) {
+        if (!IPS_VariableExists($isDayIndicatorID)
+            && (!IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID)) || !IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID)))) {
             return null;
         }
 
-        if ($isDayIndicatorID > 0) {
+        if (IPS_VariableExists($isDayIndicatorID)) {
             $isDayIndicator = GetValueBoolean($isDayIndicatorID);
             $this->Logger_Dbg(__FUNCTION__, sprintf('DayIndicator (#%s): %d', $isDayIndicatorID, $isDayIndicator));
             $isDayDayDetection = $isDayIndicator;
