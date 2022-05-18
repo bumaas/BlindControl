@@ -322,7 +322,7 @@ class BlindController extends IPSModule
                 $this->UpdateFormField(
                     self::PROP_DAYSLATSLEVEL,
                     'visible',
-                    (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) && $Value)
+                    (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) && $Value)
                     || $this->ReadPropertyBoolean(
                         self::PROP_SHOWNOTUSEDELEMENTS
                     )
@@ -334,7 +334,7 @@ class BlindController extends IPSModule
                 $this->UpdateFormField(
                     self::PROP_NIGHTSLATSLEVEL,
                     'visible',
-                    (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) && $Value)
+                    (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) && $Value)
                     || $this->ReadPropertyBoolean(
                         self::PROP_SHOWNOTUSEDELEMENTS
                     )
@@ -505,16 +505,16 @@ class BlindController extends IPSModule
             $form,
             self::PROP_DAYUSEDWHENHOLIDAY,
             'visible',
-            (($this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID) > 0) || $bShow)
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_WAKEUPTIMEOFFSET,
             'visible',
-            ($this->ReadPropertyInteger(self::PROP_WAKEUPTIMEID) > 0) || $bShow
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_WAKEUPTIMEID)) || $bShow
         );
         $form =
-            $this->MyUpdateFormField($form, self::PROP_BEDTIMEOFFSET, 'visible', ($this->ReadPropertyInteger(self::PROP_BEDTIMEID) > 0) || $bShow);
+            $this->MyUpdateFormField($form, self::PROP_BEDTIMEOFFSET, 'visible', IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BEDTIMEID)) || $bShow);
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_NIGHTBLINDLEVEL,
@@ -525,8 +525,8 @@ class BlindController extends IPSModule
             $form,
             self::PROP_NIGHTSLATSLEVEL,
             'visible',
-            ((($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) && $this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS))
-             || $bShow)
+            (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) && $this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS))
+             || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
@@ -538,110 +538,110 @@ class BlindController extends IPSModule
             $form,
             self::PROP_DAYSLATSLEVEL,
             'visible',
-            ((($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) && $this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS))
-             || $bShow)
+            (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) && $this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS))
+             || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_BRIGHTNESSAVGMINUTES,
             'visible',
-            ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID) > 0) || $bShow
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_BRIGHTNESSTHRESHOLDID,
             'visible',
-            ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID) > 0) || $bShow
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION,
             'visible',
-            ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION) > 0) || $bShow
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION,
             'visible',
-            ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION) > 0) || $bShow
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_LOWSUNPOSITIONSLATSLEVEL,
             'visible',
-            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
             'visible',
-            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL,
             'visible',
-            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL,
             'visible',
-            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS,
             'visible',
-            ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS) > 0) || $bShow
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
             'visible',
-            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
             'visible',
-            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_CONTACTCLOSESLATSLEVEL1,
             'visible',
-            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_CONTACTCLOSESLATSLEVEL2,
             'visible',
-            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_CONTACTOPENSLATSLEVEL1,
             'visible',
-            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_CONTACTOPENSLATSLEVEL2,
             'visible',
-            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             'SlatsLevel',
             'visible',
-            (($this->ReadPropertyInteger(self::PROP_SLATSLEVELID) > 0) || $bShow)
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
             'ShadowingPosition',
             'visible',
-            (($this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL) > 0) || ($this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL) > 0) || $bShow)
+            ($this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL) > 0) || ($this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL) > 0) || $bShow
         );
     }
 
@@ -854,7 +854,7 @@ class BlindController extends IPSModule
                 }
 
                 if ($positionsNew['BlindLevel'] === $positionsShadowingBySunPosition['BlindLevel']) {
-                    if ($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION) > 0) {
+                    if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION))) {
                         $Hinweis = 'Beschattung nach Sonnenstand, ' . $this->GetFormattedValue(
                                 $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION)
                             );
@@ -1206,7 +1206,7 @@ private function getModuleVersion(): string
         }
 
         foreach ($objectIDs as $id) {
-            if ($id > 10000) {
+            if ($id >= 10000) {
                 $this->RegisterReference($id);
             }
         }
@@ -2408,7 +2408,7 @@ private function getModuleVersion(): string
             return null;
         }
 
-        if ($thresholdIDHighBrightness > 0) {
+        if (IPS_VariableExists($thresholdIDHighBrightness)) {
             $thresholdLessBrightness = GetValue($thresholdIDHighBrightness);
             if ($brightness > $thresholdLessBrightness) {
                 $positions['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS);
@@ -2427,7 +2427,7 @@ private function getModuleVersion(): string
             }
         }
 
-        if ($thresholdIDLessBrightness > 0) {
+        if (IPS_VariableExists($thresholdIDLessBrightness)) {
             $thresholdBrightness = GetValue($thresholdIDLessBrightness);
             if ($brightness > $thresholdBrightness) {
                 $positions['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS);
@@ -2972,7 +2972,7 @@ private function getModuleVersion(): string
         $dayStart_ts = false;
         $dayEnd_ts   = false;
 
-        if ($this->ReadPropertyInteger(self::PROP_DAYSTARTID) > 0) {
+        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_DAYSTARTID))) {
             $dayStart    = GetValueString($this->ReadPropertyInteger(self::PROP_DAYSTARTID));
             $dayStart_ts = strtotime($dayStart);
             if ($dayStart_ts === false) {
@@ -2982,7 +2982,7 @@ private function getModuleVersion(): string
             }
         }
 
-        if ($this->ReadPropertyInteger(self::PROP_DAYENDID) > 0) {
+        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_DAYENDID))) {
             $dayEnd    = GetValueString($this->ReadPropertyInteger(self::PROP_DAYENDID));
             $dayEnd_ts = strtotime($dayEnd);
             if ($dayEnd_ts === false) {
@@ -3039,7 +3039,7 @@ private function getModuleVersion(): string
 
         //gibt es übersteuernde Zeiten?
         $idWakeUpTime = $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEID);
-        if ($idWakeUpTime > 0) {
+        if (IPS_VariableExists($idWakeUpTime)) {
             $heute_auf_ts = strtotime(GetValueString($idWakeUpTime)) + $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEOFFSET) * 60;
             if ($heute_auf_ts === false) {
                 $this->Logger_Dbg(__FUNCTION__, sprintf('No valid WakeUpTime found: \'%s\' (ignored)', GetValueString($idWakeUpTime)));
@@ -3051,7 +3051,7 @@ private function getModuleVersion(): string
         }
 
         $idBedTime = $this->ReadPropertyInteger(self::PROP_BEDTIMEID);
-        if ($idBedTime > 0) {
+        if (IPS_VariableExists($idBedTime)) {
             $heute_ab_ts = strtotime(GetValueString($idBedTime)) + $this->ReadPropertyInteger(self::PROP_BEDTIMEOFFSET) * 60;
             if ($heute_ab_ts === false) {
                 $this->Logger_Dbg(__FUNCTION__, sprintf('No valid BedTime found: \'%s\' (ignored)', GetValueString($idBedTime)));
