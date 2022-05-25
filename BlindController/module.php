@@ -3022,7 +3022,7 @@ private function getModuleVersion(): string
     {
         // An Feiertagen und Urlaubstagen können abweichende Tage gelten
         $holidayIndicatorID = $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID);
-        if (IPS_VariableExists($holidayIndicatorID) && IPS_VariableExists($this->ReadPropertyInteger(self::PROP_DAYUSEDWHENHOLIDAY))
+        if (IPS_VariableExists($holidayIndicatorID) && ($this->ReadPropertyInteger(self::PROP_DAYUSEDWHENHOLIDAY) !== 0)
             && GetValueBoolean(
                 $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID)
             )) {
