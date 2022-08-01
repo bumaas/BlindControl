@@ -141,7 +141,7 @@ class BlindController extends IPSModule
     private const VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
     private const VAR_IDENT_ACTIVATED    = 'ACTIVATED';
 
-    private const MIN_MOVEMENT = 0.05;
+    private const MIN_MOVEMENT = 0.066;
     private const MIN_DIFF_TARGET_POSITION = 0.07;
 
     private $objectName;
@@ -2760,7 +2760,7 @@ private function getModuleVersion(): string
         } elseif (($positionDiffPercentage < self::MIN_MOVEMENT) && !in_array($positionNew, [$profile['MinValue'], $profile['MaxValue']], false)) {
             $this->Logger_Dbg(
                 __FUNCTION__,
-                sprintf('#%s(%s): No Movement! Movement less than %s percent (%.2f).', $positionID, $propName, self::MIN_MOVEMENT * 100, $positionDiffPercentage)
+                sprintf('#%s(%s): No Movement! Movement less than %s percent (%.3f).', $positionID, $propName, self::MIN_MOVEMENT * 100, $positionDiffPercentage)
                 );
         } else {
             //Position setzen
