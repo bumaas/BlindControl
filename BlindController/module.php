@@ -141,7 +141,7 @@ class BlindController extends IPSModule
     private const VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
     private const VAR_IDENT_ACTIVATED    = 'ACTIVATED';
 
-    private const MIN_MOVEMENT = 0.05;
+    private const MIN_MOVEMENT = 0.07;
 
     private $objectName;
 
@@ -929,18 +929,22 @@ class BlindController extends IPSModule
                 )
             );
         } elseif ($positionsContactOpenBlind !== null) {
-            // wenn  ein Kontakt geöffnet ist und der Rollladen bzw die Lamellen unter dem ContactOpen Level steht, dann
+            // wenn  ein Kontakt geöffnet ist und der Rollladen bzw die Lamellen aktuell unter dem ContactOpen Level steht, dann
             // wird die Bewegungssperre aufgehoben und das Level auf das Mindestlevel bei geöffnetem Kontakt gesetzt
             $bNoMove              = false;
             if ($this->profileBlindLevel['Reversed']) {
                 if ($positionsContactOpenBlind['BlindLevel'] > $positionsNew['BlindLevel']) {
-                    $deactivationTimeAuto = 0;
                     $positionsNew['BlindLevel'] = $positionsContactOpenBlind['BlindLevel'];
+                    if ($positionsContactOpenBlind['BlindLevel'] > $positionsAct['BlindLevel']){
+                        $deactivationTimeAuto = 0;
+                    }
                     $Hinweis                    = 'Kontakt offen';
                 }
             } elseif ($positionsContactOpenBlind['BlindLevel'] < $positionsNew['BlindLevel']) {
-                $deactivationTimeAuto = 0;
                 $positionsNew['BlindLevel'] = $positionsContactOpenBlind['BlindLevel'];
+                if ($positionsContactOpenBlind['BlindLevel'] < $positionsAct['BlindLevel']){
+                    $deactivationTimeAuto = 0;
+                }
                 $Hinweis                    = 'Kontakt offen';
             }
 
