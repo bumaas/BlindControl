@@ -141,7 +141,8 @@ class BlindController extends IPSModule
     private const VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
     private const VAR_IDENT_ACTIVATED    = 'ACTIVATED';
 
-    private const MIN_MOVEMENT = 0.07;
+    private const MIN_MOVEMENT = 0.05;
+    private const MIN_DIFF_TARGET_POSITION = 0.07;
 
     private $objectName;
 
@@ -2726,12 +2727,13 @@ private function getModuleVersion(): string
         $this->Logger_Dbg(
             __FUNCTION__,
             sprintf(
-                '#%s(%s): positionAct: %s, positionNew: %s, positionDiffPercentage: %f/0,05, timeDiffAuto: %s/%s',
+                '#%s(%s): positionAct: %s, positionNew: %s, positionDiffPercentage: %f/%f, timeDiffAuto: %s/%s',
                 $positionID,
                 $propName,
                 $positionAct,
                 $positionNew,
                 $positionDiffPercentage,
+                self::MIN_MOVEMENT,
                 $timeDiffAuto,
                 $deactivationTimeAuto
             )
@@ -2758,7 +2760,7 @@ private function getModuleVersion(): string
         } elseif (($positionDiffPercentage < self::MIN_MOVEMENT) && !in_array($positionNew, [$profile['MinValue'], $profile['MaxValue']], false)) {
             $this->Logger_Dbg(
                 __FUNCTION__,
-                sprintf('#%s(%s): No Movement! Movement less than 5 percent (%.2f).', $positionID, $propName, $positionDiffPercentage)
+                sprintf('#%s(%s): No Movement! Movement less than %s percent (%.2f).', $positionID, $propName, self::MIN_MOVEMENT * 100, $positionDiffPercentage)
                 );
         } else {
             //Position setzen
@@ -2821,10 +2823,7 @@ private function getModuleVersion(): string
                 $percentCloseCurrent = 100 - $percentCloseCurrent;
             }
 
-            if (abs($percentCloseNew - $percentCloseCurrent) > (self::MIN_MOVEMENT * 100 - 2)) {
-                if ((float)IPS_GetKernelVersion() < 5.6) {
-                    set_time_limit(30);
-                }
+            if (abs($percentCloseNew - $percentCloseCurrent) > (self::MIN_DIFF_TARGET_POSITION * 100)) {
                 sleep(1);
             } else {
                 $this->Logger_Dbg(
