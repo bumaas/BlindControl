@@ -2761,7 +2761,12 @@ private function getModuleVersion(): string
             $this->Logger_Dbg(
                 __FUNCTION__,
                 sprintf('#%s(%s): No Movement! Movement less than %s percent (%.3f).', $positionID, $propName, self::MIN_MOVEMENT * 100, $positionDiffPercentage)
-                );
+            );
+        } elseif (($positionDiffPercentage < self::MIN_DIFF_TARGET_POSITION)) {
+            $this->Logger_Dbg(
+                __FUNCTION__,
+                sprintf('#%s(%s): No Movement! End position already reached. Difference less than %s percent (%.3f).', $positionID, $propName, self::MIN_DIFF_TARGET_POSITION * 100, $positionDiffPercentage)
+            );
         } else {
             //Position setzen
             //Wert übertragen
