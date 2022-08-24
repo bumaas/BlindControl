@@ -269,6 +269,8 @@
         {"type": "NumberSpinner", "name": "UpdateInterval", "caption": "Update Interval", "suffix": "Minutes", "minimum": 0},
         {"type": "NumberSpinner", "name": "DeactivationAutomaticMovement", "caption": "Deactivation Time after automatic Movement", "suffix": "Minutes", "minimum": 0},
         {"type": "NumberSpinner", "name": "DeactivationManualMovement", "caption": "Deactivation Time after manual Movement", "suffix": "Minutes", "minimum": 0},
+        {"type": "NumberSpinner", "name": "MinMovement", "caption": "Minimum of Movement", "digits": "1", "suffix": "%"},
+        {"type": "NumberSpinner", "name": "MinMovementAtEndPosition", "caption": "Minimum of Movement to reach End Position", "digits": "1", "suffix": "%"},
         {"type": "CheckBox", "name": "ShowNotUsedElements", "caption": "Show not used elements"},
         {"type": "CheckBox", "name": "WriteLogInformationToIPSLogger", "caption": "Log and Error Information are written to the logfile of IPSLibrary instead of standard logfile"},
         {"type": "CheckBox", "name": "WriteDebugInformationToLogfile", "caption": "Debug information are written additionally to standard logfile"},

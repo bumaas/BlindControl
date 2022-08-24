@@ -119,7 +119,14 @@ class BlindController extends IPSModule
     private const PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS = 'SlatsLevelHighBrightnessShadowingBrightness';
     private const PROP_DAYSTARTID                                  = 'DayStartID';
     private const PROP_DAYENDID                                    = 'DayEndID';
+
+    //expert
     private const PROP_UPDATEINTERVAL                              = 'UpdateInterval';
+    private const PROP_DEACTIVATIONAUTOMATICMOVEMENT               = 'DeactivationAutomaticMovement';
+    private const PROP_DEACTIVATIONMANUALMOVEMENT                  = 'DeactivationManualMovement';
+    private const PROP_MINMOVEMENT                                 = 'MinMovement';
+    private const PROP_MINMOVEMENTATENDPOSITION                    = 'MinMovementAtEndPosition';
+
     private const PROP_DELAYTIMEDAYNIGHTCHANGE                     = 'DelayTimeDayNightChange';
     private const PROP_DELAYTIMEDAYNIGHTCHANGEISRANDOMLY           = 'DelayTimeDayNightChangeIsRandomly';
     private const PROP_SHOWNOTUSEDELEMENTS                         = 'ShowNotUsedElements';
@@ -685,7 +692,7 @@ class BlindController extends IPSModule
         // erhalten bleibt bevor es überschrieben wird.
 
         if ($considerDeactivationTimeAuto) {
-            $deactivationTimeAuto = $this->ReadPropertyInteger('DeactivationAutomaticMovement') * 60;
+            $deactivationTimeAuto = $this->ReadPropertyInteger(self::PROP_DEACTIVATIONAUTOMATICMOVEMENT) * 60;
         } else {
             $deactivationTimeAuto = 0;
         }
@@ -778,7 +785,7 @@ class BlindController extends IPSModule
             $positionsNew = $positionsAct;
         } elseif ($isDay) {
             $lastManualMovement         = json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true);
-            $deactivationManualMovement = $this->ReadPropertyInteger('DeactivationManualMovement');
+            $deactivationManualMovement = $this->ReadPropertyInteger(self::PROP_DEACTIVATIONMANUALMOVEMENT);
             if (isset($lastManualMovement['timeStamp'])
                 && (($deactivationManualMovement === 0)
                     || strtotime(
@@ -1097,6 +1104,9 @@ private function getModuleVersion(): string
         $this->RegisterPropertyInteger(self::PROP_DAYSTARTID, 0);
         $this->RegisterPropertyInteger(self::PROP_DAYENDID, 0);
 
+        $this->RegisterPropertyInteger(self::PROP_DELAYTIMEDAYNIGHTCHANGE, 0);
+        $this->RegisterPropertyBoolean(self::PROP_DELAYTIMEDAYNIGHTCHANGEISRANDOMLY, false);
+
         //shadowing according to sun position
         $this->RegisterPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION, 0);
         $this->RegisterPropertyInteger(self::PROP_AZIMUTHID, 0);
@@ -1159,12 +1169,11 @@ private function getModuleVersion(): string
 
 
         $this->RegisterPropertyInteger(self::PROP_UPDATEINTERVAL, 1);
-        $this->RegisterPropertyInteger('DeactivationAutomaticMovement', 20);
-        $this->RegisterPropertyInteger('DeactivationManualMovement', 120);
-        $this->RegisterPropertyInteger(self::PROP_DELAYTIMEDAYNIGHTCHANGE, 0);
-        $this->RegisterPropertyBoolean(self::PROP_DELAYTIMEDAYNIGHTCHANGEISRANDOMLY, false);
+        $this->RegisterPropertyInteger(self::PROP_DEACTIVATIONAUTOMATICMOVEMENT, 20);
+        $this->RegisterPropertyInteger(self::PROP_DEACTIVATIONMANUALMOVEMENT, 120);
+        $this->RegisterPropertyFloat(self::PROP_MINMOVEMENT, 5.0);
+        $this->RegisterPropertyFloat(self::PROP_MINMOVEMENTATENDPOSITION, 2.5);
         $this->RegisterPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS, false);
-
         $this->RegisterPropertyBoolean('WriteLogInformationToIPSLogger', false);
         $this->RegisterPropertyBoolean('WriteDebugInformationToLogfile', false);
         $this->RegisterPropertyBoolean('WriteDebugInformationToIPSLogger', false);
@@ -1618,12 +1627,12 @@ private function getModuleVersion(): string
             }
         }
 
-        if ($ret = $this->checkRangeInteger('DeactivationManualMovement', 0, 100000, self::STATUS_INST_DEACTIVATION_TIME_MANUAL_IS_INVALID)) {
+        if ($ret = $this->checkRangeInteger(self::PROP_DEACTIVATIONMANUALMOVEMENT, 0, 100000, self::STATUS_INST_DEACTIVATION_TIME_MANUAL_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
         }
 
-        if ($ret = $this->checkRangeInteger('DeactivationAutomaticMovement', 0, 100000, self::STATUS_INST_DEACTIVATION_TIME_AUTOMATIC_IS_INVALID)) {
+        if ($ret = $this->checkRangeInteger(self::PROP_DEACTIVATIONAUTOMATICMOVEMENT, 0, 100000, self::STATUS_INST_DEACTIVATION_TIME_AUTOMATIC_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
         }
@@ -2415,7 +2424,7 @@ private function getModuleVersion(): string
 
         if (IPS_VariableExists($thresholdIDHighBrightness)) {
             $thresholdLessBrightness = GetValue($thresholdIDHighBrightness);
-            if ($brightness > $thresholdLessBrightness) {
+            if ($brightness >= $thresholdLessBrightness) {
                 $positions['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS);
                 $positions['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS);
                 $this->Logger_Dbg(
@@ -2434,7 +2443,7 @@ private function getModuleVersion(): string
 
         if (IPS_VariableExists($thresholdIDLessBrightness)) {
             $thresholdBrightness = GetValue($thresholdIDLessBrightness);
-            if ($brightness > $thresholdBrightness) {
+            if ($brightness >= $thresholdBrightness) {
                 $positions['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS);
                 $positions['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS);
                 $this->Logger_Dbg(
@@ -2489,7 +2498,7 @@ private function getModuleVersion(): string
             return false;
         }
 
-        $deactivationTimeManuSecs = $this->ReadPropertyInteger('DeactivationManualMovement') * 60;
+        $deactivationTimeManuSecs = $this->ReadPropertyInteger(self::PROP_DEACTIVATIONMANUALMOVEMENT) * 60;
 
         //Zeitpunkt festhalten, sofern noch nicht geschehen
         if ($tsBlindLastMovement !== json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true)['timeStamp']) {
@@ -2733,13 +2742,16 @@ private function getModuleVersion(): string
                 $positionAct,
                 $positionNew,
                 $positionDiffPercentage,
-                self::MIN_MOVEMENT,
+                $this->ReadPropertyFloat(self::PROP_MINMOVEMENT)/100,
                 $timeDiffAuto,
                 $deactivationTimeAuto
             )
         );
 
         $ret = false;
+
+        $minMovement = $this->ReadPropertyFloat(self::PROP_MINMOVEMENT)/100;
+        $minMovementAtEndPosition = $this->ReadPropertyFloat(self::PROP_MINMOVEMENTATENDPOSITION)/100;
 
         if ($timeDiffAuto < $deactivationTimeAuto){
             $this->Logger_Dbg(
@@ -2757,15 +2769,15 @@ private function getModuleVersion(): string
                 __FUNCTION__,
                 sprintf('#%s(%s): No Movement! Position %s already reached.', $positionID, $propName, $positionAct)
             );
-        } elseif (($positionDiffPercentage < self::MIN_MOVEMENT) && !in_array($positionNew, [$profile['MinValue'], $profile['MaxValue']], false)) {
+        } elseif (($positionDiffPercentage < $minMovement) && !in_array($positionNew, [$profile['MinValue'], $profile['MaxValue']], false)) {
             $this->Logger_Dbg(
                 __FUNCTION__,
-                sprintf('#%s(%s): No Movement! Movement less than %s percent (%.3f).', $positionID, $propName, self::MIN_MOVEMENT * 100, $positionDiffPercentage)
+                sprintf('#%s(%s): No Movement! Movement less than %s percent (%.3f).', $positionID, $propName, $minMovement * 100, $positionDiffPercentage)
             );
-        } elseif (($positionDiffPercentage < self::MIN_DIFF_TARGET_POSITION)) {
+        } elseif (($positionDiffPercentage < $minMovementAtEndPosition/100)) {
             $this->Logger_Dbg(
                 __FUNCTION__,
-                sprintf('#%s(%s): No Movement! End position already reached. Difference less than %s percent (%.3f).', $positionID, $propName, self::MIN_DIFF_TARGET_POSITION * 100, $positionDiffPercentage)
+                sprintf('#%s(%s): No Movement! End position already reached. Difference less than %s percent (%.3f).', $positionID, $propName, $minMovementAtEndPosition * 100, $positionDiffPercentage)
             );
         } else {
             //Position setzen
@@ -2813,6 +2825,7 @@ private function getModuleVersion(): string
     private function waitUntilBlindLevelIsReached(string $propName, $positionNew): bool
     {
         $levelID = $this->ReadPropertyInteger($propName);
+        $minMovementAtEndPosition = $this->ReadPropertyFloat(self::PROP_MINMOVEMENTATENDPOSITION);
 
         $profile         = $this->GetProfileInformation($propName);
         $percentCloseNew = ($positionNew - $profile['MinValue']) / ($profile['MaxValue'] - $profile['MinValue']) * 100;
@@ -2828,7 +2841,7 @@ private function getModuleVersion(): string
                 $percentCloseCurrent = 100 - $percentCloseCurrent;
             }
 
-            if (abs($percentCloseNew - $percentCloseCurrent) > (self::MIN_DIFF_TARGET_POSITION * 100)) {
+            if (abs($percentCloseNew - $percentCloseCurrent) > $minMovementAtEndPosition) {
                 sleep(1);
             } else {
                 $this->Logger_Dbg(

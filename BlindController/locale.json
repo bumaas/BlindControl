@@ -112,6 +112,8 @@
       "Update Interval": "Steuerungsintervall",
       "Deactivation Time after automatic Movement": "Zeit der Deaktivierung nach automatischer Fahrt",
       "Deactivation Time after manual Movement": "Zeit der Deaktivierung nach manueller Fahrt",
+      "Minimum of Movement": "Minimale Bewegung",
+      "Minimum of Movement to reach End Position": "Minimale Bewegung zum Erreichen der Endposition",
       "Show not used elements": "Zeige nicht benutzte Elemente",
       "Delay Time of Day Night Change": "Verzögerung beim Tag/Nacht-Wechsel",
       "Seconds": "Sekunden",
