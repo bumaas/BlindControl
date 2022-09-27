@@ -17,8 +17,8 @@ Steuert einen Rollladen bzw. eine Jalousie nach vorgegebenen Einstellungen.
 5. [Konfiguration](#5-konfiguration)  
 6. [Statusvariablen und Profile](#6-statusvariablen-und-profile)  
 7. [Anhang](#7-anhang)
-    1. [GUIDs der Module](#1-guids-der-module)
-    2. [Spenden](#2-spenden)
+    1. [GUIDs der Module](#guids-der-module)
+    2. [Spenden](#spenden)
 
 ## 1. Funktionsumfang
 
@@ -142,7 +142,7 @@ Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstell
 Das Modul holt aus dem Wochenplan ausschließlich die Aktionszeiten und den Aktionstyp.
 
 **Wichtig:** 
-- der Wochenplan muss genau zwei Aktionen mit ID 1 und ID 2 beinhalten. Die eigentlichen Aktionen bleiben dabei jedoch leer, da der Wochenplan nicht von IP-Symcon direkt ausgeführt werden soll.
+- der Wochenplan muss genau zwei Aktionen mit ID 1 und ID 2 beinhalten. Die eigentlichen Aktionen bleiben dabei jedoch "leer", da der Wochenplan nicht von IP-Symcon direkt ausgeführt werden soll. Um eine Aktion leer zu lassen, ist die Aktion "Führe PHP Code" auszuwählen. Dabei bleibt dann der Code leer.
 - Die Aktion mit ID 1 stellt dabei die Aktion zum Runterfahren des Rollladens und die ID 2 die Aktion zum Hochfahren des Rollladens dar.
 - Es darf nur maximal einen Zeitraum zur Aktion 2 (Hochfahren) geben.
 - ob ein Wochenplan aktiv ist oder nicht wird nicht berücksichtigt
