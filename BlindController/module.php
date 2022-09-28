@@ -1449,7 +1449,7 @@ private function getModuleVersion(): string
 
         if ($ret = $this->checkVariableId(
             self::PROP_AZIMUTHID,
-            $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION) === 0,
+            $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION) < 10000,
             [VARIABLETYPE_FLOAT],
             self::STATUS_INST_AZIMUTHID_IS_INVALID
         )) {
@@ -1459,7 +1459,7 @@ private function getModuleVersion(): string
 
         if ($ret = $this->checkVariableId(
             self::PROP_ALTITUDEID,
-            $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION) === 0,
+            $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION) < 10000,
             [VARIABLETYPE_FLOAT],
             self::STATUS_INST_ALTITUDEID_IS_INVALID
         )) {
