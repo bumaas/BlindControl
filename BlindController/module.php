@@ -3061,24 +3061,24 @@ private function getModuleVersion(): string
         //gibt es übersteuernde Zeiten?
         $idWakeUpTime = $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEID);
         if (IPS_VariableExists($idWakeUpTime)) {
-            $heute_auf_ts = strtotime(GetValueString($idWakeUpTime)) + $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEOFFSET) * 60;
+            $heute_auf_ts = strtotime(GetValueString($idWakeUpTime)) ;
             if ($heute_auf_ts === false) {
                 $this->Logger_Dbg(__FUNCTION__, sprintf('No valid WakeUpTime found: \'%s\' (ignored)', GetValueString($idWakeUpTime)));
             } else {
                 // es wurde eine gültige Zeit gefunden
-                $heute_auf = date('H:i', $heute_auf_ts);
+                $heute_auf = date('H:i', $heute_auf_ts + $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEOFFSET) * 60);
                 $this->Logger_Dbg(__FUNCTION__, sprintf('WakeUpTime found: %s', $heute_auf));
             }
         }
 
         $idBedTime = $this->ReadPropertyInteger(self::PROP_BEDTIMEID);
         if (IPS_VariableExists($idBedTime)) {
-            $heute_ab_ts = strtotime(GetValueString($idBedTime)) + $this->ReadPropertyInteger(self::PROP_BEDTIMEOFFSET) * 60;
+            $heute_ab_ts = strtotime(GetValueString($idBedTime));
             if ($heute_ab_ts === false) {
                 $this->Logger_Dbg(__FUNCTION__, sprintf('No valid BedTime found: \'%s\' (ignored)', GetValueString($idBedTime)));
             } else {
                 // es wurde eine gültige Zeit gefunden
-                $heute_ab = date('H:i', $heute_ab_ts);
+                $heute_ab = date('H:i', $heute_ab_ts + $this->ReadPropertyInteger(self::PROP_BEDTIMEOFFSET) * 60);
                 $this->Logger_Dbg(__FUNCTION__, sprintf('BedTime: %s', $heute_ab));
             }
         }
