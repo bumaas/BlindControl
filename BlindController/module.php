@@ -100,8 +100,11 @@ class BlindController extends IPSModule
 
 
     //shadowing according to brightness
-    private const PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS         = 'BrightnessIDShadowingBrightness';
-    private const PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS = 'BrightnessAvgMinutesShadowingBrightness';
+    private const PROP_ACTIVATORIDSHADOWINGBRIGHTNESS           = 'ActivatorIDShadowingBrightness';
+    private const PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS          = 'BrightnessIDShadowingBrightness';
+    private const PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS  = 'BrightnessAvgMinutesShadowingBrightness';
+    private const PROP_THRESHOLDIDHIGHBRIGHTNESS                = 'ThresholdIDHighBrightness';
+    private const PROP_THRESHOLDIDLESSBRIGHTNESS                = 'ThresholdIDLessBrightness';
 
     private const PROP_ACTIVATEDINDIVIDUALDAYLEVELS                = 'ActivatedIndividualDayLevels';
     private const PROP_DAYBLINDLEVEL                               = 'DayBlindLevel';
@@ -453,7 +456,7 @@ class BlindController extends IPSModule
                             $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID),
                             $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
                             $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
-                            $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
+                            $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS),
                             $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION)
                         ],
                         true
@@ -685,6 +688,7 @@ class BlindController extends IPSModule
             return false;
         }
 
+        $this->Logger_Dbg(__FUNCTION__, 'GetMessageList: ' . json_encode($this->GetMessageList()));
         // globale Instanzvariablen setzen
         $this->profileBlindLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
 
@@ -1137,13 +1141,13 @@ private function getModuleVersion(): string
         $this->RegisterPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL, 0);
 
         //shadowing according to brightness
-        $this->RegisterPropertyInteger('ActivatorIDShadowingBrightness', 0);
+        $this->RegisterPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS, 0);
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS, 0);
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS, 0);
-        $this->RegisterPropertyInteger('ThresholdIDLessBrightness', 0);
+        $this->RegisterPropertyInteger(self::PROP_THRESHOLDIDLESSBRIGHTNESS, 0);
         $this->RegisterPropertyFloat(self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS, 0);
         $this->RegisterPropertyFloat(self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS, 0);
-        $this->RegisterPropertyInteger('ThresholdIDHighBrightness', 0);
+        $this->RegisterPropertyInteger(self::PROP_THRESHOLDIDHIGHBRIGHTNESS, 0);
         $this->RegisterPropertyFloat(self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS, 0);
         $this->RegisterPropertyFloat(self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS, 0);
 
@@ -1209,10 +1213,10 @@ private function getModuleVersion(): string
             $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION),
             $this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION),
 
-            $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
+            $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS),
             $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS),
-            $this->ReadPropertyInteger('ThresholdIDLessBrightness'),
-            $this->ReadPropertyInteger('ThresholdIDHighBrightness')
+            $this->ReadPropertyInteger(self::PROP_THRESHOLDIDLESSBRIGHTNESS),
+            $this->ReadPropertyInteger(self::PROP_THRESHOLDIDHIGHBRIGHTNESS)
         ];
 
         foreach ($this->GetReferenceList() as $ref) {
@@ -1247,10 +1251,10 @@ private function getModuleVersion(): string
                 self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION
             ),
             self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION         => $this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION),
-            'ActivatorIDShadowingBrightness'                       => $this->ReadPropertyInteger('ActivatorIDShadowingBrightness'),
+            self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS              => $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS),
             self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS             => $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS),
-            'ThresholdIDHighBrightness'                            => $this->ReadPropertyInteger('ThresholdIDHighBrightness'),
-            'ThresholdIDLessBrightness'                            => $this->ReadPropertyInteger('ThresholdIDLessBrightness')
+            self::PROP_THRESHOLDIDHIGHBRIGHTNESS                            => $this->ReadPropertyInteger(self::PROP_THRESHOLDIDHIGHBRIGHTNESS),
+            self::PROP_THRESHOLDIDLESSBRIGHTNESS                            => $this->ReadPropertyInteger(self::PROP_THRESHOLDIDLESSBRIGHTNESS)
         ];
 
         foreach ($this->GetMessageList() as $senderId => $msgs) {
@@ -1498,7 +1502,7 @@ private function getModuleVersion(): string
         }
 
         if ($ret = $this->checkVariableId(
-            'ActivatorIDShadowingBrightness',
+            self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS,
             true,
             [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
             self::STATUS_INST_ACTIVATORIDSHADOWINGBRIGHTNESS_IS_INVALID
@@ -1518,7 +1522,7 @@ private function getModuleVersion(): string
         }
 
         if ($ret = $this->checkVariableId(
-            'ThresholdIDHighBrightness',
+            self::PROP_THRESHOLDIDHIGHBRIGHTNESS,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
             self::STATUS_INST_THRESHOLDIDHIGHBRIGHTNESS_IS_INVALID
@@ -1528,7 +1532,7 @@ private function getModuleVersion(): string
         }
 
         if ($ret = $this->checkVariableId(
-            'ThresholdIDLessBrightness',
+            self::PROP_THRESHOLDIDLESSBRIGHTNESS,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
             self::STATUS_INST_THRESHOLDIDLESSRIGHTNESS_IS_INVALID
@@ -2394,7 +2398,7 @@ private function getModuleVersion(): string
 
     private function getPositionsOfShadowingByBrightness(float $levelAct): ?array
     {
-        $activatorID = $this->ReadPropertyInteger('ActivatorIDShadowingBrightness');
+        $activatorID = $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS);
 
         if (!IPS_VariableExists($activatorID) || !GetValue($activatorID)) {
             // keine Beschattung bei Helligkeit gewünscht bzw. nicht notwendig
@@ -2407,8 +2411,8 @@ private function getModuleVersion(): string
             return null;
         }
 
-        $thresholdIDHighBrightness = $this->ReadPropertyInteger('ThresholdIDHighBrightness');
-        $thresholdIDLessBrightness = $this->ReadPropertyInteger('ThresholdIDLessBrightness');
+        $thresholdIDHighBrightness = $this->ReadPropertyInteger(self::PROP_THRESHOLDIDHIGHBRIGHTNESS);
+        $thresholdIDLessBrightness = $this->ReadPropertyInteger(self::PROP_THRESHOLDIDLESSBRIGHTNESS);
         if (!IPS_VariableExists($thresholdIDHighBrightness) && !IPS_VariableExists($thresholdIDLessBrightness)) {
             trigger_error(sprintf('Instance %s: Neither ThresholdIDHighBrightness nor ThresholdIDLowBrightness exist', $this->InstanceID));
             return null;
