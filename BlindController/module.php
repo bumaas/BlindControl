@@ -151,9 +151,6 @@ class BlindController extends IPSModule
     private const VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
     private const VAR_IDENT_ACTIVATED    = 'ACTIVATED';
 
-    private const MIN_MOVEMENT = 0.066;
-    private const MIN_DIFF_TARGET_POSITION = 0.07;
-
     private $objectName;
 
     private $profileBlindLevel;
@@ -688,7 +685,6 @@ class BlindController extends IPSModule
             return false;
         }
 
-        $this->Logger_Dbg(__FUNCTION__, 'GetMessageList: ' . json_encode($this->GetMessageList()));
         // globale Instanzvariablen setzen
         $this->profileBlindLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
 
@@ -921,7 +917,7 @@ class BlindController extends IPSModule
         }
 
         if ($levelContactEmergency !== null) {
-            // wenn  der Emergency Kontakt geöffnet ist dann
+            // wenn der Emergency Kontakt geöffnet ist dann
             // wird die Bewegungssperre aufgehoben und der Rollladen geöffnet
             $deactivationTimeAuto       = 0;
             $bNoMove                    = false;
@@ -941,7 +937,7 @@ class BlindController extends IPSModule
                 )
             );
         } elseif ($positionsContactOpenBlind !== null) {
-            // wenn  ein Kontakt geöffnet ist und der Rollladen bzw die Lamellen aktuell unter dem ContactOpen Level steht, dann
+            // wenn ein Kontakt geöffnet ist und der Rollladen bzw die Lamellen aktuell unter dem ContactOpen Level steht, dann
             // wird die Bewegungssperre aufgehoben und das Level auf das Mindestlevel bei geöffnetem Kontakt gesetzt
             $bNoMove              = false;
             if ($this->profileBlindLevel['Reversed']) {
@@ -986,7 +982,7 @@ class BlindController extends IPSModule
                 )
             );
         } elseif ($positionsContactCloseBlind !== null) {
-            // wenn  ein Kontakt geöffnet ist und der Rollladen bzw. die Lamellen oberhalb dem ContactClose Level steht, dann
+            // wenn ein Kontakt geöffnet ist und der Rollladen bzw. die Lamellen oberhalb dem ContactClose Level steht, dann
             // wird die Bewegungssperre aufgehoben und das Level auf das Mindestlevel bei geöffnetem Kontakt gesetzt
             $bNoMove              = false;
             if ($this->profileBlindLevel['Reversed']) {
@@ -2160,7 +2156,7 @@ private function getModuleVersion(): string
             if (AC_GetLoggingStatus($archiveId, $brightnessID)) {
                 $werte = @AC_GetAggregatedValues($archiveId, $brightnessID, 6, strtotime('-' . $brightnessAvgMinutes . ' minutes'), time(), 0);
                 if ($werte === false || (count($werte) === 0)) {
-                    //bei der Sommer auf Winterzeitumstellung gab es eine Warning'EndTime is before StartTime) um kurz vor 3
+                    //bei der Sommer auf Winterzeitumstellung gab es eine Warning (EndTime is before StartTime) um kurz vor 3
                     return (float)GetValue($brightnessID);
                 }
 
@@ -2200,10 +2196,10 @@ private function getModuleVersion(): string
         $iBrightnessHysteresis = 0.1 * $thresholdBrightness;
 
         if ($temperature !== null) {
-            //bei Temperaturen über 24 Grad soll der Rollladen auch bei geringerer Helligkeit heruntergefahren werden (10% Schwellwertverringerung je Grad Temperaturdifferenz zu 24 °C)
+            //bei Temperaturen über 24 Grad soll der Rollladen auch bei geringerer Helligkeit heruntergefahren werden (10 % Schwellwertverringerung je Grad Temperaturdifferenz zu 24 °C)
             if ($temperature > 24) {
                 $thresholdBrightness -= ($temperature - 24) * 0.10 * $thresholdBrightness;
-            } //bei Temperaturen unter 10 Grad soll der Rollladen auch bei höherer Helligkeit nicht heruntergefahren werden (10% Schwellwerterhöhung je Grad Temperaturdifferenz zu 10 °C)
+            } //bei Temperaturen unter 10 Grad soll der Rollladen auch bei höherer Helligkeit nicht heruntergefahren werden (10 % Schwellwerterhöhung je Grad Temperaturdifferenz zu 10 °C)
             elseif ($temperature < 10) {
                 $thresholdBrightness += (10 - $temperature) * 0.10 * $thresholdBrightness;
             }
@@ -2265,8 +2261,8 @@ private function getModuleVersion(): string
 
     private function getBlindPositionsFromSunPositionExact(float $degSunAltitude, float $degSunAzimuth): array
     {
-        $WindowsHeigth     = $this->ReadPropertyInteger(self::PROP_WINDOWSHEIGHT);
-        $ParapetHeigth     = $this->ReadPropertyInteger(self::PROP_PARAPETHEIGHT);
+        $WindowsHeight     = $this->ReadPropertyInteger(self::PROP_WINDOWSHEIGHT);
+        $ParapetHeight     = $this->ReadPropertyInteger(self::PROP_PARAPETHEIGHT);
         $WindowsSlope      = $this->ReadPropertyInteger(self::PROP_WINDOWSSLOPE);
         $WindowOrientation = $this->ReadPropertyInteger(self::PROP_WINDOWORIENTATION);
         $DepthSunlight     = $this->ReadPropertyInteger(self::PROP_DEPTHSUNLIGHT);
@@ -2280,12 +2276,12 @@ private function getModuleVersion(): string
         $V_Sun[2] = sin(deg2rad(90 + $degSunAltitude)) * cos(deg2rad($degSunAzimuth_norm)) * -1;
 
         //-- Fensterpositionen (Brüstung + Höhe) bestimmen, geneigtes Fenster berücksichtigen
-        $x1 = cos(deg2rad(90 - $WindowsSlope)) * $WindowsHeigth;
-        $x2 = sin(deg2rad(90 - $WindowsSlope)) * $WindowsHeigth;
+        $x1 = cos(deg2rad(90 - $WindowsSlope)) * $WindowsHeight;
+        $x2 = sin(deg2rad(90 - $WindowsSlope)) * $WindowsHeight;
 
-        //Stützvektoren H (Heigth) und P (Parapet)
-        $H_Window = [0, $ParapetHeigth + $x1, $x2];
-        $P_Window = [0, $ParapetHeigth, 0];
+        //Stützvektoren H (Height) und P (Parapet)
+        $H_Window = [0, $ParapetHeight + $x1, $x2];
+        $P_Window = [0, $ParapetHeight, 0];
 
         //-- Schattenpunkte H' und P' bestimmen (siehe https://www.youtube.com/watch?v=QvV-dFlH63c&t=87s)
         $H_Shadow = $x2 + $this->Schattenpunkt_X0_X2_Ebene($H_Window, $V_Sun);
@@ -2310,8 +2306,8 @@ private function getModuleVersion(): string
                 'WindowsOrientation: %s, WindowsSlope: %s, WindowsHeigth: %s, ParapetHeigth: %s, DepthSunLight: %s => H_Shadow: %.0f, P_Shadow: %.0f, degreeOfShadowing (100%%=closed): %.0f%%',
                 $WindowOrientation,
                 $WindowsSlope,
-                $WindowsHeigth,
-                $ParapetHeigth,
+                $WindowsHeight,
+                $ParapetHeight,
                 $DepthSunlight,
                 $H_Shadow,
                 $P_Shadow,
