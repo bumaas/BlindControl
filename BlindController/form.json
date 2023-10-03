@@ -1,7 +1,7 @@
 {
   "elements": [
-    {"type": "SelectVariable", "name": "BlindLevelID", "caption": "Blind Level ID"},
-    {"type": "SelectVariable", "name": "SlatsLevelID", "caption": "Slats Level ID (optional)", "onChange": "IPS_RequestAction($id, 'SlatsLevelID', $SlatsLevelID);"},
+    {"type": "SelectVariable", "name": "BlindLevelID", "caption": "Blind Level ID", "requiredAction": 1, "validVariableTypes": [1, 2]},
+    {"type": "SelectVariable", "name": "SlatsLevelID", "caption": "Slats Level ID (optional)", "requiredAction": 1,"validVariableTypes": [1, 2], "onChange": "IPS_RequestAction($id, 'SlatsLevelID', $SlatsLevelID);"},
     {
       "type":  "ExpansionPanel", "caption": "Change of Night and Day",
       "items": [
@@ -14,7 +14,7 @@
               "items": [
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "SelectVariable", "name": "HolidayIndicatorID", "caption": "Holiday Indicator ID", "onChange": "IPS_RequestAction($id, 'HolidayIndicatorID', $HolidayIndicatorID);"},
+                  {"type": "SelectVariable", "name": "HolidayIndicatorID", "caption": "Holiday Indicator ID", "validVariableTypes": [0],"onChange": "IPS_RequestAction($id, 'HolidayIndicatorID', $HolidayIndicatorID);"},
                   {
                     "type": "Select", "name": "DayUsedWhenHoliday", "caption": "Used Weekday when Holiday", "options": [
                     {"caption": "- not used -", "value": 0},
@@ -36,13 +36,13 @@
               "items": [
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "Wake-Up Time ID", "onChange": "IPS_RequestAction($id,'WakeUpTimeID',$WakeUpTimeID);"},
+                  {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "Wake-Up Time ID", "validVariableTypes": [3],"onChange": "IPS_RequestAction($id,'WakeUpTimeID',$WakeUpTimeID);"},
                   {"type": "NumberSpinner", "name": "WakeUpTimeOffset", "caption": "Wake-Up Time Offset", "suffix": "Minutes"}
                 ]
                 },
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "SelectVariable", "name": "BedTimeID", "caption": "Bedtime ID", "onChange": "IPS_RequestAction($id,'BedTimeID',$BedTimeID);"},
+                  {"type": "SelectVariable", "name": "BedTimeID", "caption": "Bedtime ID","validVariableTypes": [3], "onChange": "IPS_RequestAction($id,'BedTimeID',$BedTimeID);"},
                   {"type": "NumberSpinner", "name": "BedTimeOffset", "caption": "Bedtime Offset", "suffix": "Minutes"}
                 ]
                 }
@@ -67,21 +67,21 @@
         {
           "type":  "ExpansionPanel", "caption": "Is Day Detection (optional)",
           "items": [
-            {"type": "SelectVariable", "name": "IsDayIndicatorID", "caption": "Is Day Indicator ID"},
+            {"type": "SelectVariable", "name": "IsDayIndicatorID", "validVariableTypes": [0], "caption": "Is Day Indicator ID"},
             {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day is determined by the brightness:"},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID", "onChange": "IPS_RequestAction($id,'BrightnessID',$BrightnessID);"},
-              {"type": "NumberSpinner", "name": "BrightnessAvgMinutes", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0},
-              {"type": "SelectVariable", "name": "BrightnessThresholdID", "caption": "Brightness Threshold ID"}
+              {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID", "validVariableTypes": [1, 2], "onChange": "IPS_RequestAction($id,'BrightnessID',$BrightnessID);"},
+              {"type": "NumberSpinner", "name": "BrightnessAvgMinutes", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0, "validVariableTypes": [1, 2]},
+              {"type": "SelectVariable", "name": "BrightnessThresholdID", "validVariableTypes": [1, 2], "caption": "Brightness Threshold ID"}
             ]
             },
             {"type": "Label", "caption": "The determined Day Start and/or End Time can also be overridden"},
             {
               "type":  "RowLayout", "caption": "Overruling Day Start and/or End Time (optional)",
               "items": [
-                {"type": "SelectVariable", "name": "DayStartID", "caption": "Start of the day ID"},
-                {"type": "SelectVariable", "name": "DayEndID", "caption": "End of the day ID"}
+                {"type": "SelectVariable", "name": "DayStartID", "validVariableTypes": [3], "caption": "Start of the day ID"},
+                {"type": "SelectVariable", "name": "DayEndID", "validVariableTypes": [3], "caption": "End of the day ID"}
               ]
             }
           ]
@@ -100,10 +100,10 @@
         {
           "type":  "ExpansionPanel", "caption": "Shadowing According to Sun Position (optional)",
           "items": [
-            {"type": "SelectVariable", "name": "ActivatorIDShadowingBySunPosition", "caption": "Activator ID"},
+            {"type": "SelectVariable", "name": "ActivatorIDShadowingBySunPosition", "validVariableTypes": [0, 1, 2], "caption": "Activator ID"},
             {"type": "Label", "caption": "Define the sun position indicators"},
-            {"type": "SelectVariable", "name": "AzimuthID", "caption": "Azimuth ID"},
-            {"type": "SelectVariable", "name": "AltitudeID", "caption": "Altitude ID"},
+            {"type": "SelectVariable", "name": "AzimuthID", "validVariableTypes": [2], "caption": "Azimuth ID"},
+            {"type": "SelectVariable", "name": "AltitudeID", "validVariableTypes": [2], "caption": "Altitude ID"},
             {"type": "Label", "caption": "Define the range of azimuth and altitude for shadowing:"},
             {
               "type": "RowLayout", "items": [
@@ -120,13 +120,13 @@
             {"type": "Label", "caption": "Define a brightness sensor if the brightness should be considered"},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "BrightnessIDShadowingBySunPosition", "caption": "Brightness ID", "onChange": "IPS_RequestAction($id,'BrightnessIDShadowingBySunPosition',$BrightnessIDShadowingBySunPosition);"},
+              {"type": "SelectVariable", "name": "BrightnessIDShadowingBySunPosition", "validVariableTypes": [1, 2], "caption": "Brightness ID", "onChange": "IPS_RequestAction($id,'BrightnessIDShadowingBySunPosition',$BrightnessIDShadowingBySunPosition);"},
               {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBySunPosition", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0},
-              {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "caption": "Brightness Threshold ID"}
+              {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "validVariableTypes": [1, 2], "caption": "Brightness Threshold ID"}
             ]
             },
             {"type": "Label", "caption": "Define an additional temperature sensor when the outdoor temperature should be considered"},
-            {"type": "SelectVariable", "name": "TemperatureIDShadowingBySunPosition", "caption": "Temperature ID"},
+            {"type": "SelectVariable", "name": "TemperatureIDShadowingBySunPosition", "validVariableTypes": [1, 2], "caption": "Temperature ID"},
             {"type": "Label", "caption": "Two alternative methods are available for determining the degree of shadowing.\\nThe simple variant calculates the height using the specified minimum and maximum position. It is only suitable for vertical window surfaces.\\nThe more precise variant calculates the height based on the orientation of the window, the inclination of the window and the specified depth that the sun is allowed to shine through the window. It is also suitable for inclined windows."},
             {
               "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing - simple variant, only suitable for facade windows (alternative)",
@@ -183,25 +183,25 @@
         {
           "type":  "ExpansionPanel", "caption": "Shadowing According to Brightness (optional)",
           "items": [
-            {"type": "SelectVariable", "name": "ActivatorIDShadowingBrightness", "caption": "Activator ID"},
+            {"type": "SelectVariable", "name": "ActivatorIDShadowingBrightness", "validVariableTypes": [0, 1, 2, 3], "caption": "Activator ID"},
             {"type": "Label", "caption": "Define the brightness indicator"},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "caption": "Brightness ID", "onChange": "IPS_RequestAction($id,'BrightnessIDShadowingBrightness',$BrightnessIDShadowingBrightness);"},
+              {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "validVariableTypes": [1, 2], "caption": "Brightness ID", "onChange": "IPS_RequestAction($id,'BrightnessIDShadowingBrightness',$BrightnessIDShadowingBrightness);"},
               {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBrightness", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0}
             ]
             },
             {"type": "Label", "caption": "Define up to two different levels"},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "caption": "Threshold less brightness ID"},
+              {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "validVariableTypes": [1, 2], "caption": "Threshold less brightness ID"},
               {"type": "NumberSpinner", "name": "BlindLevelLessBrightnessShadowingBrightness", "caption": "Blind Level at less brightness", "digits": "2"},
               {"type": "NumberSpinner", "name": "SlatsLevelLessBrightnessShadowingBrightness", "caption": "Slats Level at less brightness", "digits": "2"}
             ]
             },
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "caption": "Threshold high brightness ID"},
+              {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "validVariableTypes": [1, 2], "caption": "Threshold high brightness ID"},
               {"type": "NumberSpinner", "name": "BlindLevelHighBrightnessShadowingBrightness", "caption": "Blind Level at high brightness", "digits": "2"},
               {"type": "NumberSpinner", "name": "SlatsLevelHighBrightnessShadowingBrightness", "caption": "Slats Level at high brightness", "digits": "2"}
             ]
@@ -219,14 +219,14 @@
             {"type": "Label", "caption": "Define up to two contacts/variables. The blind is closed immediately to the given maximum height if one of the contacts are open."},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ContactClose1ID", "caption": "Contact 1 ID"},
+              {"type": "SelectVariable", "name": "ContactClose1ID", "validVariableTypes": [1, 2], "caption": "Contact 1 ID"},
               {"type": "NumberSpinner", "name": "ContactCloseLevel1", "caption": "Maximum height when the contact is open", "digits": "2"},
               {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel1", "caption": "Maximum slats position when the contact is open", "digits": "2"}
             ]
             },
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ContactClose2ID", "caption": "Contact 2 ID"},
+              {"type": "SelectVariable", "name": "ContactClose2ID", "validVariableTypes": [1, 2], "caption": "Contact 2 ID"},
               {"type": "NumberSpinner", "name": "ContactCloseLevel2", "caption": "Maximum height when the contact is open", "digits": "2"},
               {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel2", "caption": "Maximum slats position when the contact is open", "digits": "2"}
             ]
@@ -239,14 +239,14 @@
             {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened immediately to the given minimum height if one of the contacts are open."},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ContactOpen1ID", "caption": "Contact 1 ID"},
+              {"type": "SelectVariable", "name": "ContactOpen1ID", "validVariableTypes": [1, 2], "caption": "Contact 1 ID"},
               {"type": "NumberSpinner", "name": "ContactOpenLevel1", "caption": "Minimum height when the contact is open", "digits": "2"},
               {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel1", "caption": "Minimum slats position when the contact is open", "digits": "2"}
             ]
             },
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ContactOpen2ID", "caption": "Contact 2 ID"},
+              {"type": "SelectVariable", "name": "ContactOpen2ID", "validVariableTypes": [1, 2], "caption": "Contact 2 ID"},
               {"type": "NumberSpinner", "name": "ContactOpenLevel2", "caption": "Minimum height when the contact is open", "digits": "2"},
               {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel2", "caption": "Minimum slats position when the contact is open", "digits": "2"}
             ]
@@ -260,7 +260,7 @@
       "type":  "ExpansionPanel", "caption": "Emergency Contact (optional)",
       "items": [
         {"type": "Label", "caption": "Define an emergency contact. The blind is opened immediately if the contact is open. Additionally the automatic is deactivated."},
-        {"type": "SelectVariable", "name": "EmergencyContactID", "caption": "Emergency contact ID"}
+        {"type": "SelectVariable", "name": "EmergencyContactID", "validVariableTypes": [0, 1, 2], "caption": "Emergency contact ID"}
       ]
     },
     {

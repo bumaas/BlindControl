@@ -439,6 +439,7 @@ class BlindController extends IPSModule
 
             case EM_UPDATE:
             case VM_UPDATE:
+            case VM_CHANGEPROFILEACTION:
 
                 if ($Data[1] === false) {
                     break;
@@ -1256,6 +1257,10 @@ private function getModuleVersion(): string
             self::PROP_THRESHOLDIDLESSBRIGHTNESS                            => $this->ReadPropertyInteger(self::PROP_THRESHOLDIDLESSBRIGHTNESS)
         ];
 
+        $objectIDs_RequiredAction = [
+            self::PROP_BLINDLEVELID                      => $this->ReadPropertyInteger(self::PROP_BLINDLEVELID),
+            self::PROP_SLATSLEVELID                      => $this->ReadPropertyInteger(self::PROP_SLATSLEVELID),
+        ];
         foreach ($this->GetMessageList() as $senderId => $msgs) {
             foreach ($msgs as $msg) {
                 $this->UnregisterMessage($senderId, $msg);
@@ -1267,6 +1272,12 @@ private function getModuleVersion(): string
                 $this->RegisterMessage($id, VM_UPDATE);
             } elseif (IPS_EventExists($id)){
                 $this->RegisterMessage($id, EM_UPDATE);
+            }
+        }
+
+        foreach ($objectIDs_RequiredAction as $id) {
+            if (IPS_VariableExists($id)){
+                $this->RegisterMessage($id, VM_CHANGEPROFILEACTION);
             }
         }
     }
@@ -1714,11 +1725,19 @@ private function getModuleVersion(): string
                 return $errStatus;
             }
 
-            if ($mustBeSwitchable && !(($variable['VariableCustomAction'] >= 10000) || ($variable['VariableAction'] >= 10000))){
-                $this->Logger_Err(
-                    sprintf('\'%s\': die Variable ist nicht schaltbar', $this->objectName)
-                );
-                return $errStatus;
+            if ($mustBeSwitchable){
+                if ($variable['VariableCustomAction'] != 0){
+                    $profileAction = $variable['VariableCustomAction'];
+                } else {
+                    $profileAction = $variable['VariableAction'];
+                }
+
+                if ($profileAction <= 10000){
+                    $this->Logger_Err(
+                        sprintf('\'%s\': die Variable ist nicht schaltbar', $this->objectName)
+                    );
+                    return $errStatus;
+                }
             }
         }
 
