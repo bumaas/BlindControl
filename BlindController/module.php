@@ -151,6 +151,9 @@ class BlindController extends IPSModule
     private const VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
     private const VAR_IDENT_ACTIVATED    = 'ACTIVATED';
 
+    private const MOVEMENT_WAIT_TIME = 90; //Wartezeit bis zur Erreichung der Zielposition in Sekunden
+    private const IGNORE_MOVEMENT_TIME = 40; //Nach einer Bewegung wird eine erneute gleiche Bewegung innerhalb dieser Zeit ignoriert
+    private const ALLOWED_TOLERANCE_MOVEMENT = 1; //erlaubte Abweichung bei Bewegungen in Prozent
     private $objectName;
 
     private $profileBlindLevel;
@@ -1303,6 +1306,7 @@ private function getModuleVersion(): string
             self::PROP_BLINDLEVELID,
             false,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            true,
             self::STATUS_INST_BLIND_LEVEL_ID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1323,6 +1327,7 @@ private function getModuleVersion(): string
             self::PROP_SLATSLEVELID,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            true,
             self::STATUS_INST_SLATSLEVEL_ID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1345,18 +1350,30 @@ private function getModuleVersion(): string
             return;
         }
 
-        if ($ret = $this->checkVariableId(self::PROP_WAKEUPTIMEID, true, [VARIABLETYPE_STRING], self::STATUS_INST_WAKEUPTIME_ID_IS_INVALID)) {
+        if ($ret = $this->checkVariableId(self::PROP_WAKEUPTIMEID,
+                                          true,
+                                          [VARIABLETYPE_STRING], false,
+                                          self::STATUS_INST_WAKEUPTIME_ID_IS_INVALID
+        )) {
             $this->SetStatus($ret);
             return;
         }
 
-        if ($ret = $this->checkVariableId(self::PROP_BEDTIMEID, true, [VARIABLETYPE_STRING], self::STATUS_INST_SLEEPTIME_ID_IS_INVALID)) {
+        if ($ret = $this->checkVariableId(self::PROP_BEDTIMEID,
+                                          true,
+                                          [VARIABLETYPE_STRING], false,
+                                          self::STATUS_INST_SLEEPTIME_ID_IS_INVALID
+        )) {
             $this->SetStatus($ret);
             return;
         }
 
         if ($ret =
-            $this->checkVariableId(self::PROP_HOLIDAYINDICATORID, true, [VARIABLETYPE_BOOLEAN], self::STATUS_INST_HOLYDAY_INDICATOR_ID_IS_INVALID)) {
+            $this->checkVariableId(self::PROP_HOLIDAYINDICATORID,
+                                   true,
+                                   [VARIABLETYPE_BOOLEAN], false,
+                                   self::STATUS_INST_HOLYDAY_INDICATOR_ID_IS_INVALID
+            )) {
             $this->SetStatus($ret);
             return;
         }
@@ -1365,6 +1382,7 @@ private function getModuleVersion(): string
             self::PROP_BRIGHTNESSID,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_BRIGHTNESS_ID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1375,6 +1393,7 @@ private function getModuleVersion(): string
             self::PROP_DAYSTARTID,
             true,
             [VARIABLETYPE_STRING],
+            false,
             self::STATUS_INST_DAYSTART_ID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1385,6 +1404,7 @@ private function getModuleVersion(): string
             self::PROP_DAYENDID,
             true,
             [VARIABLETYPE_STRING],
+            false,
             self::STATUS_INST_DAYEND_ID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1395,6 +1415,7 @@ private function getModuleVersion(): string
             self::PROP_BRIGHTNESSTHRESHOLDID,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_BRIGHTNESS_THRESHOLD_ID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1402,7 +1423,11 @@ private function getModuleVersion(): string
         }
 
         if ($ret =
-            $this->checkVariableId(self::PROP_ISDAYINDICATORID, true, [VARIABLETYPE_BOOLEAN], self::STATUS_INST_ISDAY_INDICATOR_ID_IS_INVALID)) {
+            $this->checkVariableId(self::PROP_ISDAYINDICATORID,
+                                   true,
+                                   [VARIABLETYPE_BOOLEAN], false,
+                                   self::STATUS_INST_ISDAY_INDICATOR_ID_IS_INVALID
+            )) {
             $this->SetStatus($ret);
             return;
         }
@@ -1411,6 +1436,7 @@ private function getModuleVersion(): string
             self::PROP_CONTACTOPEN1ID,
             true,
             [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_CONTACT1_ID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1421,6 +1447,7 @@ private function getModuleVersion(): string
             self::PROP_CONTACTOPEN2ID,
             true,
             [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_CONTACT2_ID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1431,6 +1458,7 @@ private function getModuleVersion(): string
             self::PROP_EMERGENCYCONTACTID,
             true,
             [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_EMERGENCY_CONTACT_ID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1441,6 +1469,7 @@ private function getModuleVersion(): string
             self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION,
             true,
             [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_ACTIVATORIDSHADOWINGBYSUNPOSITION_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1451,6 +1480,7 @@ private function getModuleVersion(): string
             self::PROP_AZIMUTHID,
             $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION) < 10000,
             [VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_AZIMUTHID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1461,6 +1491,7 @@ private function getModuleVersion(): string
             self::PROP_ALTITUDEID,
             $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION) < 10000,
             [VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_ALTITUDEID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1471,6 +1502,7 @@ private function getModuleVersion(): string
             self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_BRIGTHNESSIDSHADOWINGBYSUNPOSITION_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1481,6 +1513,7 @@ private function getModuleVersion(): string
             self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1491,6 +1524,7 @@ private function getModuleVersion(): string
             self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_ROOMTEMPERATUREID_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1501,6 +1535,7 @@ private function getModuleVersion(): string
             self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS,
             true,
             [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_ACTIVATORIDSHADOWINGBRIGHTNESS_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1511,6 +1546,7 @@ private function getModuleVersion(): string
             self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_BRIGHTNESSIDSHADOWINGBRIGHTNESS_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1521,6 +1557,7 @@ private function getModuleVersion(): string
             self::PROP_THRESHOLDIDHIGHBRIGHTNESS,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_THRESHOLDIDHIGHBRIGHTNESS_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1531,6 +1568,7 @@ private function getModuleVersion(): string
             self::PROP_THRESHOLDIDLESSBRIGHTNESS,
             true,
             [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
+            false,
             self::STATUS_INST_THRESHOLDIDLESSRIGHTNESS_IS_INVALID
         )) {
             $this->SetStatus($ret);
@@ -1654,7 +1692,7 @@ private function getModuleVersion(): string
         $this->SetStatus(IS_ACTIVE);
     }
 
-    private function checkVariableId(string $propName, bool $optional, array $variableTypes, int $errStatus): int
+    private function checkVariableId(string $propName, bool $optional, array $variableTypes, bool $mustBeSwitchable, int $errStatus): int
     {
         $variableID = $this->ReadPropertyInteger($propName);
 
@@ -1672,6 +1710,13 @@ private function getModuleVersion(): string
             if (!in_array($variable['VariableType'], $variableTypes, true)) {
                 $this->Logger_Err(
                     sprintf('\'%s\': falscher Variablentyp (%s) für "%s" - nur %s erlaubt', $this->objectName, $variable['VariableType'], $propName, implode(', ', $variableTypes))
+                );
+                return $errStatus;
+            }
+
+            if ($mustBeSwitchable && !(($variable['VariableCustomAction'] >= 10000) || ($variable['VariableAction'] >= 10000))){
+                $this->Logger_Err(
+                    sprintf('\'%s\': die Variable ist nicht schaltbar', $this->objectName)
                 );
                 return $errStatus;
             }
@@ -2700,7 +2745,7 @@ private function getModuleVersion(): string
 
         $lastMove = json_decode($this->ReadAttributeString(self::ATTR_LASTMOVE . $propName), true);
 
-        if (((int)$lastMove['percentClose'] === $percentClose) && ($lastMove['timeStamp'] > strtotime('-40 secs'))) {
+        if (((int)$lastMove['percentClose'] === $percentClose) && ($lastMove['timeStamp'] > strtotime('-' . self::IGNORE_MOVEMENT_TIME . ' secs'))) {
             //dieselbe Bewegung in den letzten 40 Sekunden
             $this->Logger_Dbg(
                 __FUNCTION__,
@@ -2764,7 +2809,7 @@ private function getModuleVersion(): string
                     $timeDiffAuto
                 )
             );
-        } elseif ($positionDiffPercentage <= 0.01) {
+        } elseif ($positionDiffPercentage <= (self::ALLOWED_TOLERANCE_MOVEMENT/100)) {
             $this->Logger_Dbg(
                 __FUNCTION__,
                 sprintf('#%s(%s): No Movement! Position %s already reached.', $positionID, $propName, $positionAct)
@@ -2833,7 +2878,7 @@ private function getModuleVersion(): string
             $percentCloseNew = 100 - $percentCloseNew;
         }
 
-        for ($i = 0; $i < 90; $i++) { //wir warten maximal 90 Sekunden
+        for ($i = 0; $i < self::MOVEMENT_WAIT_TIME; $i++) { //wir warten maximal 90 Sekunden
             $currentValue        = GetValue($levelID);
             $percentCloseCurrent = ($currentValue - $profile['MinValue']) / ($profile['MaxValue'] - $profile['MinValue']) * 100;
 
