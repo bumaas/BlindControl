@@ -219,14 +219,14 @@
             {"type": "Label", "caption": "Define up to two contacts/variables. The blind is closed immediately to the given maximum height if one of the contacts are open."},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ContactClose1ID", "validVariableTypes": [1, 2], "caption": "Contact 1 ID"},
+              {"type": "SelectVariable", "name": "ContactClose1ID", "validVariableTypes": [0, 1, 2], "caption": "Contact 1 ID"},
               {"type": "NumberSpinner", "name": "ContactCloseLevel1", "caption": "Maximum height when the contact is open", "digits": "2"},
               {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel1", "caption": "Maximum slats position when the contact is open", "digits": "2"}
             ]
             },
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ContactClose2ID", "validVariableTypes": [1, 2], "caption": "Contact 2 ID"},
+              {"type": "SelectVariable", "name": "ContactClose2ID", "validVariableTypes": [0, 1, 2], "caption": "Contact 2 ID"},
               {"type": "NumberSpinner", "name": "ContactCloseLevel2", "caption": "Maximum height when the contact is open", "digits": "2"},
               {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel2", "caption": "Maximum slats position when the contact is open", "digits": "2"}
             ]
@@ -239,14 +239,14 @@
             {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened immediately to the given minimum height if one of the contacts are open."},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ContactOpen1ID", "validVariableTypes": [1, 2], "caption": "Contact 1 ID"},
+              {"type": "SelectVariable", "name": "ContactOpen1ID", "validVariableTypes": [0, 1, 2], "caption": "Contact 1 ID"},
               {"type": "NumberSpinner", "name": "ContactOpenLevel1", "caption": "Minimum height when the contact is open", "digits": "2"},
               {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel1", "caption": "Minimum slats position when the contact is open", "digits": "2"}
             ]
             },
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ContactOpen2ID", "validVariableTypes": [1, 2], "caption": "Contact 2 ID"},
+              {"type": "SelectVariable", "name": "ContactOpen2ID", "validVariableTypes": [0, 1, 2], "caption": "Contact 2 ID"},
               {"type": "NumberSpinner", "name": "ContactOpenLevel2", "caption": "Minimum height when the contact is open", "digits": "2"},
               {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel2", "caption": "Minimum slats position when the contact is open", "digits": "2"}
             ]

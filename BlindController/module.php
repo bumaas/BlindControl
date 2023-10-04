@@ -1734,7 +1734,7 @@ private function getModuleVersion(): string
 
                 if ($profileAction <= 10000){
                     $this->Logger_Err(
-                        sprintf('\'%s\': die Variable ist nicht schaltbar', $this->objectName)
+                        sprintf('\'%s\': die Variable #%s für "%s" ist nicht schaltbar', $this->objectName,  $variableID, $propName)
                     );
                     return $errStatus;
                 }
