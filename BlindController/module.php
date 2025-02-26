@@ -7,154 +7,155 @@ if (function_exists('IPSUtils_Include')) {
 }
 
 /** @noinspection AutoloadingIssuesInspection */
-class BlindController extends IPSModule
+class BlindController extends IPSModuleStrict
 {
     //Status
-    private const STATUS_INST_TIMETABLE_ID_IS_INVALID                                = 201;
-    private const STATUS_INST_HOLYDAY_INDICATOR_ID_IS_INVALID                        = 202;
-    private const STATUS_INST_BLIND_LEVEL_ID_IS_INVALID                              = 203;
-    private const STATUS_INST_BRIGHTNESS_ID_IS_INVALID                               = 204;
-    private const STATUS_INST_BRIGHTNESS_THRESHOLD_ID_IS_INVALID                     = 205;
-    private const STATUS_INST_ISDAY_INDICATOR_ID_IS_INVALID                          = 206;
-    private const STATUS_INST_DEACTIVATION_TIME_MANUAL_IS_INVALID                    = 207;
-    private const STATUS_INST_DEACTIVATION_TIME_AUTOMATIC_IS_INVALID                 = 208;
-    private const STATUS_INST_TIMETABLE_IS_INVALID                                   = 209;
-    private const STATUS_INST_CONTACT1_ID_IS_INVALID                                 = 210;
-    private const STATUS_INST_CONTACT2_ID_IS_INVALID                                 = 211;
-    private const STATUS_INST_EMERGENCY_CONTACT_ID_IS_INVALID                        = 212;
-    private const STATUS_INST_WAKEUPTIME_ID_IS_INVALID                               = 213;
-    private const STATUS_INST_SLEEPTIME_ID_IS_INVALID                                = 214;
-    private const STATUS_INST_DAYSTART_ID_IS_INVALID                                 = 215;
-    private const STATUS_INST_DAYEND_ID_IS_INVALID                                   = 216;
-    private const STATUS_INST_BLIND_LEVEL_IS_EMULATED                                = 217;
-    private const STATUS_INST_SLATS_LEVEL_IS_EMULATED                                = 218;
-    private const STATUS_INST_ACTIVATORIDSHADOWINGBYSUNPOSITION_IS_INVALID           = 220;
-    private const STATUS_INST_AZIMUTHID_IS_INVALID                                   = 221;
-    private const STATUS_INST_ALTITUDEID_IS_INVALID                                  = 222;
-    private const STATUS_INST_BRIGTHNESSIDSHADOWINGBYSUNPOSITION_IS_INVALID          = 223;
-    private const STATUS_INST_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION_IS_INVALID = 224;
-    private const STATUS_INST_ROOMTEMPERATUREID_IS_INVALID                           = 225;
-    private const STATUS_INST_ACTIVATORIDSHADOWINGBRIGHTNESS_IS_INVALID              = 230;
-    private const STATUS_INST_BRIGHTNESSIDSHADOWINGBRIGHTNESS_IS_INVALID             = 231;
-    private const STATUS_INST_THRESHOLDIDHIGHBRIGHTNESS_IS_INVALID                   = 232;
-    private const STATUS_INST_THRESHOLDIDLESSRIGHTNESS_IS_INVALID                    = 233;
-    private const STATUS_INST_BLINDLEVEL_IS_OUT_OF_RANGE                             = 234;
-    private const STATUS_INST_SLATSLEVEL_IS_OUT_OF_RANGE                             = 235;
-    private const STATUS_INST_SLATSLEVEL_ID_IS_INVALID                               = 236;
-    private const STATUS_INST_BLINDLEVEL_ID_PROFILE_NOT_SET                          = 237;
-    private const STATUS_INST_BLINDLEVEL_ID_PROFILE_MIN_MAX_INVALID                  = 238;
-    private const STATUS_INST_SLATSLEVEL_ID_PROFILE_MIN_MAX_INVALID                  = 239;
-    private const STATUS_INST_SLATSLEVEL_ID_PROFILE_NOT_SET                          = 240;
+    private const int STATUS_INST_TIMETABLE_ID_IS_INVALID                                = 201;
+    private const int STATUS_INST_HOLYDAY_INDICATOR_ID_IS_INVALID                        = 202;
+    private const int STATUS_INST_BLIND_LEVEL_ID_IS_INVALID                              = 203;
+    private const int STATUS_INST_BRIGHTNESS_ID_IS_INVALID                               = 204;
+    private const int STATUS_INST_BRIGHTNESS_THRESHOLD_ID_IS_INVALID                     = 205;
+    private const int STATUS_INST_ISDAY_INDICATOR_ID_IS_INVALID                          = 206;
+    private const int STATUS_INST_DEACTIVATION_TIME_MANUAL_IS_INVALID                    = 207;
+    private const int STATUS_INST_DEACTIVATION_TIME_AUTOMATIC_IS_INVALID                 = 208;
+    private const int STATUS_INST_TIMETABLE_IS_INVALID                                   = 209;
+    private const int STATUS_INST_CONTACT1_ID_IS_INVALID                                 = 210;
+    private const int STATUS_INST_CONTACT2_ID_IS_INVALID                                 = 211;
+    private const int STATUS_INST_EMERGENCY_CONTACT_ID_IS_INVALID                        = 212;
+    private const int STATUS_INST_WAKEUPTIME_ID_IS_INVALID                               = 213;
+    private const int STATUS_INST_SLEEPTIME_ID_IS_INVALID                                = 214;
+    private const int STATUS_INST_DAYSTART_ID_IS_INVALID                                 = 215;
+    private const int STATUS_INST_DAYEND_ID_IS_INVALID                                   = 216;
+    private const int STATUS_INST_BLIND_LEVEL_IS_EMULATED                                = 217;
+    private const int STATUS_INST_SLATS_LEVEL_IS_EMULATED                                = 218;
+    private const int STATUS_INST_ACTIVATORIDSHADOWINGBYSUNPOSITION_IS_INVALID           = 220;
+    private const int STATUS_INST_AZIMUTHID_IS_INVALID                                   = 221;
+    private const int STATUS_INST_ALTITUDEID_IS_INVALID                                  = 222;
+    private const int STATUS_INST_BRIGTHNESSIDSHADOWINGBYSUNPOSITION_IS_INVALID          = 223;
+    private const int STATUS_INST_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION_IS_INVALID = 224;
+    private const int STATUS_INST_ROOMTEMPERATUREID_IS_INVALID                           = 225;
+    private const int STATUS_INST_ACTIVATORIDSHADOWINGBRIGHTNESS_IS_INVALID              = 230;
+    private const int STATUS_INST_BRIGHTNESSIDSHADOWINGBRIGHTNESS_IS_INVALID             = 231;
+    private const int STATUS_INST_THRESHOLDIDHIGHBRIGHTNESS_IS_INVALID                   = 232;
+    private const int STATUS_INST_THRESHOLDIDLESSRIGHTNESS_IS_INVALID                    = 233;
+    private const int STATUS_INST_BLINDLEVEL_IS_OUT_OF_RANGE                             = 234;
+    private const int STATUS_INST_SLATSLEVEL_IS_OUT_OF_RANGE                             = 235;
+    private const int STATUS_INST_SLATSLEVEL_ID_IS_INVALID                               = 236;
+    private const int STATUS_INST_BLINDLEVEL_ID_PROFILE_NOT_SET                          = 237;
+    private const int STATUS_INST_BLINDLEVEL_ID_PROFILE_MIN_MAX_INVALID                  = 238;
+    private const int STATUS_INST_SLATSLEVEL_ID_PROFILE_MIN_MAX_INVALID                  = 239;
+    private const int STATUS_INST_SLATSLEVEL_ID_PROFILE_NOT_SET                          = 240;
 
     // -- property names --
-    private const PROP_BLINDLEVELID                      = 'BlindLevelID';
-    private const PROP_SLATSLEVELID                      = 'SlatsLevelID';
-    private const PROP_WEEKLYTIMETABLEEVENTID            = 'WeeklyTimeTableEventID';
-    private const PROP_HOLIDAYINDICATORID                = 'HolidayIndicatorID';
-    private const PROP_DAYUSEDWHENHOLIDAY                = 'DayUsedWhenHoliday';
-    private const PROP_WAKEUPTIMEID                      = 'WakeUpTimeID';
-    private const PROP_WAKEUPTIMEOFFSET                  = 'WakeUpTimeOffset';
-    private const PROP_BEDTIMEID                         = 'BedTimeID';
-    private const PROP_BEDTIMEOFFSET                     = 'BedTimeOffset';
-    private const PROP_CONTACTCLOSE1ID                   = 'ContactClose1ID';
-    private const PROP_CONTACTCLOSE2ID                   = 'ContactClose2ID';
-    private const PROP_CONTACTCLOSELEVEL1                = 'ContactCloseLevel1';
-    private const PROP_CONTACTCLOSELEVEL2                = 'ContactCloseLevel2';
-    private const PROP_CONTACTCLOSESLATSLEVEL1           = 'ContactCloseSlatsLevel1';
-    private const PROP_CONTACTCLOSESLATSLEVEL2           = 'ContactCloseSlatsLevel2';
-    private const PROP_CONTACTOPEN1ID                    = 'ContactOpen1ID';
-    private const PROP_CONTACTOPEN2ID                    = 'ContactOpen2ID';
-    private const PROP_CONTACTOPENLEVEL1                 = 'ContactOpenLevel1';
-    private const PROP_CONTACTOPENLEVEL2                 = 'ContactOpenLevel2';
-    private const PROP_CONTACTOPENSLATSLEVEL1            = 'ContactOpenSlatsLevel1';
-    private const PROP_CONTACTOPENSLATSLEVEL2            = 'ContactOpenSlatsLevel2';
-    private const PROP_EMERGENCYCONTACTID                = 'EmergencyContactID';
-    private const PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY = 'ContactsToCloseHaveHigherPriority';
+    private const string PROP_BLINDLEVELID                      = 'BlindLevelID';
+    private const string PROP_SLATSLEVELID                      = 'SlatsLevelID';
+    private const string PROP_WEEKLYTIMETABLEEVENTID            = 'WeeklyTimeTableEventID';
+    private const string PROP_HOLIDAYINDICATORID                = 'HolidayIndicatorID';
+    private const string PROP_DAYUSEDWHENHOLIDAY                = 'DayUsedWhenHoliday';
+    private const string PROP_WAKEUPTIMEID                      = 'WakeUpTimeID';
+    private const string PROP_WAKEUPTIMEOFFSET                  = 'WakeUpTimeOffset';
+    private const string PROP_BEDTIMEID                         = 'BedTimeID';
+    private const string PROP_BEDTIMEOFFSET                     = 'BedTimeOffset';
+    private const string PROP_CONTACTCLOSE1ID                   = 'ContactClose1ID';
+    private const string PROP_CONTACTCLOSE2ID                   = 'ContactClose2ID';
+    private const string PROP_CONTACTCLOSELEVEL1                = 'ContactCloseLevel1';
+    private const string PROP_CONTACTCLOSELEVEL2                = 'ContactCloseLevel2';
+    private const string PROP_CONTACTCLOSESLATSLEVEL1           = 'ContactCloseSlatsLevel1';
+    private const string PROP_CONTACTCLOSESLATSLEVEL2           = 'ContactCloseSlatsLevel2';
+    private const string PROP_CONTACTOPEN1ID                    = 'ContactOpen1ID';
+    private const string PROP_CONTACTOPEN2ID                    = 'ContactOpen2ID';
+    private const string PROP_CONTACTOPENLEVEL1                 = 'ContactOpenLevel1';
+    private const string PROP_CONTACTOPENLEVEL2                 = 'ContactOpenLevel2';
+    private const string PROP_CONTACTOPENSLATSLEVEL1            = 'ContactOpenSlatsLevel1';
+    private const string PROP_CONTACTOPENSLATSLEVEL2            = 'ContactOpenSlatsLevel2';
+    private const string PROP_EMERGENCYCONTACTID                = 'EmergencyContactID';
+    private const string PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY = 'ContactsToCloseHaveHigherPriority';
 
     //shadowing according to sun position
-    private const PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION           = 'ActivatorIDShadowingBySunPosition';
-    private const PROP_AZIMUTHID                                   = 'AzimuthID';
-    private const PROP_ALTITUDEID                                  = 'AltitudeID';
-    private const PROP_AZIMUTHFROM                                 = 'AzimuthFrom';
-    private const PROP_AZIMUTHTO                                   = 'AzimuthTo';
-    private const PROP_ALTITUDEFROM                                = 'AltitudeFrom';
-    private const PROP_ALTITUDETO                                  = 'AltitudeTo';
-    private const PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION          = 'BrightnessIDShadowingBySunPosition';
-    private const PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION  = 'BrightnessAvgMinutesShadowingBySunPosition';
-    private const PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION = 'BrightnessThresholdIDShadowingBySunPosition';
-    private const PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION         = 'TemperatureIDShadowingBySunPosition';
-    private const PROP_LOWSUNPOSITIONBLINDLEVEL                    = 'LowSunPositionBlindLevel';
-    private const PROP_HIGHSUNPOSITIONBLINDLEVEL                   = 'HighSunPositionBlindLevel';
-    private const PROP_LOWSUNPOSITIONSLATSLEVEL                    = 'LowSunPositionSlatsLevel';
-    private const PROP_HIGHSUNPOSITIONSLATSLEVEL                   = 'HighSunPositionSlatsLevel';
-    private const PROP_DEPTHSUNLIGHT                               = 'DepthSunLight';
-    private const PROP_WINDOWORIENTATION                           = 'WindowOrientation';
-    private const PROP_WINDOWSSLOPE                                = 'WindowsSlope';
-    private const PROP_WINDOWSHEIGHT                               = 'WindowHeight';
-    private const PROP_PARAPETHEIGHT                               = 'ParapetHeight';
-    private const PROP_MINIMUMSHADERELEVANTBLINDLEVEL              = 'MinimumShadeRelevantBlindLevel';
-    private const PROP_HALFSHADERELEVANTBLINDLEVEL                 = 'HalfShadeRelevantBlindLevel';
-    private const PROP_MAXIMUMSHADERELEVANTBLINDLEVEL              = 'MaximumShadeRelevantBlindLevel';
-    private const PROP_MINIMUMSHADERELEVANTSLATSLEVEL              = 'MinimumShadeRelevantSlatsLevel';
-    private const PROP_MAXIMUMSHADERELEVANTSLATSLEVEL              = 'MaximumShadeRelevantSlatsLevel';
+    private const string PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION           = 'ActivatorIDShadowingBySunPosition';
+    private const string PROP_AZIMUTHID                                   = 'AzimuthID';
+    private const string PROP_ALTITUDEID                                  = 'AltitudeID';
+    private const string PROP_AZIMUTHFROM                                 = 'AzimuthFrom';
+    private const string PROP_AZIMUTHTO                                   = 'AzimuthTo';
+    private const string PROP_ALTITUDEFROM                                = 'AltitudeFrom';
+    private const string PROP_ALTITUDETO                                  = 'AltitudeTo';
+    private const string PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION          = 'BrightnessIDShadowingBySunPosition';
+    private const string PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION  = 'BrightnessAvgMinutesShadowingBySunPosition';
+    private const string PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION = 'BrightnessThresholdIDShadowingBySunPosition';
+    private const string PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION         = 'TemperatureIDShadowingBySunPosition';
+    private const string PROP_LOWSUNPOSITIONBLINDLEVEL                    = 'LowSunPositionBlindLevel';
+    private const string PROP_HIGHSUNPOSITIONBLINDLEVEL                   = 'HighSunPositionBlindLevel';
+    private const string PROP_LOWSUNPOSITIONSLATSLEVEL                    = 'LowSunPositionSlatsLevel';
+    private const string PROP_HIGHSUNPOSITIONSLATSLEVEL                   = 'HighSunPositionSlatsLevel';
+    private const string PROP_DEPTHSUNLIGHT                               = 'DepthSunLight';
+    private const string PROP_WINDOWORIENTATION                           = 'WindowOrientation';
+    private const string PROP_WINDOWSSLOPE                                = 'WindowsSlope';
+    private const string PROP_WINDOWSHEIGHT                               = 'WindowHeight';
+    private const string PROP_PARAPETHEIGHT                               = 'ParapetHeight';
+    private const string PROP_MINIMUMSHADERELEVANTBLINDLEVEL              = 'MinimumShadeRelevantBlindLevel';
+    private const string PROP_HALFSHADERELEVANTBLINDLEVEL                 = 'HalfShadeRelevantBlindLevel';
+    private const string PROP_MAXIMUMSHADERELEVANTBLINDLEVEL              = 'MaximumShadeRelevantBlindLevel';
+    private const string PROP_MINIMUMSHADERELEVANTSLATSLEVEL              = 'MinimumShadeRelevantSlatsLevel';
+    private const string PROP_MAXIMUMSHADERELEVANTSLATSLEVEL              = 'MaximumShadeRelevantSlatsLevel';
 
 
     //shadowing according to brightness
-    private const PROP_ACTIVATORIDSHADOWINGBRIGHTNESS           = 'ActivatorIDShadowingBrightness';
-    private const PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS          = 'BrightnessIDShadowingBrightness';
-    private const PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS  = 'BrightnessAvgMinutesShadowingBrightness';
-    private const PROP_THRESHOLDIDHIGHBRIGHTNESS                = 'ThresholdIDHighBrightness';
-    private const PROP_THRESHOLDIDLESSBRIGHTNESS                = 'ThresholdIDLessBrightness';
+    private const string PROP_ACTIVATORIDSHADOWINGBRIGHTNESS          = 'ActivatorIDShadowingBrightness';
+    private const string PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS         = 'BrightnessIDShadowingBrightness';
+    private const string PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS = 'BrightnessAvgMinutesShadowingBrightness';
+    private const string PROP_THRESHOLDIDHIGHBRIGHTNESS               = 'ThresholdIDHighBrightness';
+    private const string PROP_THRESHOLDIDLESSBRIGHTNESS               = 'ThresholdIDLessBrightness';
 
-    private const PROP_ACTIVATEDINDIVIDUALDAYLEVELS                = 'ActivatedIndividualDayLevels';
-    private const PROP_DAYBLINDLEVEL                               = 'DayBlindLevel';
-    private const PROP_DAYSLATSLEVEL                               = 'DaySlatsLevel';
-    private const PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS              = 'ActivatedIndividualNightLevels';
-    private const PROP_NIGHTBLINDLEVEL                             = 'NightBlindLevel';
-    private const PROP_NIGHTSLATSLEVEL                             = 'NightSlatsLevel';
-    private const PROP_ISDAYINDICATORID                            = 'IsDayIndicatorID';
-    private const PROP_BRIGHTNESSID                                = 'BrightnessID';
-    private const PROP_BRIGHTNESSAVGMINUTES                        = 'BrightnessAvgMinutes';
-    private const PROP_BRIGHTNESSTHRESHOLDID                       = 'BrightnessThresholdID';
-    private const PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS = 'BlindLevelLessBrightnessShadowingBrightness';
-    private const PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS = 'SlatsLevelLessBrightnessShadowingBrightness';
-    private const PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS = 'BlindLevelHighBrightnessShadowingBrightness';
-    private const PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS = 'SlatsLevelHighBrightnessShadowingBrightness';
-    private const PROP_DAYSTARTID                                  = 'DayStartID';
-    private const PROP_DAYENDID                                    = 'DayEndID';
+    private const string PROP_ACTIVATEDINDIVIDUALDAYLEVELS                = 'ActivatedIndividualDayLevels';
+    private const string PROP_DAYBLINDLEVEL                               = 'DayBlindLevel';
+    private const string PROP_DAYSLATSLEVEL                               = 'DaySlatsLevel';
+    private const string PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS              = 'ActivatedIndividualNightLevels';
+    private const string PROP_NIGHTBLINDLEVEL                             = 'NightBlindLevel';
+    private const string PROP_NIGHTSLATSLEVEL                             = 'NightSlatsLevel';
+    private const string PROP_ISDAYINDICATORID                            = 'IsDayIndicatorID';
+    private const string PROP_BRIGHTNESSID                                = 'BrightnessID';
+    private const string PROP_BRIGHTNESSAVGMINUTES                        = 'BrightnessAvgMinutes';
+    private const string PROP_BRIGHTNESSTHRESHOLDID                       = 'BrightnessThresholdID';
+    private const string PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS = 'BlindLevelLessBrightnessShadowingBrightness';
+    private const string PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS = 'SlatsLevelLessBrightnessShadowingBrightness';
+    private const string PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS = 'BlindLevelHighBrightnessShadowingBrightness';
+    private const string PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS = 'SlatsLevelHighBrightnessShadowingBrightness';
+    private const string PROP_DAYSTARTID                                  = 'DayStartID';
+    private const string PROP_DAYENDID                                    = 'DayEndID';
 
     //expert
-    private const PROP_UPDATEINTERVAL                              = 'UpdateInterval';
-    private const PROP_DEACTIVATIONAUTOMATICMOVEMENT               = 'DeactivationAutomaticMovement';
-    private const PROP_DEACTIVATIONMANUALMOVEMENT                  = 'DeactivationManualMovement';
-    private const PROP_MINMOVEMENT                                 = 'MinMovement';
-    private const PROP_MINMOVEMENTATENDPOSITION                    = 'MinMovementAtEndPosition';
+    private const string PROP_UPDATEINTERVAL                = 'UpdateInterval';
+    private const string PROP_DEACTIVATIONAUTOMATICMOVEMENT = 'DeactivationAutomaticMovement';
+    private const string PROP_DEACTIVATIONMANUALMOVEMENT    = 'DeactivationManualMovement';
+    private const string PROP_MINMOVEMENT                   = 'MinMovement';
+    private const string PROP_MINMOVEMENTATENDPOSITION      = 'MinMovementAtEndPosition';
 
-    private const PROP_DELAYTIMEDAYNIGHTCHANGE                     = 'DelayTimeDayNightChange';
-    private const PROP_DELAYTIMEDAYNIGHTCHANGEISRANDOMLY           = 'DelayTimeDayNightChangeIsRandomly';
-    private const PROP_SHOWNOTUSEDELEMENTS                         = 'ShowNotUsedElements';
+    private const string PROP_DELAYTIMEDAYNIGHTCHANGE           = 'DelayTimeDayNightChange';
+    private const string PROP_DELAYTIMEDAYNIGHTCHANGEISRANDOMLY = 'DelayTimeDayNightChangeIsRandomly';
+    private const string PROP_SHOWNOTUSEDELEMENTS               = 'ShowNotUsedElements';
 
     //attribute names
-    private const ATTR_MANUALMOVEMENT           = 'manualMovement';
-    private const ATTR_LASTMOVE                 = 'lastMovement';
-    private const ATTR_TIMESTAMP_AUTOMATIC      = 'TimeStampAutomatic';
-    private const ATTR_CONTACT_OPEN             = 'AttrContactOpen';
-    private const ATTR_DAYTIME_CHANGE_TIME      = 'DaytimeChangeTime';
-    private const ATTR_LAST_ISDAYBYTIMESCHEDULE = 'LastIsDayByTimeSchedule';
+    private const string ATTR_MANUALMOVEMENT           = 'manualMovement';
+    private const string ATTR_LASTMOVE                 = 'lastMovement';
+    private const string ATTR_TIMESTAMP_AUTOMATIC      = 'TimeStampAutomatic';
+    private const string ATTR_CONTACT_OPEN             = 'AttrContactOpen';
+    private const string ATTR_DAYTIME_CHANGE_TIME      = 'DaytimeChangeTime';
+    private const string ATTR_LAST_ISDAYBYTIMESCHEDULE = 'LastIsDayByTimeSchedule';
 
     //timer names
-    private const TIMER_UPDATE           = 'Update';
-    private const TIMER_DELAYED_MOVEMENT = 'DelayedMovement';
+    private const string TIMER_UPDATE           = 'Update';
+    private const string TIMER_DELAYED_MOVEMENT = 'DelayedMovement';
 
 
     //variable names
-    private const VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
-    private const VAR_IDENT_ACTIVATED    = 'ACTIVATED';
+    private const string VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
+    private const string VAR_IDENT_ACTIVATED    = 'ACTIVATED';
 
-    private const MOVEMENT_WAIT_TIME = 90; //Wartezeit bis zur Erreichung der Zielposition in Sekunden
-    private const IGNORE_MOVEMENT_TIME = 40; //Nach einer Bewegung wird eine erneute gleiche Bewegung innerhalb dieser Zeit ignoriert
-    private const ALLOWED_TOLERANCE_MOVEMENT = 1; //erlaubte Abweichung bei Bewegungen in Prozent
-    private $objectName;
+    private const int MOVEMENT_WAIT_TIME         = 90; //Wartezeit bis zur Erreichung der Zielposition in Sekunden
+    private const int IGNORE_MOVEMENT_TIME       = 40; //Nach einer Bewegung wird eine erneute gleiche Bewegung innerhalb dieser Zeit ignoriert
+    private const int ALLOWED_TOLERANCE_MOVEMENT = 1; //erlaubte Abweichung bei Bewegungen in Prozent
+
+    private string $objectName;
 
     private $profileBlindLevel;
 
@@ -169,7 +170,7 @@ class BlindController extends IPSModule
         parent::__construct($InstanceID);
     }
 
-    public function Create()
+    public function Create(): void
     {
         // Diese Zeile nicht löschen.
         parent::Create();
@@ -190,7 +191,7 @@ class BlindController extends IPSModule
         );
     }
 
-    public function ApplyChanges()
+    public function ApplyChanges(): void
     {
         //we will wait until the kernel is ready
         $this->RegisterMessage(0, IPS_KERNELMESSAGE);
@@ -207,11 +208,9 @@ class BlindController extends IPSModule
         $this->RegisterVariables();
 
         $this->SetInstanceStatusAndTimerEvent();
-
     }
 
-    /** @noinspection PhpUnreachableStatementInspection */
-    public function RequestAction($Ident, $Value): bool
+    public function RequestAction($Ident, $Value): void
     {
         if (is_bool($Value)) {
             $this->Logger_Dbg(__FUNCTION__, sprintf('Ident: %s, Value: %s', $Ident, (int)$Value));
@@ -227,13 +226,11 @@ class BlindController extends IPSModule
                     $this->Logger_Inf(sprintf('\'%s\' wurde deaktiviert.', IPS_GetObject($this->InstanceID)['ObjectName']));
                 }
 
-                if ($this->SetValue($Ident, $Value)) {
-                    $this->SetInstanceStatusAndTimerEvent();
-                    IPS_RunScriptText(sprintf('BLC_ControlBlind(%s, %s);', $this->InstanceID, 'false'));
-                    //todo: kann später mal durch RegisterOnceTimer() ersetzt werden. Setzt aber 5.5 voraus.
-                    return true;
-                }
-                return false;
+                $this->SetValue($Ident, $Value);
+                $this->SetInstanceStatusAndTimerEvent();
+                IPS_RunScriptText(sprintf('BLC_ControlBlind(%s, %s);', $this->InstanceID, 'false'));
+                //todo: kann später mal durch RegisterOnceTimer() ersetzt werden. Setzt aber 5.5 voraus.
+                break;
 
             case self::PROP_SLATSLEVELID:
                 $this->UpdateFormField(
@@ -302,7 +299,7 @@ class BlindController extends IPSModule
                     'visible',
                     ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
                 );
-                return false;
+                break;
 
             case self::PROP_HOLIDAYINDICATORID:
                 $this->UpdateFormField(
@@ -310,7 +307,7 @@ class BlindController extends IPSModule
                     'visible',
                     ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
                 );
-                return false;
+                break;
 
             case self::PROP_WAKEUPTIMEID:
                 $this->UpdateFormField(
@@ -318,7 +315,7 @@ class BlindController extends IPSModule
                     'visible',
                     ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
                 );
-                return false;
+                break;
 
             case self::PROP_BEDTIMEID:
                 $this->UpdateFormField(
@@ -326,7 +323,7 @@ class BlindController extends IPSModule
                     'visible',
                     ($Value > 0) || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
                 );
-                return false;
+                break;
 
             case self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS:
                 $this->UpdateFormField(self::PROP_DAYBLINDLEVEL, 'visible', $Value || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS));
@@ -338,7 +335,7 @@ class BlindController extends IPSModule
                         self::PROP_SHOWNOTUSEDELEMENTS
                     )
                 );
-                return false;
+                break;
 
             case self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS:
                 $this->UpdateFormField(self::PROP_NIGHTBLINDLEVEL, 'visible', $Value || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS));
@@ -350,7 +347,7 @@ class BlindController extends IPSModule
                         self::PROP_SHOWNOTUSEDELEMENTS
                     )
                 );
-                return false;
+                break;
 
             case self::PROP_BRIGHTNESSID:
                 $this->UpdateFormField(
@@ -363,7 +360,7 @@ class BlindController extends IPSModule
                     'visible',
                     $Value || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
                 );
-                return false;
+                break;
 
             case self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION:
                 $this->UpdateFormField(
@@ -376,7 +373,7 @@ class BlindController extends IPSModule
                     'visible',
                     $Value || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
                 );
-                return false;
+                break;
 
             case self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS:
                 $this->UpdateFormField(
@@ -384,38 +381,20 @@ class BlindController extends IPSModule
                     'visible',
                     $Value || $this->ReadPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS)
                 );
-                return false;
+                break;
 
             case 'MoveBlindToShadowingPosition':
-                return $this->MoveBlindToShadowingPosition((int) $Value);
+                $this->MoveBlindToShadowingPosition((int)$Value);
+                break;
 
             default:
                 trigger_error(sprintf('Instance %s: Unknown Ident %s', $this->InstanceID, $Ident));
-                return false;
         }
-
-        trigger_error (sprintf('Error - not expected situation. Ident: %s, Value: %s', $Ident, $Value), E_USER_ERROR);
     }
 
-    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
         parent::MessageSink($TimeStamp, $SenderID, $Message, $Data);
-
-        if (json_decode($this->GetBuffer('LastMessage'), true) === [$SenderID, $Message, $Data]) {
-            $this->Logger_Dbg(
-                __FUNCTION__,
-                sprintf(
-                    'Duplicate Message: Timestamp: %s, SenderID: %s, Message: %s, Data: %s',
-                    $TimeStamp,
-                    $SenderID,
-                    $Message,
-                    json_encode($Data)
-                )
-            );
-            return;
-        }
-
-        $this->SetBuffer('LastMessage', json_encode([$SenderID, $Message, $Data]));
 
         $this->Logger_Dbg(
             __FUNCTION__,
@@ -426,7 +405,7 @@ class BlindController extends IPSModule
                 IPS_GetObject($SenderID)['ObjectName'],
                 $SenderID,
                 $Message,
-                json_encode($Data)
+                json_encode($Data, JSON_THROW_ON_ERROR)
             )
         );
 
@@ -474,9 +453,9 @@ class BlindController extends IPSModule
         }
     }
 
-    public function GetConfigurationForm()
+    public function GetConfigurationForm(): string
     {
-        $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+        $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true, 512, JSON_THROW_ON_ERROR);
 
         if (IPS_GetKernelVersion() < '5.20') {
             $elements[] = [
@@ -505,8 +484,8 @@ class BlindController extends IPSModule
 
         $this->SetVisibilityOfNotUsedElements($form);
 
-        $this->SendDebug('Form', json_encode($form), 0);
-        return json_encode($form);
+        $this->SendDebug('Form', json_encode($form, JSON_THROW_ON_ERROR), 0);
+        return json_encode($form, JSON_THROW_ON_ERROR);
     }
 
     private function SetVisibilityOfNotUsedElements(array &$form): void
@@ -525,8 +504,12 @@ class BlindController extends IPSModule
             'visible',
             IPS_VariableExists($this->ReadPropertyInteger(self::PROP_WAKEUPTIMEID)) || $bShow
         );
-        $form =
-            $this->MyUpdateFormField($form, self::PROP_BEDTIMEOFFSET, 'visible', IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BEDTIMEID)) || $bShow);
+        $form = $this->MyUpdateFormField(
+            $form,
+            self::PROP_BEDTIMEOFFSET,
+            'visible',
+            IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BEDTIMEID)) || $bShow
+        );
         $form = $this->MyUpdateFormField(
             $form,
             self::PROP_NIGHTBLINDLEVEL,
@@ -537,8 +520,11 @@ class BlindController extends IPSModule
             $form,
             self::PROP_NIGHTSLATSLEVEL,
             'visible',
-            (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) && $this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS))
-             || $bShow
+            (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))
+             && $this->ReadPropertyBoolean(
+                    self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS
+                ))
+            || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
@@ -550,8 +536,11 @@ class BlindController extends IPSModule
             $form,
             self::PROP_DAYSLATSLEVEL,
             'visible',
-            (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID)) && $this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS))
-             || $bShow
+            (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))
+             && $this->ReadPropertyBoolean(
+                    self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS
+                ))
+            || $bShow
         );
         $form = $this->MyUpdateFormField(
             $form,
@@ -653,11 +642,15 @@ class BlindController extends IPSModule
             $form,
             'ShadowingPosition',
             'visible',
-            ($this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL) > 0) || ($this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL) > 0) || $bShow
+            ($this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL) > 0)
+            || ($this->ReadPropertyFloat(
+                    self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL
+                ) > 0)
+            || $bShow
         );
     }
 
-    public function ReceiveData($JSONString): bool
+    public function ReceiveData(string $JSONString): string
     {
         trigger_error(sprintf('Fatal error: no ReceiveData expected. (%s)', $JSONString));
 
@@ -672,6 +665,7 @@ class BlindController extends IPSModule
      * @param bool $considerDeactivationTimeAuto
      *
      * @return bool
+     * @throws \JsonException
      */
     public function ControlBlind(bool $considerDeactivationTimeAuto): bool
     {
@@ -745,7 +739,9 @@ class BlindController extends IPSModule
             $deactivationTimeAuto = 0;
 
             //wird eine manuelle Bewegung zurückgesetzt
-            $this->WriteAttributeString(self::ATTR_MANUALMOVEMENT, json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null]));
+            $this->WriteAttributeString(self::ATTR_MANUALMOVEMENT,
+                                        json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null], JSON_THROW_ON_ERROR)
+            );
 
             //wird keine Bewegungssperre gesetzt
             $bNoMove = false;
@@ -788,7 +784,7 @@ class BlindController extends IPSModule
         if ($bNoMove) {
             $positionsNew = $positionsAct;
         } elseif ($isDay) {
-            $lastManualMovement         = json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true);
+            $lastManualMovement         = json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true, 512, JSON_THROW_ON_ERROR);
             $deactivationManualMovement = $this->ReadPropertyInteger(self::PROP_DEACTIVATIONMANUALMOVEMENT);
             if (isset($lastManualMovement['timeStamp'])
                 && (($deactivationManualMovement === 0)
@@ -943,32 +939,32 @@ class BlindController extends IPSModule
         } elseif ($positionsContactOpenBlind !== null) {
             // wenn ein Kontakt geöffnet ist und der Rollladen bzw die Lamellen aktuell unter dem ContactOpen Level steht, dann
             // wird die Bewegungssperre aufgehoben und das Level auf das Mindestlevel bei geöffnetem Kontakt gesetzt
-            $bNoMove              = false;
+            $bNoMove = false;
             if ($this->profileBlindLevel['Reversed']) {
                 if ($positionsContactOpenBlind['BlindLevel'] > $positionsNew['BlindLevel']) {
                     $positionsNew['BlindLevel'] = $positionsContactOpenBlind['BlindLevel'];
-                    if ($positionsContactOpenBlind['BlindLevel'] > $positionsAct['BlindLevel']){
+                    if ($positionsContactOpenBlind['BlindLevel'] > $positionsAct['BlindLevel']) {
                         $deactivationTimeAuto = 0;
                     }
-                    $Hinweis                    = 'Kontakt offen';
+                    $Hinweis = 'Kontakt offen';
                 }
             } elseif ($positionsContactOpenBlind['BlindLevel'] < $positionsNew['BlindLevel']) {
                 $positionsNew['BlindLevel'] = $positionsContactOpenBlind['BlindLevel'];
-                if ($positionsContactOpenBlind['BlindLevel'] < $positionsAct['BlindLevel']){
+                if ($positionsContactOpenBlind['BlindLevel'] < $positionsAct['BlindLevel']) {
                     $deactivationTimeAuto = 0;
                 }
-                $Hinweis                    = 'Kontakt offen';
+                $Hinweis = 'Kontakt offen';
             }
 
             if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
                 if ($this->profileSlatsLevel['Reversed']) {
                     if ($positionsContactOpenBlind['SlatsLevel'] > $positionsNew['SlatsLevel']) {
-                        $deactivationTimeAuto = 0;
+                        $deactivationTimeAuto       = 0;
                         $positionsNew['SlatsLevel'] = $positionsContactOpenBlind['SlatsLevel'];
                         $Hinweis                    = 'Kontakt offen';
                     }
                 } elseif ($positionsContactOpenBlind['SlatsLevel'] < $positionsNew['SlatsLevel']) {
-                    $deactivationTimeAuto = 0;
+                    $deactivationTimeAuto       = 0;
                     $positionsNew['SlatsLevel'] = $positionsContactOpenBlind['SlatsLevel'];
                     $Hinweis                    = 'Kontakt offen';
                 }
@@ -988,15 +984,15 @@ class BlindController extends IPSModule
         } elseif ($positionsContactCloseBlind !== null) {
             // wenn ein Kontakt geöffnet ist und der Rollladen bzw. die Lamellen oberhalb dem ContactClose Level steht, dann
             // wird die Bewegungssperre aufgehoben und das Level auf das Mindestlevel bei geöffnetem Kontakt gesetzt
-            $bNoMove              = false;
+            $bNoMove = false;
             if ($this->profileBlindLevel['Reversed']) {
                 if ($positionsContactCloseBlind['BlindLevel'] < $positionsNew['BlindLevel']) {
-                    $deactivationTimeAuto = 0;
+                    $deactivationTimeAuto       = 0;
                     $positionsNew['BlindLevel'] = $positionsContactCloseBlind['BlindLevel'];
                     $Hinweis                    = 'Kontakt offen';
                 }
             } elseif ($positionsContactCloseBlind['BlindLevel'] > $positionsNew['BlindLevel']) {
-                $deactivationTimeAuto = 0;
+                $deactivationTimeAuto       = 0;
                 $positionsNew['BlindLevel'] = $positionsContactCloseBlind['BlindLevel'];
                 $Hinweis                    = 'Kontakt offen';
             }
@@ -1004,12 +1000,12 @@ class BlindController extends IPSModule
             if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
                 if ($this->profileSlatsLevel['Reversed']) {
                     if ($positionsContactCloseBlind['SlatsLevel'] < $positionsNew['SlatsLevel']) {
-                        $deactivationTimeAuto = 0;
+                        $deactivationTimeAuto       = 0;
                         $positionsNew['SlatsLevel'] = $positionsContactCloseBlind['SlatsLevel'];
                         $Hinweis                    = 'Kontakt offen';
                     }
                 } elseif ($positionsContactCloseBlind['SlatsLevel'] > $positionsNew['SlatsLevel']) {
-                    $deactivationTimeAuto = 0;
+                    $deactivationTimeAuto       = 0;
                     $positionsNew['SlatsLevel'] = $positionsContactCloseBlind['SlatsLevel'];
                     $Hinweis                    = 'Kontakt offen';
                 }
@@ -1060,16 +1056,22 @@ class BlindController extends IPSModule
         return true;
     }
 
-private function getModuleVersion(): string
-{
-    $library       = json_decode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'library.json'), true);
-    return sprintf('%s.%s (%s)', $library['version'], $library['build'], date(DATE_ATOM, $library['date']));
-}
+    private function getModuleVersion(): string
+    {
+        $library = json_decode(
+            file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'library.json'),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        );
+        return sprintf('%s.%s (%s)', $library['version'], $library['build'], date(DATE_ATOM, $library['date']));
+    }
+
     private function resetManualMovement(): void
     {
         $this->WriteAttributeString(
             self::ATTR_MANUALMOVEMENT,
-            json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null])
+            json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null], JSON_THROW_ON_ERROR)
         );
 
         // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
@@ -1253,13 +1255,13 @@ private function getModuleVersion(): string
             self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION         => $this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION),
             self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS              => $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS),
             self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS             => $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS),
-            self::PROP_THRESHOLDIDHIGHBRIGHTNESS                            => $this->ReadPropertyInteger(self::PROP_THRESHOLDIDHIGHBRIGHTNESS),
-            self::PROP_THRESHOLDIDLESSBRIGHTNESS                            => $this->ReadPropertyInteger(self::PROP_THRESHOLDIDLESSBRIGHTNESS)
+            self::PROP_THRESHOLDIDHIGHBRIGHTNESS                   => $this->ReadPropertyInteger(self::PROP_THRESHOLDIDHIGHBRIGHTNESS),
+            self::PROP_THRESHOLDIDLESSBRIGHTNESS                   => $this->ReadPropertyInteger(self::PROP_THRESHOLDIDLESSBRIGHTNESS)
         ];
 
         $objectIDs_RequiredAction = [
-            self::PROP_BLINDLEVELID                      => $this->ReadPropertyInteger(self::PROP_BLINDLEVELID),
-            self::PROP_SLATSLEVELID                      => $this->ReadPropertyInteger(self::PROP_SLATSLEVELID),
+            self::PROP_BLINDLEVELID => $this->ReadPropertyInteger(self::PROP_BLINDLEVELID),
+            self::PROP_SLATSLEVELID => $this->ReadPropertyInteger(self::PROP_SLATSLEVELID),
         ];
         foreach ($this->GetMessageList() as $senderId => $msgs) {
             foreach ($msgs as $msg) {
@@ -1268,15 +1270,15 @@ private function getModuleVersion(): string
         }
 
         foreach ($objectIDs as $id) {
-            if (IPS_VariableExists($id)){
+            if (IPS_VariableExists($id)) {
                 $this->RegisterMessage($id, VM_UPDATE);
-            } elseif (IPS_EventExists($id)){
+            } elseif (IPS_EventExists($id)) {
                 $this->RegisterMessage($id, EM_UPDATE);
             }
         }
 
         foreach ($objectIDs_RequiredAction as $id) {
-            if (IPS_VariableExists($id)){
+            if (IPS_VariableExists($id)) {
                 $this->RegisterMessage($id, VM_CHANGEPROFILEACTION);
             }
         }
@@ -1285,22 +1287,23 @@ private function getModuleVersion(): string
     private function RegisterAttributes(): void
     {
         $this->RegisterAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, 0);
-        $this->RegisterAttributeString(self::ATTR_MANUALMOVEMENT, json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null]));
+        $this->RegisterAttributeString(self::ATTR_MANUALMOVEMENT,
+                                       json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null], JSON_THROW_ON_ERROR)
+        );
         $this->RegisterAttributeInteger('AttrTimeStampIsDayChange', 0);
         $this->RegisterAttributeBoolean('AttrIsDay', false);
         $this->RegisterAttributeBoolean(self::ATTR_CONTACT_OPEN, false);
         $this->RegisterAttributeString(
             self::ATTR_LASTMOVE . self::PROP_BLINDLEVELID,
-            json_encode(['timeStamp' => null, 'percentClose' => null, 'hint' => null])
+            json_encode(['timeStamp' => null, 'percentClose' => null, 'hint' => null], JSON_THROW_ON_ERROR)
         );
 
         $this->RegisterAttributeString(
             self::ATTR_LASTMOVE . self::PROP_SLATSLEVELID,
-            json_encode(['timeStamp' => null, 'percentClose' => null, 'hint' => null])
+            json_encode(['timeStamp' => null, 'percentClose' => null, 'hint' => null], JSON_THROW_ON_ERROR)
         );
         $this->RegisterAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME, 0);
         $this->RegisterAttributeBoolean(self::ATTR_LAST_ISDAYBYTIMESCHEDULE, false);
-
     }
 
     private function RegisterVariables(): void
@@ -1361,30 +1364,35 @@ private function getModuleVersion(): string
             return;
         }
 
-        if ($ret = $this->checkVariableId(self::PROP_WAKEUPTIMEID,
-                                          true,
-                                          [VARIABLETYPE_STRING], false,
-                                          self::STATUS_INST_WAKEUPTIME_ID_IS_INVALID
+        if ($ret = $this->checkVariableId(
+            self::PROP_WAKEUPTIMEID,
+            true,
+            [VARIABLETYPE_STRING],
+            false,
+            self::STATUS_INST_WAKEUPTIME_ID_IS_INVALID
         )) {
             $this->SetStatus($ret);
             return;
         }
 
-        if ($ret = $this->checkVariableId(self::PROP_BEDTIMEID,
-                                          true,
-                                          [VARIABLETYPE_STRING], false,
-                                          self::STATUS_INST_SLEEPTIME_ID_IS_INVALID
+        if ($ret = $this->checkVariableId(
+            self::PROP_BEDTIMEID,
+            true,
+            [VARIABLETYPE_STRING],
+            false,
+            self::STATUS_INST_SLEEPTIME_ID_IS_INVALID
         )) {
             $this->SetStatus($ret);
             return;
         }
 
-        if ($ret =
-            $this->checkVariableId(self::PROP_HOLIDAYINDICATORID,
-                                   true,
-                                   [VARIABLETYPE_BOOLEAN], false,
-                                   self::STATUS_INST_HOLYDAY_INDICATOR_ID_IS_INVALID
-            )) {
+        if ($ret = $this->checkVariableId(
+            self::PROP_HOLIDAYINDICATORID,
+            true,
+            [VARIABLETYPE_BOOLEAN],
+            false,
+            self::STATUS_INST_HOLYDAY_INDICATOR_ID_IS_INVALID
+        )) {
             $this->SetStatus($ret);
             return;
         }
@@ -1433,12 +1441,13 @@ private function getModuleVersion(): string
             return;
         }
 
-        if ($ret =
-            $this->checkVariableId(self::PROP_ISDAYINDICATORID,
-                                   true,
-                                   [VARIABLETYPE_BOOLEAN], false,
-                                   self::STATUS_INST_ISDAY_INDICATOR_ID_IS_INVALID
-            )) {
+        if ($ret = $this->checkVariableId(
+            self::PROP_ISDAYINDICATORID,
+            true,
+            [VARIABLETYPE_BOOLEAN],
+            false,
+            self::STATUS_INST_ISDAY_INDICATOR_ID_IS_INVALID
+        )) {
             $this->SetStatus($ret);
             return;
         }
@@ -1676,12 +1685,14 @@ private function getModuleVersion(): string
             }
         }
 
-        if ($ret = $this->checkRangeInteger(self::PROP_DEACTIVATIONMANUALMOVEMENT, 0, 100000, self::STATUS_INST_DEACTIVATION_TIME_MANUAL_IS_INVALID)) {
+        if ($ret =
+            $this->checkRangeInteger(self::PROP_DEACTIVATIONMANUALMOVEMENT, 0, 100000, self::STATUS_INST_DEACTIVATION_TIME_MANUAL_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
         }
 
-        if ($ret = $this->checkRangeInteger(self::PROP_DEACTIVATIONAUTOMATICMOVEMENT, 0, 100000, self::STATUS_INST_DEACTIVATION_TIME_AUTOMATIC_IS_INVALID)) {
+        if ($ret =
+            $this->checkRangeInteger(self::PROP_DEACTIVATIONAUTOMATICMOVEMENT, 0, 100000, self::STATUS_INST_DEACTIVATION_TIME_AUTOMATIC_IS_INVALID)) {
             $this->SetStatus($ret);
             return;
         }
@@ -1720,21 +1731,27 @@ private function getModuleVersion(): string
 
             if (!in_array($variable['VariableType'], $variableTypes, true)) {
                 $this->Logger_Err(
-                    sprintf('\'%s\': falscher Variablentyp (%s) für "%s" - nur %s erlaubt', $this->objectName, $variable['VariableType'], $propName, implode(', ', $variableTypes))
+                    sprintf(
+                        '\'%s\': falscher Variablentyp (%s) für "%s" - nur %s erlaubt',
+                        $this->objectName,
+                        $variable['VariableType'],
+                        $propName,
+                        implode(', ', $variableTypes)
+                    )
                 );
                 return $errStatus;
             }
 
-            if ($mustBeSwitchable){
-                if ($variable['VariableCustomAction'] != 0){
+            if ($mustBeSwitchable) {
+                if ($variable['VariableCustomAction'] != 0) {
                     $profileAction = $variable['VariableCustomAction'];
                 } else {
                     $profileAction = $variable['VariableAction'];
                 }
 
-                if ($profileAction <= 10000){
+                if ($profileAction <= 10000) {
                     $this->Logger_Err(
-                        sprintf('\'%s\': die Variable #%s für "%s" ist nicht schaltbar', $this->objectName,  $variableID, $propName)
+                        sprintf('\'%s\': die Variable #%s für "%s" ist nicht schaltbar', $this->objectName, $variableID, $propName)
                     );
                     return $errStatus;
                 }
@@ -1748,8 +1765,13 @@ private function getModuleVersion(): string
     {
         $var = IPS_GetVariable($this->ReadPropertyInteger($proName));
 
-        return ($var['VariableAction'] || $var['VariableCustomAction']) && ($var['VariableCustomProfile'] || $var['VariableProfile']);
+        return ($var['VariableAction'] || $var['VariableCustomAction'])
+               && (count($var['VariableCustomPresentation'])
+                   || count(
+                       $var['VariablePresentation']
+                   ));
     }
+
 
     private function checkEmulateStatusOfVariableAction(string $proName): bool
     {
@@ -1758,7 +1780,7 @@ private function getModuleVersion(): string
         if ($var['VariableAction'] !== 0) {
             $configuration = IPS_GetConfiguration($var['VariableAction']);
             if ($configuration !== false) {
-                $arrConfiguration = json_decode($configuration, true);
+                $arrConfiguration = json_decode($configuration, true, 512, JSON_THROW_ON_ERROR);
                 if (isset($arrConfiguration['EmulateStatus'])) {
                     return !$arrConfiguration['EmulateStatus'];
                 }
@@ -2101,15 +2123,17 @@ private function getModuleVersion(): string
             $levelAct,
             true
         );
-        if (isset($brightness)) {
-            $thresholdBrightness = $this->getBrightnessThreshold(
-                $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION),
-                $levelAct,
-                $temperature
-            );
-        } else {
-            $thresholdBrightness = 0;
+
+        if (is_null($brightness) || ($brightness === 0.0)) {
+            // keine Beschattung nach Sonnenstand gewünscht bzw. nicht notwendig
+            return null;
         }
+
+        $thresholdBrightness = $this->getBrightnessThreshold(
+            $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION),
+            $levelAct,
+            $temperature
+        );
 
         $rSunAzimuth = GetValueFloat($this->ReadPropertyInteger(self::PROP_AZIMUTHID));
         $azimuthFrom = $this->ReadPropertyFloat(self::PROP_AZIMUTHFROM);
@@ -2126,10 +2150,10 @@ private function getModuleVersion(): string
                 (int)GetValue($activatorID),
                 $brightness,
                 $thresholdBrightness,
-                floor($rSunAzimuth*10)/10,
+                floor($rSunAzimuth * 10) / 10,
                 $azimuthFrom,
                 $azimuthTo,
-                floor($rSunAltitude*10)/10,
+                floor($rSunAltitude * 10) / 10,
                 $altitudeFrom,
                 $altitudeTo,
                 $temperature ?? 'null'
@@ -2379,11 +2403,11 @@ private function getModuleVersion(): string
             )
         );
 
-        if ($degreeOfShadowing == 0){
-            if (isset($this->profileSlatsLevel)){
-                return ['BlindLevel' =>  $this->profileBlindLevel['LevelOpened'], 'SlatsLevel' => $this->profileSlatsLevel['LevelOpened']];
+        if ($degreeOfShadowing == 0) {
+            if (isset($this->profileSlatsLevel)) {
+                return ['BlindLevel' => $this->profileBlindLevel['LevelOpened'], 'SlatsLevel' => $this->profileSlatsLevel['LevelOpened']];
             }
-            return ['BlindLevel' =>  $this->profileBlindLevel['LevelOpened'], 'SlatsLevel' => null];
+            return ['BlindLevel' => $this->profileBlindLevel['LevelOpened'], 'SlatsLevel' => null];
         }
 
         return $this->GetBlindPositionsFromDegreeOfShadowing($degreeOfShadowing);
@@ -2399,14 +2423,14 @@ private function getModuleVersion(): string
     {
         $blindPositions = null;
 
-        $blindLevelMin = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL);
-        $blindLevelHalf =  $this->ReadPropertyFloat(self::PROP_HALFSHADERELEVANTBLINDLEVEL);
-        $blindLevelMax = $this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL);
+        $blindLevelMin  = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL);
+        $blindLevelHalf = $this->ReadPropertyFloat(self::PROP_HALFSHADERELEVANTBLINDLEVEL);
+        $blindLevelMax  = $this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL);
 
-        if ($blindLevelHalf === 0.0){
+        if ($blindLevelHalf === 0.0) {
             //Funktion 1.Grades mit f(x) = a * x + b
-            $b = $blindLevelMin;
-            $a = ($blindLevelMax-$blindLevelMin);
+            $b                            = $blindLevelMin;
+            $a                            = ($blindLevelMax - $blindLevelMin);
             $blindPositions['BlindLevel'] = $a * $degreeOfShadowing + $b;
 
             $this->Logger_Dbg(
@@ -2418,12 +2442,11 @@ private function getModuleVersion(): string
                     $blindPositions['BlindLevel']
                 )
             );
-
         } else {
             //Funktion 2.Grades mit x(x) = a * x² + b * x + c
-            $c = $blindLevelMin;
-            $b = 4 * $blindLevelHalf - $blindLevelMax - 3 * $blindLevelMin;
-            $a = $blindLevelMax - $blindLevelMin - $b;
+            $c                            = $blindLevelMin;
+            $b                            = 4 * $blindLevelHalf - $blindLevelMax - 3 * $blindLevelMin;
+            $a                            = $blindLevelMax - $blindLevelMin - $b;
             $blindPositions['BlindLevel'] = $a * $degreeOfShadowing ** 2 + $b * $degreeOfShadowing + $c;
 
             $this->Logger_Dbg(
@@ -2436,7 +2459,6 @@ private function getModuleVersion(): string
                     $blindPositions['BlindLevel']
                 )
             );
-
         }
 
         if ($this->profileBlindLevel['Reversed']) {
@@ -2453,7 +2475,6 @@ private function getModuleVersion(): string
         $blindPositions['SlatsLevel'] = ($slatsLevelMax - $slatsLevelMin) * $degreeOfShadowing + $slatsLevelMin;
 
         return $blindPositions;
-
     }
 
     private function getPositionsOfShadowingByBrightness(float $levelAct): ?array
@@ -2494,7 +2515,8 @@ private function getModuleVersion(): string
                 $this->Logger_Dbg(
                     __FUNCTION__,
                     sprintf(
-                        'Beschattung bei hoher Helligkeit (%s/%s): BlindLevel: %s, SlatsLevel: %s',
+                        'active: %d, Beschattung bei hoher Helligkeit (%s/%s): BlindLevel: %s, SlatsLevel: %s',
+                        (int)GetValue($activatorID),
                         $brightness,
                         $thresholdLessBrightness,
                         $positions['BlindLevel'],
@@ -2513,7 +2535,8 @@ private function getModuleVersion(): string
                 $this->Logger_Dbg(
                     __FUNCTION__,
                     sprintf(
-                        'Beschattung bei niedriger Helligkeit (%s/%s): BlindLevel: %s, SlatsLevel: %s',
+                        'active: %d, Beschattung bei niedriger Helligkeit (%s/%s): BlindLevel: %s, SlatsLevel: %s',
+                        (int)GetValue($activatorID),
                         $brightness,
                         $thresholdBrightness,
                         $positions['BlindLevel'],
@@ -2565,12 +2588,11 @@ private function getModuleVersion(): string
         $deactivationTimeManuSecs = $this->ReadPropertyInteger(self::PROP_DEACTIVATIONMANUALMOVEMENT) * 60;
 
         //Zeitpunkt festhalten, sofern noch nicht geschehen
-        if ($tsBlindLastMovement !== json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true)['timeStamp']) {
+        if ($tsBlindLastMovement !== json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true, 512, JSON_THROW_ON_ERROR)['timeStamp']) {
             $this->WriteAttributeString(
                 self::ATTR_MANUALMOVEMENT,
-                json_encode(
-                    ['timeStamp' => $tsBlindLastMovement, 'blindLevel' => $blindLevelAct, 'slatsLevel' => $slatsLevelAct]
-                )
+                json_encode(['timeStamp' => $tsBlindLastMovement, 'blindLevel' => $blindLevelAct, 'slatsLevel' => $slatsLevelAct],
+                            JSON_THROW_ON_ERROR)
             );
 
             if ($slatsLevelAct === null) {
@@ -2586,7 +2608,8 @@ private function getModuleVersion(): string
                     $blindLevelAct,
                     $txtSlatsLevelAct,
                     $this->FormatTimeStamp($tsAutomatik),
-                    $this->FormatTimeStamp(json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true)['timeStamp']),
+                    $this->FormatTimeStamp(
+                        json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true, 512, JSON_THROW_ON_ERROR)['timeStamp']),
                     time() - $tsBlindLastMovement,
                     $deactivationTimeManuSecs
                 )
@@ -2628,7 +2651,7 @@ private function getModuleVersion(): string
         }
 
         $bNoMove          = false;
-        $tsManualMovement = json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true)['timeStamp'];
+        $tsManualMovement = json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true, 512, JSON_THROW_ON_ERROR)['timeStamp'];
 
         if ($isDay && ($tsManualMovement > $tsIsDayChanged)) {
             //tagsüber gilt:
@@ -2699,7 +2722,8 @@ private function getModuleVersion(): string
         //gibt es Lamellen?
         if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
             $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
-            $moveSlatsOk             = $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClosed, $tsAutomatic, $deactivationTimeAuto, $hint);
+            $moveSlatsOk             =
+                $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClosed, $tsAutomatic, $deactivationTimeAuto, $hint);
 
             return $moveBladeOk || $moveSlatsOk;
         }
@@ -2733,16 +2757,18 @@ private function getModuleVersion(): string
             $percentCloseBlind = 1 - $percentCloseBlind;
         }
 
-        $moveBladeOk = $this->MoveToPosition(self::PROP_BLINDLEVELID, (int) ($percentCloseBlind * 100), 0, 0, sprintf('%s Beschattung', $percentCloseBlind));
+        $moveBladeOk =
+            $this->MoveToPosition(self::PROP_BLINDLEVELID, (int)($percentCloseBlind * 100), 0, 0, sprintf('%s Beschattung', $percentCloseBlind));
 
         //gibt es Lamellen?
         if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
             $this->profileSlatsLevel = $this->GetProfileInformation(self::PROP_SLATSLEVELID);
-            $percentCloseSlats = $blindPositions['SlatsLevel'] / ($this->profileSlatsLevel['MaxValue'] - $this->profileSlatsLevel['MinValue']);
+            $percentCloseSlats       = $blindPositions['SlatsLevel'] / ($this->profileSlatsLevel['MaxValue'] - $this->profileSlatsLevel['MinValue']);
             if ($this->profileSlatsLevel['Reversed']) {
                 $percentCloseSlats = 1 - $percentCloseSlats;
             }
-            $moveSlatsOk             = $this->MoveToPosition(self::PROP_SLATSLEVELID, (int) ($percentCloseSlats * 100), 0, 0, sprintf('%s Beschattung', $percentCloseSlats));
+            $moveSlatsOk =
+                $this->MoveToPosition(self::PROP_SLATSLEVELID, (int)($percentCloseSlats * 100), 0, 0, sprintf('%s Beschattung', $percentCloseSlats));
 
             return $moveBladeOk || $moveSlatsOk;
         }
@@ -2762,7 +2788,7 @@ private function getModuleVersion(): string
             return false;
         }
 
-        $lastMove = json_decode($this->ReadAttributeString(self::ATTR_LASTMOVE . $propName), true);
+        $lastMove = json_decode($this->ReadAttributeString(self::ATTR_LASTMOVE . $propName), true, 512, JSON_THROW_ON_ERROR);
 
         if (((int)$lastMove['percentClose'] === $percentClose) && ($lastMove['timeStamp'] > strtotime('-' . self::IGNORE_MOVEMENT_TIME . ' secs'))) {
             //dieselbe Bewegung in den letzten 40 Sekunden
@@ -2806,7 +2832,7 @@ private function getModuleVersion(): string
                 $positionAct,
                 $positionNew,
                 $positionDiffPercentage,
-                $this->ReadPropertyFloat(self::PROP_MINMOVEMENT)/100,
+                $this->ReadPropertyFloat(self::PROP_MINMOVEMENT) / 100,
                 $timeDiffAuto,
                 $deactivationTimeAuto
             )
@@ -2814,10 +2840,10 @@ private function getModuleVersion(): string
 
         $ret = false;
 
-        $minMovement = $this->ReadPropertyFloat(self::PROP_MINMOVEMENT)/100;
-        $minMovementAtEndPosition = $this->ReadPropertyFloat(self::PROP_MINMOVEMENTATENDPOSITION)/100;
+        $minMovement              = $this->ReadPropertyFloat(self::PROP_MINMOVEMENT) / 100;
+        $minMovementAtEndPosition = $this->ReadPropertyFloat(self::PROP_MINMOVEMENTATENDPOSITION) / 100;
 
-        if ($timeDiffAuto < $deactivationTimeAuto){
+        if ($timeDiffAuto < $deactivationTimeAuto) {
             $this->Logger_Dbg(
                 __FUNCTION__,
                 sprintf(
@@ -2828,7 +2854,7 @@ private function getModuleVersion(): string
                     $timeDiffAuto
                 )
             );
-        } elseif ($positionDiffPercentage <= (self::ALLOWED_TOLERANCE_MOVEMENT/100)) {
+        } elseif ($positionDiffPercentage <= (self::ALLOWED_TOLERANCE_MOVEMENT / 100)) {
             $this->Logger_Dbg(
                 __FUNCTION__,
                 sprintf('#%s(%s): No Movement! Position %s already reached.', $positionID, $propName, $positionAct)
@@ -2836,12 +2862,24 @@ private function getModuleVersion(): string
         } elseif (($positionDiffPercentage < $minMovement) && !in_array($positionNew, [$profile['MinValue'], $profile['MaxValue']], false)) {
             $this->Logger_Dbg(
                 __FUNCTION__,
-                sprintf('#%s(%s): No Movement! Movement less than %s percent (%.3f).', $positionID, $propName, $minMovement * 100, $positionDiffPercentage)
+                sprintf(
+                    '#%s(%s): No Movement! Movement less than %s percent (%.3f).',
+                    $positionID,
+                    $propName,
+                    $minMovement * 100,
+                    $positionDiffPercentage
+                )
             );
-        } elseif (($positionDiffPercentage < $minMovementAtEndPosition/100)) {
+        } elseif (($positionDiffPercentage < $minMovementAtEndPosition / 100)) {
             $this->Logger_Dbg(
                 __FUNCTION__,
-                sprintf('#%s(%s): No Movement! End position already reached. Difference less than %s percent (%.3f).', $positionID, $propName, $minMovementAtEndPosition * 100, $positionDiffPercentage)
+                sprintf(
+                    '#%s(%s): No Movement! End position already reached. Difference less than %s percent (%.3f).',
+                    $positionID,
+                    $propName,
+                    $minMovementAtEndPosition * 100,
+                    $positionDiffPercentage
+                )
             );
         } else {
             //Position setzen
@@ -2855,7 +2893,7 @@ private function getModuleVersion(): string
                 $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, time());
                 $this->WriteAttributeString(
                     self::ATTR_LASTMOVE . $propName,
-                    json_encode(['timeStamp' => time(), 'percentClose' => $percentClose, 'hint' => $hint])
+                    json_encode(['timeStamp' => time(), 'percentClose' => $percentClose, 'hint' => $hint], JSON_THROW_ON_ERROR)
                 );
                 $this->Logger_Dbg(
                     __FUNCTION__,
@@ -2888,7 +2926,7 @@ private function getModuleVersion(): string
 
     private function waitUntilBlindLevelIsReached(string $propName, $positionNew): bool
     {
-        $levelID = $this->ReadPropertyInteger($propName);
+        $levelID                  = $this->ReadPropertyInteger($propName);
         $minMovementAtEndPosition = $this->ReadPropertyFloat(self::PROP_MINMOVEMENTATENDPOSITION);
 
         $profile         = $this->GetProfileInformation($propName);
@@ -2984,7 +3022,7 @@ private function getModuleVersion(): string
                     __FUNCTION__,
                     sprintf(
                         'Invalid TimeTable: No Points with ActionID 1 or 2 found. (ScheduleGroup: %s)',
-                        json_encode($scheduleGroup)
+                        json_encode($scheduleGroup, JSON_THROW_ON_ERROR)
                     )
                 );
                 return self::STATUS_INST_TIMETABLE_IS_INVALID;
@@ -2996,7 +3034,7 @@ private function getModuleVersion(): string
                     sprintf(
                         'Invalid TimeTable: More (%s) than one Point with ActionID 2. (ScheduleGroup: %s)',
                         $countID2,
-                        json_encode($scheduleGroup)
+                        json_encode($scheduleGroup, JSON_THROW_ON_ERROR)
                     )
                 );
                 return self::STATUS_INST_TIMETABLE_IS_INVALID;
@@ -3024,7 +3062,10 @@ private function getModuleVersion(): string
         $isDayIndicatorID = $this->ReadPropertyInteger(self::PROP_ISDAYINDICATORID);
 
         if (!IPS_VariableExists($isDayIndicatorID)
-            && (!IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID)) || !IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID)))) {
+            && (!IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID))
+                || !IPS_VariableExists(
+                    $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID)
+                ))) {
             return null;
         }
 
@@ -3125,7 +3166,7 @@ private function getModuleVersion(): string
         //gibt es übersteuernde Zeiten?
         $idWakeUpTime = $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEID);
         if (IPS_VariableExists($idWakeUpTime)) {
-            $heute_auf_ts = strtotime(GetValueString($idWakeUpTime)) ;
+            $heute_auf_ts = strtotime(GetValueString($idWakeUpTime));
             if ($heute_auf_ts === false) {
                 $this->Logger_Dbg(__FUNCTION__, sprintf('No valid WakeUpTime found: \'%s\' (ignored)', GetValueString($idWakeUpTime)));
             } else {
@@ -3157,7 +3198,7 @@ private function getModuleVersion(): string
             trigger_error(sprintf('Instance %s: wrong Event ID #%s', $this->InstanceID, $weeklyTimeTableEventId));
             return false;
         }
-        $this->SendDebug(__FUNCTION__, sprintf('event: %s', json_encode($event)), 0);
+        $this->SendDebug(__FUNCTION__, sprintf('event: %s', json_encode($event, JSON_THROW_ON_ERROR)), 0);
         if ($event['EventType'] !== EVENTTYPE_SCHEDULE) {
             trigger_error(sprintf('Instance %s: wrong Eventtype %s', $this->InstanceID, $event['EventType']));
             return false;
@@ -3217,6 +3258,13 @@ private function getModuleVersion(): string
         return null;
     }
 
+    /**
+     * Retrieves profile information associated with a given property name.
+     *
+     * @param string $propName The property name for which the profile information is to be fetched.
+     *
+     * @return array|null Returns an associative array containing profile information if the property exists and has a valid profile; otherwise, returns null.
+     */
     private function GetProfileInformation(string $propName): ?array
     {
         if (!($variable = @IPS_GetVariable($this->ReadPropertyInteger($propName)))) {
@@ -3324,7 +3372,7 @@ private function getModuleVersion(): string
         } elseif (is_float($val) || is_int($val)) {
             $ret = (string)$val;
         } elseif (is_array($val)) {
-            $ret = json_encode($val);
+            $ret = json_encode($val, JSON_THROW_ON_ERROR);
         } elseif (is_object($val) || is_scalar($val)) {
             $ret = serialize($val);
         } elseif ($val === null) {
