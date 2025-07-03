@@ -687,7 +687,7 @@ class BlindController extends IPSModuleStrict
         $this->profileBlindLevel = $this->GetProfileInformation(self::PROP_BLINDLEVELID);
 
         // $deactivationTimeAuto: Zeitraum, in dem das automatisch gesetzte Level
-        // erhalten bleibt bevor es überschrieben wird.
+        // erhalten bleibt, bevor es überschrieben wird.
 
         if ($considerDeactivationTimeAuto) {
             $deactivationTimeAuto = $this->ReadPropertyInteger(self::PROP_DEACTIVATIONAUTOMATICMOVEMENT) * 60;
@@ -2071,16 +2071,16 @@ class BlindController extends IPSModuleStrict
             true
         );
 
-        if (is_null($brightness) || ($brightness === 0.0)) {
-            // keine Beschattung nach Sonnenstand gewünscht bzw. nicht notwendig
-            return null;
+        if (!is_null($brightness)) {
+            $thresholdBrightness = $this->getBrightnessThreshold(
+                $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION),
+                $levelAct,
+                $temperature
+            );
+        } else {
+            $thresholdBrightness = 0;
         }
 
-        $thresholdBrightness = $this->getBrightnessThreshold(
-            $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION),
-            $levelAct,
-            $temperature
-        );
 
         $rSunAzimuth = GetValueFloat($this->ReadPropertyInteger(self::PROP_AZIMUTHID));
         $azimuthFrom = $this->ReadPropertyFloat(self::PROP_AZIMUTHFROM);
