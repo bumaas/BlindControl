@@ -21,55 +21,50 @@ Steuert einen Rollladen bzw. eine Jalousie nach vorgegebenen Einstellungen.
     2. [Spenden](#spenden)
 
 ## 1. Funktionsumfang
-
 Das Blind Control Modul dient der Steuerung von Rollläden oder anderweitigen Abdunkelungseinrichtungen.
 
 Aktuelle Features:
-
-- Hoch-/Runterfahren zu vorgegeben Zeiten
+- Hoch-/Runterfahren zu vorgegebenen Zeiten
 - Lamellenstellung bei Jalousien
 - Urlaubs- und Feiertagsberücksichtigung
-- Berücksichtigung Sonnenauf- und untergang
+- Berücksichtigung von Sonnenauf- und -untergang
 - Berücksichtigung der Helligkeit
 - Sonnenschutz inclusive Nachführen nach Sonnenstand
 - Zufallsfunktion bei Tagesanfang/Tagesende
-- Unterstützung von Kontakten (Fenster-/Tür, Regen, Alarm etc)
+- Unterstützung von Kontakten (Fenster/Tür, Regen, Alarm etc.)
 - Hitzeschutz
-- Notfall Sensor
+- Notfall-Sensor
 - Erkennung von manueller Bedienung
 - Aktivierung/Deaktivierung über Statusvariable
-- herstellerunabhängig
+- Herstellerunabhängig
 
-Zusätzlich kann zur leichteren Verwaltung mehrerer Rollläden/Jalousien ein Gruppenmaster definiert werden.
+Zusätzlich kann zur leichteren Verwaltung mehrerer Rollläden/Jalousien ein Gruppen-Master definiert werden.
 
 ## 2. Voraussetzungen
-
  - Symcon 5.1
  
- - Es werden alle Aktoren unterstützt, die über eine Statusvariable verfügen und sich über RequestAction steuern lassen.
-Die Statusvariable muss vom Typ Integer oder Float sein und ein Profil mit einem korrekten Minimal- und Maximalwert besitzen. Bei einem Rollladen, der beim Minimalwert 
-geschlossen und beim Maximalwert geöffnet ist (z.B. typischerweise bei Homematic), ist ein Profil mit der Namensendung ".Reversed" zu verwenden.<br>
-Zudem dürfen die Statusvariablen nicht emuliert werden. Dies ist wichtig, um manuell ausgelöste Bewegungen eindeutig von automatisch ausgeführten Bewegungen unterscheiden zu können.
-<br>  
-Zur Steuerung von Lamellen bei Jalousien ist eine eigene Statusvariable notwendig, über die die Stellung der Lamellen gesteuert werden kann. Für sie gelten die gleichen Vorausetzungen.
+ - Es werden alle Aktoren unterstützt, die über eine Statusvariable verfügen und sich über `RequestAction` steuern lassen.
+ - Die Statusvariable muss vom Typ Integer oder Float sein.
+ - Es ist eine geeignete Darstellung zu verwenden. Geeignet ist die Darstellung "Legacy Profil" mit einem korrekten Minimal- und Maximalwert sowie die Darstellung "Rolladen".
+ - Wird das Legacy-Profil genutzt, ist zu beachten, dass bei einem Rollladen, der beim Minimalwert geschlossen und beim Maximalwert geöffnet ist (z. B. typischerweise bei Homematic), ein Profil mit der Namensendung ".Reversed" zu verwenden ist.<br>
+ - Die Statusvariablen dürfen nicht emuliert werden. Dies ist wichtig, um manuell ausgelöste Bewegungen eindeutig von automatisch ausgeführten Bewegungen unterscheiden zu können.
+ - Zur Steuerung von Lamellen bei Jalousien ist eine eigene Statusvariable notwendig, über die die Stellung der Lamellen gesteuert werden kann. Für diese gelten die gleichen Voraussetzungen.
 
 ## 3. Installation
 
 ### 3.1 Laden des Moduls
 
-Das Modul wird über den Modul Store installiert.
+Das Modul wird über den Module Store installiert (Suchbegriff: "Blind Control").
 
 ### 3.2 Anlegen einer Rollladeninstanz
 
-In Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Blind Controller` auswählen. Es wird eine Rollladeninstanz angelegt, in der die Eigenschaften zur Steuerung eines einzelnen Rollladens gesetzt werden.
+In Symcon im Objektbaum an beliebiger Stelle `Instanz hinzufügen` auswählen und nach `Blind Controller` suchen. Es wird eine Rollladeninstanz angelegt, in der die Eigenschaften zur Steuerung eines einzelnen Rollladens konfiguriert werden.
 
 ### 3.3 Anlegen eines Gruppenmasters
 
-In Symcon an beliebiger Stelle `Instanz hinzufügen` auswählen und `Blind Control Group Master` auswählen. Es wird ein Gruppenmaster angelegt, in dem Rollläden zu Bearbeitungszwecken (nicht zu Steuerungszwecken!) zusammengefasst werden können.
-Hierüber wird es ermöglicht, eine Eigenschaft für mehrere Rollläden in einem Schritt auszulesen oder zu setzen.
-
-Der Gruppen Master dient zur leichteren Bearbeitung der definierten Rollladen Instanzen. 
- 	
+In Symcon im Objektbaum an beliebiger Stelle `Instanz hinzufügen` auswählen und nach `Blind Control Group Master` suchen.
+Es wird ein Gruppenmaster angelegt, in dem Rollläden zu Bearbeitungszwecken (nicht zu Steuerungszwecken!) zusammengefasst werden können.
+Dies ermöglicht es, eine Eigenschaft für mehrere Rollläden in einem Schritt auszulesen oder zu setzen, was die Verwaltung vieler Rollladeninstanzen erleichtert.
 
 ## 4. Funktionsreferenz
 
@@ -116,17 +111,17 @@ Setzt die Statusvariable 'Activated' auf den gegebenen Wert $active bei allen Ro
 
 ## 5. Konfiguration
 
-### 5.1 Überprüfen, ob der zu steuernde Rollladen korrekt in IP-Symcon eingerichtet ist
+### 5.1 Überprüfen, ob der zu steuernde Rollladen korrekt in Symcon eingerichtet ist
 
-Damit das Modul korrekt arbeiten kann, ist eine richtige und vollständige Einrichtung des zu steuernden Rollladens in IP-Symcon Voraussetzung. Es muss sichergestellt sein, dass der Rollladen sich korrekt positionieren lässt (offen, geschlossen und in Zwischenstufen) und die Laufrichtung richtig erkannt wird.
-Dies lässt sich am einfachsten überprüfen, indem die zu steuernde Positions-Variable (bei Homematic z.B. LEVEL genannt) mit einem adaptiven Icon (z.B. "Jalousie") versehen wird und das Webfront eingebunden wird.
+Damit das Modul korrekt arbeiten kann, ist eine richtige und vollständige Einrichtung des zu steuernden Rollladens in Symcon Voraussetzung. Es muss sichergestellt sein, dass der Rollladen sich korrekt positionieren lässt (offen, geschlossen und in Zwischenstufen) und die Laufrichtung richtig erkannt wird.
+Dies lässt sich am einfachsten überprüfen, indem die zu steuernde Positions-Variable (bei Homematic z.B. LEVEL genannt) mit einem adaptiven Icon (z.B. "Jalousie") versehen wird und in das Webfront eingebunden wird.
 
 Nun sollte sich im Webfront folgendes Bild für einen geöffneten bzw. geschlossenen Rollladen ergeben:
 
 ![image](docs/Rollladen_geöffnet.jpg)
 ![image](docs/Rollladen_geschlossen.jpg)
 
-Zeigt das Icon den falschen Zustand an, dann ist dem Profil im Namen ein '.Reversed' anzuhängen. Man erreicht dies, indem das bislang zugeordnete Profil kopiert wird und dabei dem Namen ein '.Reversed' (Groß-/Kleinschreibung beachten!) angehängt wird.
+Zeigt das Icon den falschen Zustand an, muss dem Profilnamen ein '.Reversed' angehängt werden. Man erreicht dies, indem das bislang zugeordnete Profil kopiert wird und dabei dem Namen ein '.Reversed' (Groß-/Kleinschreibung beachten!) angehängt wird.
 Dieses neue Profil ist dann der Variablen zuzuordnen.
 
 Diese Positionsvariable ist im Modul als 'Rollladen Level ID' anzugeben.
@@ -139,35 +134,36 @@ Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstell
  
 ![image](docs/Wochenplan.jpg)
 
-Das Modul holt aus dem Wochenplan ausschließlich die Aktionszeiten und den Aktionstyp.
+Das Modul bezieht aus dem Wochenplan ausschließlich die Aktionszeiten und den Aktionstyp.
 
 **Wichtig:** 
-- der Wochenplan muss genau zwei Aktionen mit ID 1 und ID 2 beinhalten. Die eigentlichen Aktionen bleiben dabei jedoch "leer", da der Wochenplan nicht von IP-Symcon direkt ausgeführt werden soll. Um eine Aktion leer zu lassen, ist die Aktion "Führe PHP Code" auszuwählen. Dabei bleibt dann der Code leer.
-- Die Aktion mit ID 1 stellt dabei die Aktion zum Runterfahren des Rollladens und die ID 2 die Aktion zum Hochfahren des Rollladens dar.
-- Es darf nur maximal einen Zeitraum zur Aktion 2 (Hochfahren) geben.
-- ob ein Wochenplan aktiv ist oder nicht wird nicht berücksichtigt
+- Der Wochenplan muss genau zwei Aktionen mit den IDs 1 und 2 beinhalten. Die eigentlichen Aktionen bleiben dabei jedoch "leer" (ohne Funktion), da der Wochenplan nicht von Symcon direkt ausgeführt werden soll. Wählen Sie hierzu die Aktion "Führe PHP Code" aus und lassen Sie das Code-Feld leer.
+- Die Aktion mit ID 1 definiert das Herunterfahren, die ID 2 das Hochfahren des Rollladens.
+- Es darf maximal einen Zeitraum für Aktion 2 (Hochfahren) geben.
+- Ob der Wochenplan selbst in Symcon als "aktiv" markiert ist, wird nicht berücksichtigt.
 
-Über den Wochenplan werden die Grundfahrzeiten (morgens hoch/ abends runter) definiert.
+Über diesen Wochenplan werden die Grundfahrzeiten (morgens hoch / abends runter) definiert.
 
-Der Verweis auf einen Wochenplan ist zwingend. Wird kein Wochenplan benötigt (z.B. weil die Rollläden) ausschließlich zum Sonnenschutz heruntergefahren werden sollen, dann muss dennoch ein rudimentärer Wochenplan vorhanden sein, der den oben genannten Bedingungen genügt.
-Dies könnte ein Wochenplan sein mit den Aktionen 1 und 2 und nur einer Zeitspanne der ID 2 über 24/7. 
+Der Verweis auf einen Wochenplan ist zwingend erforderlich. Wird kein spezifischer Wochenplan benötigt (z.B. weil die Rollläden ausschließlich zum Sonnenschutz heruntergefahren werden sollen), muss dennoch ein rudimentärer Wochenplan vorhanden sein, der den oben genannten Bedingungen genügt.
+Dies kann beispielsweise ein Wochenplan mit den Aktionen 1 und 2 sein, bei dem lediglich eine Zeitspanne der ID 2 über 24 Stunden (00:00 bis 24:00) definiert ist.
 
 ### 5.3 Tagerkennung (optional)
-Als Ergänzung zum Wochenplan kann eine zusätzliche Tagerkennung eingerichtet werden. Sie kommt zum Einsatz, wenn neben den Fahrzeiten gemäß Wochenplan auch die Helligkeit berücksichtigt werden soll.
+Ergänzend zum Wochenplan kann eine Tagerkennung eingerichtet werden. Diese kommt zum Einsatz, wenn neben den festen Fahrzeiten auch die Helligkeit berücksichtigt werden soll.
 
-Beispiel:
- 
-Der Rollladen wird gemäß Wochenplan morgens um 8:00 Uhr hochgefahren und abends um 23:00 Uhr wieder herunter.
-Er soll aber nur dann hochgefahren werden, wenn es Tag ist und nur dann heruntergefahren werden, wenn es nicht mehr Tag ist.
+**Beispiel:**
+Der Rollladen wird gemäß Wochenplan morgens um 8:00 Uhr hochgefahren und abends um 23:00 Uhr wieder heruntergefahren. Er soll jedoch nur dann hochfahren, wenn es tatsächlich schon hell (Tag) ist, und herunterfahren, sobald es dunkel wird.
 
-Hierzu kann die Tagerkennung zusätzlich eingerichtet werden. Dann wird (und bleibt) der Rollladen nur dann hochgefahren, wenn beide Bedingungen (Öffnungszeit laut Wochenplan und "es ist Tag") erfüllt sind. Ist eine der Bedingungen nicht mehr erfüllt, dann wird der Rollladen heruntergefahren.
+Wird die Tagerkennung aktiviert, fährt (und bleibt) der Rollladen nur dann oben, wenn **beide** Bedingungen erfüllt sind:
+1. Öffnungszeit laut Wochenplan ist erreicht.
+2. Es ist "Tag".
 
-Damit der Tag erkannt wird, kann entweder auf eine bereits bestehenden Variable verwiesen werden (hier bietet sich die 'IsDay' Variable des Location-Moduls an) oder durch einen Helligkeitsvergleich erfolgen.
-Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen Helligkeitswert beinhaltet (z.B. von einem Helligkeitssensor) sowie eine Variable, die den Schwellwert beinhaltet. Soll als Helligkeitswert ein Durchschnittswert der letzten Minuten genommen werden,
-dann ist die Anzahl der Minuten anzugeben, über die der Durchschnitt gebildet werden soll. Der Durchschnitt wird aus den archivierten Daten gewonnen. Dazu ist es notwendig, dass für die Variable die Archivierung aktiviert ist.
- 
- 
-![image](docs/LUX_Messwert.jpg)
+Ist eine der Bedingungen nicht mehr erfüllt, wird der Rollladen heruntergefahren.
+
+Zur Erkennung des Tages gibt es zwei Möglichkeiten:
+1.  **Verweis auf eine existierende Variable:** Hier bietet sich z.B. die Variable `IsDay` des Location-Moduls an.
+2.  **Helligkeitsvergleich:** Hierfür ist eine Variable mit dem aktuellen Helligkeitswert (z.B. von einem Helligkeitssensor) sowie eine Variable für den Schwellwert anzugeben.
+
+Soll für den Helligkeitsvergleich ein Durchschnittswert der letzten Minuten verwendet werden, geben Sie die gewünschte Zeitspanne in Minuten an. Der Durchschnitt wird aus den archivierten Daten berechnet. Voraussetzung hierfür ist, dass für die Helligkeits-Variable die Archivierung in Symcon aktiviert ist.
 
 ![image](docs/Helligkeitsschwellwert.jpg)
 
@@ -198,28 +194,32 @@ Durch eine korrekte Einmessung wird erreicht, dass der Schatten des Rollladens i
 - Bei der genauen Variante wird direkt vorgegeben, wie tief die Sonne in den Raum scheinen darf. Aus der Fensterposition, der Fensterhöhe, der minimalen und maximalen schattenrelevanten Position sowie der aktuellen Sonnenhöhe und dem Azimut wird dann die entsprechende Beschattungsposition berechnet. Diese Variante wird verwendet, sobald die Tiefe eingestellt ist.
 
 ### 5.4.2 Beschattung nach Helligkeit (optional)
-Es sind die Variablen anzugeben, die zur Helligkeitsbestimmung herangezogen werden sollen. Wenn der Helligkeitswert überschritten wird, dann wird der Rollladen auf die vorgegebene Position gefahren. Es stehen zwei Paare an Helligkeitsschwellwert und Rollladenposition zur Verfügung.
+Anzugeben sind die Variablen, die zur Helligkeitsbestimmung herangezogen werden. Bei Überschreitung des Helligkeitswertes wird der Rollladen auf die vorgegebene Position gefahren. Es stehen zwei Paare an Helligkeitsschwellwert und Rollladenposition zur Verfügung.
 
-Die Regel wird über eine Aktivierungsvariable aktiviert/deaktiviert.
+Die Regel lässt sich über eine Aktivierungsvariable steuern.
 
-Ist sowohl eine Beschattung nach Helligkeit als auch eine Beschattung nach Sonnenstand aktiv, dann wirkt die Beschattung nach Helligkeit zusätzlich zur Beschattung nach Sonnenstand. 
+Ist sowohl eine Beschattung nach Helligkeit als auch eine Beschattung nach Sonnenstand aktiv, wirkt die Beschattung nach Helligkeit **zusätzlich** zur Beschattung nach Sonnenstand.
 
 Praktisches Beispielszenario:
-Im Normalfall wird nach Sonnenstand beschattet. Wenn jedoch der Fernseher eingeschaltet wird, dann soll je nach Helligkeit stärker oder schwächer abgedunkelt werden.
+Im Normalfall erfolgt die Beschattung nach Sonnenstand. Wird jedoch der Fernseher eingeschaltet, soll je nach Helligkeit stärker oder schwächer abgedunkelt werden.
 
 ### 5.5 Erkennung von Kontakten (optional)
-Um auf offene Fenster/Türen oder auch Regen/Sturm reagieren zu können, können bis zu vier Kontakte angegeben werden. Ein Kontakt wird als offen erkannt, wenn der Wert >0 ist. Bei Kontakten, die im geöffneten Zustand den Wert 0 haben, ist ein 'Reversed'-Profil zu verwenden.
+Um auf offene Fenster/Türen oder auch Regen/Sturm reagieren zu können, lassen sich bis zu vier Kontakte definieren. Ein Kontakt wird als offen erkannt, wenn der Wert >0 ist. Bei Kontakten, die im geöffneten Zustand den Wert 0 aufweisen, ist ein 'Reversed'-Profil zu verwenden.
 
-Je zwei Kontakte dienen dem Öffnen (Fenster/Tür) sowie dem Schließen (Regen/Wind) eines Rollladens.
-Je Kontakt ist anzugeben, in welche Position mindestens gefahren werden soll.  
-Wird ein Kontakt als offen erkannt, dann wird sofort auf die gewünschte Position gefahren. Nach dem Schließen des Kontaktes wird die dann gültige Höhe neu ermittelt und sofort angefahren.
+Je zwei Kontakte stehen für folgende Funktionen bereit:
+*   **Öffnen (Fenster/Tür):** Es ist die Position anzugeben, auf die *mindestens* gefahren werden soll.
+*   **Schließen (Regen/Wind):** Es ist die Position anzugeben, auf die *maximal* gefahren werden soll.
 
-Sonderfall: werden sowohl offene Kontakte zum Schließen als auch zum Öffnen des Rollladens erkannt (z.B. die Tür ist offen und es regnet), dann erhalten die Kontakte zum Öffnen Vorrang. 
+Wird ein Kontakt als offen erkannt, erfolgt sofort die Fahrt auf die gewünschte Position. Nach dem Schließen des Kontaktes wird die dann gültige Höhe neu ermittelt und sofort angefahren.
+
+Sonderfall: Werden gleichzeitig offene Kontakte zum Schließen und zum Öffnen erkannt (z.B. die Tür ist offen und es regnet), erhalten die **Kontakte zum Öffnen Vorrang**.
  
 ### 5.6 Blind Controller
 
-**Hinweis**: Als Werte sind immer die Originalwerte und nicht die umgerechneten Werte anzugeben. Beispiel: wenn die referierte Levelvariable einen Wertebereich von 0 bis 255 hat, so ist bei allen Properties, die sich auf das Level beziehen, ebenfalls ein Wert von 0-255 anzugeben.
-und nicht ein Wert von 100 für "geschlossen".
+**Hinweis**: Als Werte sind immer die **Rohwerte der Variable** anzugeben (keine umgerechneten Werte).
+*Beispiele*:
+*   Hat die Variable einen Bereich von **0 bis 255**, ist für "geschlossen" **255** einzutragen (und nicht 100).
+*   Hat die Variable einen Bereich von **0.0 bis 1.0** (z. B. Homematic), ist für "geschlossen" **1.0** einzutragen.
 
 | Eigenschaft                                                                                                                                                               |   Typ   | Standardwert | Funktion                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------:|:-------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

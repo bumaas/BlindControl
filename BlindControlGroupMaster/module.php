@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 /** @noinspection AutoloadingIssuesInspection */
-class BlindControlGroupMaster extends IPSModule
+class BlindControlGroupMaster extends IPSModuleStrict
 {
     /** @noinspection PhpUnused */
-    public function Create()
+    public function Create(): void
     {
         //Never delete this line!
         parent::Create();
@@ -18,7 +18,7 @@ class BlindControlGroupMaster extends IPSModule
     }
 
     /** @noinspection PhpUnused */
-    public function ApplyChanges()
+    public function ApplyChanges(): void
     {
         //Never delete this line!
         parent::ApplyChanges();
@@ -45,14 +45,14 @@ class BlindControlGroupMaster extends IPSModule
     }
 
     /** @noinspection PhpUnused */
-    public function GetConfigurationForm()
+    public function GetConfigurationForm(): string
     {
         $allBlindInstances = IPS_GetInstanceListByModuleID('{538F6461-5410-4F4C-91D3-B39122152D56}');
         if (empty($allBlindInstances)) {
             $form['elements'][] = [
                 'type'    => 'Label',
                 'caption' => 'The group master can only be used if at least one blind has been created. Please create a blind.'];
-            return json_encode($form);
+            return json_encode($form, JSON_THROW_ON_ERROR);
         }
 
         $options = [];
@@ -67,7 +67,7 @@ class BlindControlGroupMaster extends IPSModule
         $defaultInstance = $options[0]['value'];
 
         $properties[] = ['value' => -1, 'caption' => '- please select -'];
-        foreach (json_decode(IPS_GetConfiguration($defaultInstance), true) as $property => $propertyValue) {
+        foreach (json_decode(IPS_GetConfiguration($defaultInstance), true, 512, JSON_THROW_ON_ERROR) as $property => $propertyValue) {
             $properties[] = ['value' => $property, 'caption' => $property];
         }
 
@@ -155,7 +155,7 @@ class BlindControlGroupMaster extends IPSModule
                         }        
                      ']]]];
 
-        return json_encode($form);
+        return json_encode($form, JSON_THROW_ON_ERROR);
     }
 
     private function GetListValues(): array
@@ -163,7 +163,7 @@ class BlindControlGroupMaster extends IPSModule
         $listValues = [];
         if ($this->ReadPropertyString('Blinds') !== '') {
             //Annotate existing elements
-            $shutters = json_decode($this->ReadPropertyString('Blinds'), true);
+            $shutters = json_decode($this->ReadPropertyString('Blinds'), true, 512, JSON_THROW_ON_ERROR);
             foreach ($shutters as $shutter) {
                 //We only need to add annotations. Remaining data is merged from persistance automatically.
                 //Order is determinted by the order of array elements
@@ -189,7 +189,7 @@ class BlindControlGroupMaster extends IPSModule
     public function GetBlinds(): array
     {
         $arr    = [];
-        $blinds = json_decode($this->ReadPropertyString('Blinds'), true);
+        $blinds = json_decode($this->ReadPropertyString('Blinds'), true, 512, JSON_THROW_ON_ERROR);
         if (empty($blinds)) {
             return [];
         }
@@ -218,7 +218,7 @@ class BlindControlGroupMaster extends IPSModule
         $shutters = $this->GetBlinds();
 
         if (!empty($shutters)) {
-            $conf = json_decode(IPS_GetConfiguration($shutters[0]['instanceID']), true);
+            $conf = json_decode(IPS_GetConfiguration($shutters[0]['instanceID']), true, 512, JSON_THROW_ON_ERROR);
             if (!array_key_exists($Property, $conf)) {
                 return false;
             }
@@ -242,7 +242,7 @@ class BlindControlGroupMaster extends IPSModule
                     return false;
                 }
 
-            } catch (Exception $e) {
+            } catch (Exception) {
                 return false;
             }
         }
@@ -257,7 +257,7 @@ class BlindControlGroupMaster extends IPSModule
         $shutters = $this->GetBlinds();
 
         if (!empty($shutters)) {
-            $conf = json_decode(IPS_GetConfiguration($shutters[0]['instanceID']), true);
+            $conf = json_decode(IPS_GetConfiguration($shutters[0]['instanceID']), true, 512, JSON_THROW_ON_ERROR);
             if (!array_key_exists($Property, $conf)) {
                 return null;
             }
