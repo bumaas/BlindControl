@@ -2168,11 +2168,11 @@ class BlindController extends IPSModuleStrict
                 return $positions;
             }
 
-            //wenn zusätlicher *Wärmeschutz* notwendig oder bereits eingeschaltet und Hysterese nicht unterschritten
+            //wenn zusätzlicher *Wärmeschutz* notwendig oder bereits eingeschaltet und Hysterese nicht unterschritten
             if ($this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])) {
-                $levelCorrectionHeat = -round(0.15 * ($this->profileBlindLevel['MinValue'] - $this->profileBlindLevel['LevelClosed']), 2);
+                $levelCorrectionHeat = -round(0.15 * ($this->profileBlindLevel['MinValue'] - $this->profileBlindLevel['MaxValue']), 2);
             } else {
-                $levelCorrectionHeat = round(0.15 * ($this->profileBlindLevel['LevelClosed'] - $this->profileBlindLevel['MinValue']), 2);
+                $levelCorrectionHeat = round(0.15 * ($this->profileBlindLevel['MaxValue'] - $this->profileBlindLevel['MinValue']), 2);
             }
 
             if (($temperature > 27.0)
@@ -2968,7 +2968,7 @@ class BlindController extends IPSModuleStrict
     private function WriteInfo(string $propName, float $rLevelneu, string $hint): void
     {
         if ($propName === self::PROP_BLINDLEVELID) {
-            if ($rLevelneu === (float)$this->profileBlindLevel['LevelClosed']) {
+            if ($rLevelneu === (float)$this->profileBlindLevel['MaxValue']) {
                 $logMessage = sprintf('\'%s\' wurde geschlossen.', $this->objectName);
             } elseif ($rLevelneu === (float)$this->profileBlindLevel['MinValue']) {
                 $logMessage = sprintf('\'%s\' wurde geöffnet.', $this->objectName);
@@ -2977,7 +2977,7 @@ class BlindController extends IPSModuleStrict
                                                                                        - $this->profileBlindLevel['MinValue']);
                 $logMessage   = sprintf('\'%s\' wurde auf %.0f%% gefahren.', $this->objectName, 100 * $levelPercent);
             }
-        } elseif ($rLevelneu === (float)$this->profileSlatsLevel['LevelClosed']) {
+        } elseif ($rLevelneu === (float)$this->profileSlatsLevel['MaxValue']) {
             $logMessage = sprintf('Die Lamellen \'%s\' wurden geschlossen.', $this->objectName);
         } elseif ($rLevelneu === (float)$this->profileSlatsLevel['MinValue']) {
             $logMessage = sprintf('Die Lamellen \'%s\' wurden geöffnet.', $this->objectName);
