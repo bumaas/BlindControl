@@ -4,10 +4,10 @@
   "name":          "Blind Control",
   "url":           "",
   "compatibility": {
-    "version": "6.2",
+    "version": "8.1",
     "date":    0
   },
   "version":       "2.30",
   "build":         58,
-  "date":          1751534375
+  "date":          1764853757
 }
