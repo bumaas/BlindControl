@@ -1032,6 +1032,9 @@ class BlindController extends IPSModuleStrict
 
         if (!$bNoMove) {
             $blindLevel = $this->calculateNormalizedLevel($positionsNew['BlindLevel'], $this->profileBlindLevel);
+            $this->Logger_Dbg(
+                'TEST' . __FUNCTION__,
+                sprintf('new: %s, blindLevel: %s', print_r($positionsNew, true), $blindLevel) . PHP_EOL);
 
             $slatsLevel = null;
             if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
@@ -1054,9 +1057,13 @@ class BlindController extends IPSModuleStrict
 
     private function calculateNormalizedLevel(float $position, array $profile): int
     {
+
         if ($this->isMinMaxReversed($profile['MinValue'], $profile['MaxValue'])) {
             $level = $position / ($profile['MinValue'] - $profile['MaxValue']);
-            return (int) (1 - $level) * 100
+            $this->Logger_Dbg(
+                'TEST' . __FUNCTION__,
+                sprintf('profile: %s, level: %s', print_r($profile, true), $level) . PHP_EOL);
+            return (int) ((1 - $level) * 100);
         }
 
         return (int) ($position / ($profile['MaxValue'] - $profile['MinValue'])) * 100;
@@ -2718,23 +2725,18 @@ class BlindController extends IPSModuleStrict
 
         $blindPositions = $this->GetBlindPositionsFromDegreeOfShadowing($percentShadowing / 100);
 
-        $percentCloseBlind = $blindPositions['BlindLevel'] / ($this->profileBlindLevel['MaxValue'] - $this->profileBlindLevel['MinValue']);
-        if ($this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])) {
-            $percentCloseBlind = 1 - $percentCloseBlind;
-        }
+        $blindLevel = $this->calculateNormalizedLevel($blindPositions['BlindLevel'], $this->profileBlindLevel);
 
         $moveBladeOk =
-            $this->MoveToPosition(self::PROP_BLINDLEVELID, (int)($percentCloseBlind * 100), 0, 0, sprintf('%s Beschattung', $percentCloseBlind));
+            $this->MoveToPosition(self::PROP_BLINDLEVELID, $blindLevel, 0, 0, sprintf('%s Beschattung', $blindLevel));
+
 
         //gibt es Lamellen?
         if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
-            $this->profileSlatsLevel = $this->GetPresentationInformation(self::PROP_SLATSLEVELID);
-            $percentCloseSlats       = $blindPositions['SlatsLevel'] / ($this->profileSlatsLevel['MaxValue'] - $this->profileSlatsLevel['MinValue']);
-            if ($this->isMinMaxReversed($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'])) {
-                $percentCloseSlats = 1 - $percentCloseSlats;
-            }
+            $slatsLevel = $this->calculateNormalizedLevel($blindPositions['SlatsLevel'], $this->profileSlatsLevel);
+
             $moveSlatsOk =
-                $this->MoveToPosition(self::PROP_SLATSLEVELID, (int)($percentCloseSlats * 100), 0, 0, sprintf('%s Beschattung', $percentCloseSlats));
+                $this->MoveToPosition(self::PROP_SLATSLEVELID, $slatsLevel, 0, 0, sprintf('%s Beschattung', $slatsLevel));
 
             return $moveBladeOk || $moveSlatsOk;
         }
