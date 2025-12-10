@@ -1031,32 +1031,14 @@ class BlindController extends IPSModuleStrict
         }
 
         if (!$bNoMove) {
-            if ($this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])) {
-                $blindLevel = $positionsNew['BlindLevel'] / ($this->profileBlindLevel['MinValue'] - $this->profileBlindLevel['MaxValue']);
-                $blindLevel = 1 - $blindLevel;
-            } else {
-                $blindLevel = $positionsNew['BlindLevel'] / ($this->profileBlindLevel['MaxValue'] - $this->profileBlindLevel['MinValue']);
-            }
-            $this->Logger_Dbg(
-                __FUNCTION__,
-                sprintf(
-                    'MOVE: positionNew: %s, MaxValue: %s, MinValue: %s, blindLevel: %s',
-                    $positionsNew['BlindLevel'],
-                    $this->profileBlindLevel['MaxValue'],
-                    $this->profileBlindLevel['MinValue'],
-                    $blindLevel
-                )
-            );
+            $blindLevel = $this->calculateNormalizedLevel($positionsNew['BlindLevel'], $this->profileBlindLevel);
 
+            $slatsLevel = null;
             if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
-                $slatsLevel = $positionsNew['SlatsLevel'] / ($this->profileSlatsLevel['MaxValue'] - $this->profileSlatsLevel['MinValue']);
-                if ($this->isMinMaxReversed($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'])) {
-                    $slatsLevel = 1 - $slatsLevel;
-                }
-                $this->MoveBlind((int)($blindLevel * 100), (int)($slatsLevel * 100), $deactivationTimeAuto, $Hinweis);
-            } else {
-                $this->MoveBlind((int)($blindLevel * 100), null, $deactivationTimeAuto, $Hinweis);
+                $slatsLevel = $this->calculateNormalizedLevel($positionsNew['SlatsLevel'], $this->profileSlatsLevel);
             }
+
+            $this->MoveBlind($blindLevel, $slatsLevel, $deactivationTimeAuto, $Hinweis);
         }
 
         //im Notfall wird die Automatik deaktiviert
@@ -1068,6 +1050,16 @@ class BlindController extends IPSModuleStrict
         IPS_SemaphoreLeave($this->InstanceID . '- Blind');
 
         return true;
+    }
+
+    private function calculateNormalizedLevel(float $position, array $profile): int
+    {
+        if ($this->isMinMaxReversed($profile['MinValue'], $profile['MaxValue'])) {
+            $level = $position / ($profile['MinValue'] - $profile['MaxValue']);
+            return (int) (1 - $level) * 100
+        }
+
+        return (int) ($position / ($profile['MaxValue'] - $profile['MinValue'])) * 100;
     }
 
     private function getModuleVersion(): string
@@ -2662,7 +2654,7 @@ class BlindController extends IPSModuleStrict
     }
 
     //-----------------------------------------------
-    public function MoveBlind(int $percentBlindClose, ?int $percentSlatsClosed, int $deactivationTimeAuto, string $hint): bool
+    public function MoveBlind(int $percentBlindClose, ?int $percentSlatsClose, int $deactivationTimeAuto, string $hint): bool
     {
         if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
             return false;
@@ -2673,15 +2665,15 @@ class BlindController extends IPSModuleStrict
             sprintf(
                 'percentBlindClose: %s, percentSlatClose: %s, deactivationTimeAuto: %s, hint: %s',
                 $percentBlindClose,
-                $percentSlatsClosed ?? 'null',
+                $percentSlatsClose ?? 'null',
                 $deactivationTimeAuto,
                 $hint
             )
         );
 
-        if (($percentBlindClose < 0) || ($percentBlindClose > 100) || ($percentSlatsClosed < 0) || ($percentSlatsClosed > 100)) {
-            return false;
-        }
+
+        assert($percentBlindClose >= 0 && $percentBlindClose <= 100);
+        assert(is_null($percentSlatsClose) || ($percentSlatsClose >= 0 && $percentSlatsClose <= 100));
 
         // globale Instanzvariablen setzen
         $this->profileBlindLevel = $this->GetPresentationInformation(self::PROP_BLINDLEVELID);
@@ -2693,11 +2685,11 @@ class BlindController extends IPSModuleStrict
         $tsAutomatic = $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
         $moveBladeOk = $this->MoveToPosition(self::PROP_BLINDLEVELID, $percentBlindClose, $tsAutomatic, $deactivationTimeAuto, $hint);
 
-        //gibt es Lamellen?
+        //Gibt es Lamellen?
         if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
             $this->profileSlatsLevel = $this->GetPresentationInformation(self::PROP_SLATSLEVELID);
             $moveSlatsOk             =
-                $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClosed, $tsAutomatic, $deactivationTimeAuto, $hint);
+                $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClose, $tsAutomatic, $deactivationTimeAuto, $hint);
 
             return $moveBladeOk || $moveSlatsOk;
         }
