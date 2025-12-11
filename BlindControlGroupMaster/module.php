@@ -211,7 +211,7 @@ class BlindControlGroupMaster extends IPSModuleStrict
     }
 
     /** @noinspection PhpUnused */
-    public function SetPropertyOfBlinds(string $Property, $Value): bool
+    public function SetPropertyOfBlinds(string $Property, mixed $Value): bool
     {
         $this->LogMessage(__CLASS__ . '::' . __FUNCTION__ . ': ' . $this->InstanceID . ' ' . $Property . ' ' . $Value, KL_DEBUG);
 
