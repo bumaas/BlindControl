@@ -157,9 +157,9 @@ class BlindController extends IPSModuleStrict
 
     private string $objectName;
 
-    private        $profileBlindLevel;
+    private ?array $profileBlindLevel;
 
-    private        $profileSlatsLevel;
+    private ?array $profileSlatsLevel;
 
 
     // Die folgenden Funktionen überschreiben die interne IPS_() Funktionen
@@ -970,7 +970,7 @@ class BlindController extends IPSModuleStrict
             );
         } elseif ($positionsContactOpenBlind !== null) {
             // Kontakt Öffnen
-            $checkResult = $this->checkContactLimit($positionsAct, $positionsNew, $positionsContactOpenBlind, 'Open');
+            $checkResult = $this->checkContactLimit($positionsAct, $positionsNew, $positionsContactOpenBlind, true);
             if ($checkResult['modified']) {
                 $bNoMove      = false;
                 $positionsNew = $checkResult['positions'];
@@ -983,7 +983,7 @@ class BlindController extends IPSModuleStrict
             }
         } elseif ($positionsContactCloseBlind !== null) {
             // Kontakt Schließen
-            $checkResult = $this->checkContactLimit($positionsAct, $positionsNew, $positionsContactCloseBlind, 'Close');
+            $checkResult = $this->checkContactLimit($positionsAct, $positionsNew, $positionsContactCloseBlind, false);
             if ($checkResult['modified']) {
                 $bNoMove              = false;
                 $positionsNew         = $checkResult['positions'];
@@ -1007,31 +1007,31 @@ class BlindController extends IPSModuleStrict
         ];
     }
 
-    private function checkContactLimit(array $positionsAct, array $positionsNew, array $contactLimit, string $type): array
+    private function checkContactLimit(array $currentPositions, array $targetPositions, array $contactLimit, bool $isOpeningContact): array
     {
         $modified          = false;
         $resetDeactivation = false;
         $reversed          = $this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue']);
 
-        // Prüflogik für BlindLevel
-        $shouldModifyBlind = ($type === 'Open')
-            ? ($reversed
-                ? ($contactLimit['BlindLevel'] > $positionsNew['BlindLevel'])
-                : ($contactLimit['BlindLevel'] < $positionsNew['BlindLevel']))
-            : ($reversed
-                ? ($contactLimit['BlindLevel'] < $positionsNew['BlindLevel'])
-                : ($contactLimit['BlindLevel'] > $positionsNew['BlindLevel']));
+        // Bestimmen, ob das Kontakt-Limit eine Untergrenze oder Obergrenze darstellt
+        $isLowerLimit = ($isOpeningContact && !$reversed) || (!$isOpeningContact && $reversed);
+
+        $shouldModifyBlind = $isLowerLimit
+            ? ($contactLimit['BlindLevel'] < $targetPositions['BlindLevel'])
+            : ($contactLimit['BlindLevel'] > $targetPositions['BlindLevel']);
 
         if ($shouldModifyBlind) {
-            $positionsNew['BlindLevel'] = $contactLimit['BlindLevel'];
-            $modified                   = true;
+            $targetPositions['BlindLevel'] = $contactLimit['BlindLevel'];
+            $modified                      = true;
 
             // DeactivationTime nur resetten, wenn wir den Aktor auch wirklich "wegbewegen" müssen
             // Im Originalcode war das bei 'Open' davon abhängig, ob das Limit > Act ist (bei reversed)
-            $conditionAct = ($type === 'Open') ? ($reversed ? ($contactLimit['BlindLevel'] > $positionsAct['BlindLevel'])
-                : ($contactLimit['BlindLevel'] < $positionsAct['BlindLevel'])) : true; // Bei Close war es im Original immer 0
-
-            if ($conditionAct) {
+            if ($isOpeningContact) {
+                $resetDeactivation = $reversed
+                    ? ($contactLimit['BlindLevel'] > $currentPositions['BlindLevel'])
+                    : ($contactLimit['BlindLevel'] < $currentPositions['BlindLevel']);
+            } else {
+                // Bei 'Close' wird laut Originalcode immer ein Reset durchgeführt
                 $resetDeactivation = true;
             }
         }
@@ -1039,20 +1039,21 @@ class BlindController extends IPSModuleStrict
         // Prüflogik für Lamellen (falls vorhanden)
         if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
             $reversedSlats     = $this->isMinMaxReversed($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue']);
-            $shouldModifySlats = ($type === 'Open')
-                ? ($reversedSlats ? ($contactLimit['SlatsLevel'] > $positionsNew['SlatsLevel'])
-                    : ($contactLimit['SlatsLevel'] < $positionsNew['SlatsLevel']))
-                : ($reversedSlats ? ($contactLimit['SlatsLevel'] < $positionsNew['SlatsLevel'])
-                    : ($contactLimit['SlatsLevel'] > $positionsNew['SlatsLevel']));
+            // Bestimmen, ob das Lamellen-Limit eine Untergrenze oder Obergrenze darstellt
+            $isLowerLimitSlats = ($isOpeningContact && !$reversedSlats) || (!$isOpeningContact && $reversedSlats);
+
+            $shouldModifySlats = $isLowerLimitSlats
+                ? ($contactLimit['SlatsLevel'] < $targetPositions['SlatsLevel'])
+                : ($contactLimit['SlatsLevel'] > $targetPositions['SlatsLevel']);
 
             if ($shouldModifySlats) {
-                $positionsNew['SlatsLevel'] = $contactLimit['SlatsLevel'];
-                $modified                   = true;
+                $targetPositions['SlatsLevel'] = $contactLimit['SlatsLevel'];
+                $modified                      = true;
                 $resetDeactivation          = true; // Bei Lamellenänderung wurde im Original deactivationTimeAuto immer auf 0 gesetzt
             }
         }
 
-        return ['positions' => $positionsNew, 'modified' => $modified, 'resetDeactivation' => $resetDeactivation];
+        return ['positions' => $targetPositions, 'modified' => $modified, 'resetDeactivation' => $resetDeactivation];
     }
 
     private function calculateNormalizedLevel(float $position, array $profile): int
@@ -1323,7 +1324,7 @@ class BlindController extends IPSModuleStrict
 
     private function RegisterVariables(): void
     {
-        $this->RegisterVariableBoolean(self::VAR_IDENT_ACTIVATED, $this->Translate('Activated'), '~Switch');
+        $this->RegisterVariableBoolean(self::VAR_IDENT_ACTIVATED, $this->Translate('Activated'), ['PRESENTATION' => VARIABLE_PRESENTATION_SWITCH]);
         $this->RegisterVariableString(self::VAR_IDENT_LAST_MESSAGE, $this->Translate('Last Message'));
 
         $this->EnableAction(self::VAR_IDENT_ACTIVATED);
@@ -2023,44 +2024,27 @@ class BlindController extends IPSModuleStrict
 
     private function getLevelEmergencyContact(): ?float
     {
-        $contacts = [];
-
-        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID))) {
-            $contacts[self::PROP_EMERGENCYCONTACTID] = [
-                'id'    => $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
-                'level' => $this->profileBlindLevel['MinValue']
-            ];
+        $emergencyContactId = $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID);
+        if (!IPS_VariableExists($emergencyContactId)) {
+            return null;
         }
 
-        // alle Kontakte prüfen ...
-        $contactOpen = null;
-        $level       = null;
-        foreach ($contacts as $propName => $contact) {
-            if ($this->isContactOpen($propName)) {
-                $contactOpen = true;
-                if (isset($level)) {
-                    if ($this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])) {
-                        $level = max($level, $contact['level']);
-                    } else {
-                        $level = min($level, $contact['level']);
-                    }
-                } else {
-                    $level = $contact['level'];
-                }
+        // Wenn der Kontakt offen ist (Logik inkl. Reversed-Profil in isContactOpen)
+        if ($this->isContactOpen(self::PROP_EMERGENCYCONTACTID)) {
+            $level = $this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])
+                ? (float)$this->profileBlindLevel['MinValue']
+                : (float)$this->profileBlindLevel['MaxValue'];
 
-                $this->Logger_Dbg(
-                    __FUNCTION__,
-                    sprintf(
-                        'emergency contact is open: #%s, value: %s, level: %s',
-                        $contact['id'],
-                        $this->GetFormattedValue($contact['id']),
-                        $contact['level']
-                    )
-                );
-            }
-        }
+            $this->Logger_Dbg(
+                __FUNCTION__,
+                sprintf(
+                    'emergency contact is open: #%s, value: %s, target level: %s',
+                    $emergencyContactId,
+                    $this->GetFormattedValue($emergencyContactId),
+                    $level
+                )
+            );
 
-        if ($contactOpen) {
             return $level;
         }
 
