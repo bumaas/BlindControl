@@ -883,6 +883,7 @@ class BlindController extends IPSModuleStrict
         if (isset($dayState['isDayByDayDetection'], $dayState['brightness'])) {
             $Hinweis .= ', ' . $this->GetFormattedValue($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID));
         }
+        $this->Logger_Dbg(__FUNCTION__, sprintf('isDay: %d, positionsAct: %s, dayState: %s => positions: %s, hint: %s', (int)$isDay, json_encode($positionsAct), json_encode($dayState), json_encode($positionsNew), $Hinweis));
 
         return ['positions' => $positionsNew, 'hint' => $Hinweis];
     }
