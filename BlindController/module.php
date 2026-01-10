@@ -763,7 +763,7 @@ class BlindController extends IPSModuleStrict
         );
 
         // --- 3. Basis-Zielposition berechnen (Tag/Nacht/Manuell) ---
-        $calcResult   = $this->calculateBasePosition($isDay, $bNoMove, $positionsAct, $dayState);
+        $calcResult   = $this->calculateBasePosition($bNoMove, $positionsAct, $dayState);
         $positionsNew = $calcResult['positions'];
         $Hinweis      = $calcResult['hint'];
 
@@ -828,7 +828,7 @@ class BlindController extends IPSModuleStrict
         ];
     }
 
-    private function calculateBasePosition(bool $isDay, bool $bNoMove, array $positionsAct, array $dayState): array
+    private function calculateBasePosition(bool $bNoMove, array $positionsAct, array $dayState): array
     {
         $positionsNew = $positionsAct;
 
@@ -836,7 +836,7 @@ class BlindController extends IPSModuleStrict
             return ['positions' => $positionsNew, 'hint' => ''];
         }
 
-        if ($isDay) {
+        if ($dayState['isDay']) {
             $lastManualMovement         = json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true, 512, JSON_THROW_ON_ERROR);
             $deactivationManualMovement = $this->ReadPropertyInteger(self::PROP_DEACTIVATIONMANUALMOVEMENT);
 
@@ -883,7 +883,7 @@ class BlindController extends IPSModuleStrict
         if (isset($dayState['isDayByDayDetection'], $dayState['brightness'])) {
             $Hinweis .= ', ' . $this->GetFormattedValue($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID));
         }
-        $this->Logger_Dbg(__FUNCTION__, sprintf('isDay: %d, positionsAct: %s, dayState: %s => positions: %s, hint: %s', (int)$isDay, json_encode($positionsAct), json_encode($dayState), json_encode($positionsNew), $Hinweis));
+        $this->Logger_Dbg(__FUNCTION__, sprintf('positionsAct: %s, dayState: %s => positions: %s, hint: %s', json_encode($positionsAct), json_encode($dayState), json_encode($positionsNew), $Hinweis));
 
         return ['positions' => $positionsNew, 'hint' => $Hinweis];
     }
@@ -939,13 +939,15 @@ class BlindController extends IPSModuleStrict
 
     private function applyContactLogic(array $positionsAct, array $positionsNew, int $deactivationTimeAuto, bool $bNoMove, string $Hinweis): array
     {
+        $this->Logger_Dbg(__FUNCTION__, sprintf('positionsAct: %s, positionsNew: %s, deactivationTimeAuto: %d, bNoMove: %d, hint: %s', json_encode($positionsAct), json_encode($positionsNew), $deactivationTimeAuto, (int)$bNoMove, $Hinweis));
+
         $levelContactEmergency      = $this->getLevelEmergencyContact();
         $positionsContactOpenBlind  = $this->getPositionsOfOpenBlindContact();
         $positionsContactCloseBlind = $this->getPositionsOfCloseBlindContact();
         $bEmergency                 = false;
 
-        // Prioritäten klären
-        if (($positionsContactOpenBlind !== null) && ($positionsContactCloseBlind !== null)) {
+        // 1. Prioritäten klären
+        if ($positionsContactOpenBlind !== null && $positionsContactCloseBlind !== null) {
             if ($this->ReadPropertyBoolean(self::PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY)) {
                 $positionsContactOpenBlind = null;
             } else {
@@ -953,22 +955,16 @@ class BlindController extends IPSModuleStrict
             }
         }
 
+        // 2. Kontakt-Logik anwenden
         if ($levelContactEmergency !== null) {
-            // Notfallkontakt
+            // Notfallkontakt hat höchste Priorität
             $deactivationTimeAuto       = 0;
             $bNoMove                    = false;
             $positionsNew['BlindLevel'] = $levelContactEmergency;
             $Hinweis                    = 'Notfallkontakt offen';
             $bEmergency                 = true;
             $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
-            $this->Logger_Dbg(
-                __FUNCTION__,
-                sprintf(
-                    'NOTFALL: Kontakt geöffnet (posAct: %.2f, posNew: %.2f)',
-                    $positionsAct['BlindLevel'],
-                    $positionsNew['BlindLevel']
-                )
-            );
+            $this->Logger_Dbg(__FUNCTION__, sprintf('NOTFALL: Kontakt geöffnet (posAct: %.2f, posNew: %.2f)', $positionsAct['BlindLevel'], $positionsNew['BlindLevel']));
         } elseif ($positionsContactOpenBlind !== null) {
             // Kontakt Öffnen
             $checkResult = $this->checkContactLimit($positionsAct, $positionsNew, $positionsContactOpenBlind, true);
@@ -989,23 +985,26 @@ class BlindController extends IPSModuleStrict
                 $bNoMove              = false;
                 $positionsNew         = $checkResult['positions'];
                 $Hinweis              = 'Kontakt offen';
-                $deactivationTimeAuto = 0; // Beim Schließen immer 0 laut original code? (Dort stand es direkt im Block)
+                $deactivationTimeAuto = 0;
                 $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
                 $this->Logger_Dbg(__FUNCTION__, 'Kontakt geöffnet (Close-Logik angewendet)');
             }
         } elseif ($this->ReadAttributeBoolean(self::ATTR_CONTACT_OPEN)) {
-            // Reset nach Kontaktöffnung
+            // Reset-Logik: Kein Kontakt mehr aktiv, aber Attribut war noch gesetzt
             $deactivationTimeAuto = 0;
             $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, false);
         }
 
-        return [
+        $result = [
             'positions'            => $positionsNew,
             'deactivationTimeAuto' => $deactivationTimeAuto,
             'bNoMove'              => $bNoMove,
             'hint'                 => $Hinweis,
             'bEmergency'           => $bEmergency
         ];
+
+        $this->Logger_Dbg(__FUNCTION__, 'Result: ' . json_encode($result));
+        return $result;
     }
 
     private function checkContactLimit(array $currentPositions, array $targetPositions, array $contactLimit, bool $isOpeningContact): array
