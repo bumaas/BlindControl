@@ -1058,17 +1058,16 @@ class BlindController extends IPSModuleStrict
 
     private function calculateNormalizedLevel(float $position, array $profile): int
     {
-        if ($this->isMinMaxReversed($profile['MinValue'], $profile['MaxValue'])) {
-            $level = $position / ($profile['MinValue'] - $profile['MaxValue']);
-            /*
-            $this->Logger_Dbg(
-                'TEST' . __FUNCTION__,
-                sprintf('profile: %s, level: %s', print_r($profile, true), $level) . PHP_EOL);
-            */
-            return (int)((1 - $level) * 100);
+        $min = $profile['MinValue'];
+        $max = $profile['MaxValue'];
+        $range = $max - $min;
+
+        if (abs($range) < PHP_FLOAT_EPSILON) {
+            return 0;
         }
 
-        return (int)($position / ($profile['MaxValue'] - $profile['MinValue'])) * 100;
+        // Diese eine Zeile deckt beide Richtungen (reversed j/n) korrekt ab
+        return (int)round((($position - $min) / $range) * 100);
     }
 
     private function getModuleVersion(): string
