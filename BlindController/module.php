@@ -573,7 +573,6 @@ class BlindController extends IPSModuleStrict
 
         // --- 1. Tageszeit bestimmen ---
         $dayState = $this->determineDayState($positionsAct['BlindLevel']);
-        $isDay    = $dayState['isDay'];
 
         //Zeitpunkt der letzten Rollladenbewegung (Höhe oder Lamellen)
         $tsBlindLastMovement = $this->GetBlindLastTimeStamp($blindLevelId, $slatsLevelId);
@@ -582,7 +581,7 @@ class BlindController extends IPSModuleStrict
         $tsAutomatik = $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
 
         // --- 2. Prüfen auf Tageswechsel oder manuelle Bewegungssperre ---
-        if ($this->checkIsDayChange($isDay)) {
+        if ($this->checkIsDayChange($dayState)) {
             //beim Tageswechsel ...
             $deactivationTimeAuto = 0;
             $this->WriteAttributeString(
@@ -592,7 +591,7 @@ class BlindController extends IPSModuleStrict
             $bNoMove = false;
         } else {
             // während der Verzögerung ist die ursprüngliche Tageszeit anzunehmen
-            $isDay = $this->ReadAttributeBoolean('AttrIsDay');
+            $isDay = $dayState['isDay'];
 
             $bNoMove = $this->shouldBlockMovement(
                 $positionsAct['BlindLevel'],
@@ -603,6 +602,7 @@ class BlindController extends IPSModuleStrict
                 $tsAutomatik
             );
         }
+        $isDay = $dayState['isDay'];
 
         $this->Logger_Dbg(
             __FUNCTION__,
@@ -1800,8 +1800,16 @@ class BlindController extends IPSModuleStrict
         $this->SetTimerInterval(self::TIMER_DELAYED_MOVEMENT, 0);
     }
 
-    private function checkIsDayChange(bool $isDay): bool
+    /**
+     * Prüft den Tageswechsel und berücksichtigt eine ggf. konfigurierte Verzögerung.
+     * Aktualisiert den effektiven Tageszustand in $dayState['isDay'].
+     *
+     * @param array $dayState Ergebnis aus determineDayState(); 'isDay' wird ggf. angepasst.
+     * @return bool True, wenn der Tageswechsel final vollzogen wurde (nach Ablauf der Verzögerung).
+     */
+    private function checkIsDayChange(array &$dayState): bool
     {
+        $isDay = $dayState['isDay'];
         if ($this->ReadAttributeBoolean('AttrIsDay') !== $isDay) { //Tageswechsel erreicht
 
             if ((time() - $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC)) <= 1) {
@@ -1816,10 +1824,12 @@ class BlindController extends IPSModuleStrict
 
                 if ($attrDaytimeChangeTime === 0) {
                     $this->activateDelayTimer($delayTime);
+                    $dayState['isDay'] = $this->ReadAttributeBoolean('AttrIsDay');
                     return false;
                 }
 
                 if (time() < $attrDaytimeChangeTime) {
+                    $dayState['isDay'] = $this->ReadAttributeBoolean('AttrIsDay');
                     return false;
                 }
 
@@ -1829,9 +1839,11 @@ class BlindController extends IPSModuleStrict
             $this->WriteAttributeBoolean('AttrIsDay', $isDay);
             $this->WriteAttributeInteger('AttrTimeStampIsDayChange', time());
             $this->Logger_Dbg(__FUNCTION__, 'DayChange!');
+            $dayState['isDay'] = $isDay;
             return true;
         }
 
+        $dayState['isDay'] = $isDay;
         return false;
     }
 
