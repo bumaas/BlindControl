@@ -974,8 +974,18 @@ class BlindController extends IPSModuleStrict
             return 0;
         }
 
+        $position = $this->clampToProfile($position, $profile);
+
         // Diese Zeile deckt beide Richtungen (reversed j/n) korrekt ab.
         return (int)round((($position - $min) / $range) * 100);
+    }
+
+    private function calculateProfilePositionByPercent(float $percent, array $profile): float
+    {
+        return $this->clampToProfile(
+            $profile['MinValue'] + (($profile['MaxValue'] - $profile['MinValue']) * ($percent / 100)),
+            $profile
+        );
     }
 
     private function getModuleVersion(): string
@@ -2064,11 +2074,7 @@ class BlindController extends IPSModuleStrict
             }
 
             //wenn zusätzlicher *Hitzeschutz* notwenig oder bereits eingeschaltet und Hysterese nicht unterschritten
-            if ($this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])) {
-                $levelPositionHeat = round(0.10 * ($this->profileBlindLevel['MinValue'] - $this->profileBlindLevel['MaxValue']), 2);
-            } else {
-                $levelPositionHeat = round(0.90 * ($this->profileBlindLevel['MaxValue'] - $this->profileBlindLevel['MinValue']), 2);
-            }
+            $levelPositionHeat = round($this->calculateProfilePositionByPercent(90.0, $this->profileBlindLevel), 2);
 
             if (($temperature > 30.0) || ((round($levelAct, 1) === round($levelPositionHeat, 1)) && ($temperature > (30.0 - 0.5)))) {
                 $positions['BlindLevel'] = $levelPositionHeat;
@@ -2077,16 +2083,12 @@ class BlindController extends IPSModuleStrict
             }
 
             //wenn zusätzlicher *Wärmeschutz* notwendig oder bereits eingeschaltet und Hysterese nicht unterschritten
-            if ($this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])) {
-                $levelCorrectionHeat = -round(0.15 * ($this->profileBlindLevel['MinValue'] - $this->profileBlindLevel['MaxValue']), 2);
-            } else {
-                $levelCorrectionHeat = round(0.15 * ($this->profileBlindLevel['MaxValue'] - $this->profileBlindLevel['MinValue']), 2);
-            }
+            $levelCorrectionHeat = round(0.15 * ($this->profileBlindLevel['MaxValue'] - $this->profileBlindLevel['MinValue']), 2);
 
             if (($temperature > 27.0)
                 || ((round($levelAct, 1) === round($positions['BlindLevel'] + $levelCorrectionHeat, 1))
                     && ($temperature > (27.0 - 0.5)))) {
-                $positions['BlindLevel'] += $levelCorrectionHeat;
+                $positions['BlindLevel'] = $this->clampToProfile($positions['BlindLevel'] + $levelCorrectionHeat, $this->profileBlindLevel);
                 $this->Logger_Dbg(
                     __FUNCTION__,
                     sprintf(
