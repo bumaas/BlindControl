@@ -2044,8 +2044,9 @@ class BlindController extends IPSModuleStrict
             )
         );
 
-        $positions = null;
-        if (($brightness >= $thresholdBrightness) && ($rSunAzimuth >= $azimuthFrom) && ($rSunAzimuth <= $azimuthTo)
+        $positions      = null;
+        $azimuthMatches = $this->isAzimuthInRange($rSunAzimuth, $azimuthFrom, $azimuthTo);
+        if (($brightness >= $thresholdBrightness) && $azimuthMatches
             && ($rSunAltitude >= $altitudeFrom)
             && ($rSunAltitude <= $altitudeTo)) {
             // Simple variant
@@ -2103,6 +2104,19 @@ class BlindController extends IPSModuleStrict
         }
 
         return $positions;
+    }
+
+    private function isAzimuthInRange(float $azimuth, float $from, float $to): bool
+    {
+        $azimuth = fmod($azimuth + 360.0, 360.0);
+        $from    = fmod($from + 360.0, 360.0);
+        $to      = fmod($to + 360.0, 360.0);
+
+        if ($from <= $to) {
+            return ($azimuth >= $from) && ($azimuth <= $to);
+        }
+
+        return ($azimuth >= $from) || ($azimuth <= $to);
     }
 
     private function GetBrightness(string $propBrightnessID, string $propBrightnessAvgMinutes, float $levelAct, bool $shadowing): ?float
