@@ -2108,6 +2108,11 @@ class BlindController extends IPSModuleStrict
 
     private function isAzimuthInRange(float $azimuth, float $from, float $to): bool
     {
+        // Ein Bereich mit 360 Grad Spannweite soll immer den Vollkreis abdecken.
+        if (abs($to - $from) >= (360.0 - PHP_FLOAT_EPSILON)) {
+            return true;
+        }
+
         $azimuth = fmod($azimuth + 360.0, 360.0);
         $from    = fmod($from + 360.0, 360.0);
         $to      = fmod($to + 360.0, 360.0);
