@@ -189,7 +189,11 @@ class BlindControlGroupMaster extends IPSModuleStrict
     public function GetBlinds(): array
     {
         $arr    = [];
-        $blinds = json_decode($this->ReadPropertyString('Blinds'), true, 512, JSON_THROW_ON_ERROR);
+        $blindsJson = $this->ReadPropertyString('Blinds');
+        if ($blindsJson === '') {
+            return [];
+        }
+        $blinds = json_decode($blindsJson, true, 512, JSON_THROW_ON_ERROR);
         if (empty($blinds)) {
             return [];
         }
