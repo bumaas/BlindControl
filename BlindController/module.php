@@ -3292,6 +3292,21 @@ class BlindController extends IPSModuleStrict
                     'MaxValue' => $presentation['MAX']
                 ];
 
+            case VARIABLE_PRESENTATION_ENUMERATION:
+                // "Aufzählung" mit "Rolladen"-Vorlage
+                // OPTIONS ist ein JSON-String mit Value/Caption-Paaren
+                $options = json_decode($presentation['OPTIONS'] ?? '[]', true);
+                if (empty($options)) {
+                    return null;
+                }
+                $values = array_column($options, 'Value');
+                // Konvention wie bei SHUTTER (Rolladen-Vorlage): kleinster Wert = geschlossen, größter = offen
+                // MinValue = offen (max), MaxValue = geschlossen (min) → isMinMaxReversed = true
+                return [
+                    'MinValue' => max($values),
+                    'MaxValue' => min($values)
+                ];
+
             default:
                 //assert(false, sprintf('unsupported presentation: %s with "%s"', $presentation['PRESENTATION'], $propName));
                 trigger_error(sprintf('unsupported presentation: %s with "%s"', $presentation['PRESENTATION'], $propName));
