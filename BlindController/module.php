@@ -3292,6 +3292,21 @@ class BlindController extends IPSModuleStrict
                     'MaxValue' => $presentation['MAX']
                 ];
 
+            case VARIABLE_PRESENTATION_ENUMERATION:
+                // "Aufzählung": OPTIONS ist ein JSON-String mit Value/Caption-Paaren.
+                // Die Aufzählung trägt keine Richtungsinformation, daher wird sie wie ein
+                // Legacy-Profil ohne ".Reversed" behandelt: kleinster Wert = geöffnet, größter = geschlossen.
+                // Für reversierte Rollläden (z. B. Homematic) ist die Darstellung "Rolladen" zu verwenden.
+                $options = json_decode($presentation['OPTIONS'] ?? '[]', true);
+                $values  = is_array($options) ? array_column($options, 'Value') : [];
+                if (empty($values)) {
+                    return null;
+                }
+                return [
+                    'MinValue' => min($values),
+                    'MaxValue' => max($values)
+                ];
+
             default:
                 //assert(false, sprintf('unsupported presentation: %s with "%s"', $presentation['PRESENTATION'], $propName));
                 trigger_error(sprintf('unsupported presentation: %s with "%s"', $presentation['PRESENTATION'], $propName));

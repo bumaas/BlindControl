@@ -45,9 +45,10 @@ Zusätzlich kann zur leichteren Verwaltung mehrerer Rollläden/Jalousien ein Gru
  
  - Es werden alle Aktoren unterstützt, die über eine Statusvariable verfügen und sich über `RequestAction` steuern lassen.
  - Die Statusvariable muss vom Typ Integer oder Float sein.
- - Es ist eine geeignete Darstellung zu verwenden. Geeignet ist die Darstellung "Legacy Profil" mit einem korrekten Minimal- und Maximalwert sowie die Darstellung "Rolladen".
+ - Es ist eine geeignete Darstellung zu verwenden. Geeignet sind die Darstellungen "Legacy Profil" (mit einem korrekten Minimal- und Maximalwert), "Rolladen", "Schieberegler" und "Aufzählung".
  - Wird das Legacy-Profil genutzt, ist zu beachten, dass bei einem Rollladen, der beim Minimalwert geschlossen und beim Maximalwert geöffnet ist (z. B. typischerweise bei Homematic), ein Profil mit der Namensendung ".Reversed" zu verwenden ist.<br>
- - Bei reversierten Rollläden (Minimalwert = geöffnet, Maximalwert = geschlossen bzw. umgekehrt, z. B. typischerweise bei Homematic) wird die Darstellung "Rolladen" empfohlen: Sie kennt über die hinterlegten Werte für "geöffnet" und "geschlossen" die richtige Richtung von sich aus, ein zusätzliches ".Reversed"-Profil ist hier nicht erforderlich. Andere Darstellungen (z. B. "Aufzählung") tragen diese Richtungsinformation nicht und werden daher für reversierte Rollläden nicht unterstützt.<br>
+ - Bei reversierten Rollläden (Minimalwert = geöffnet, Maximalwert = geschlossen bzw. umgekehrt, z. B. typischerweise bei Homematic) wird die Darstellung "Rolladen" empfohlen: Sie kennt über die hinterlegten Werte für "geöffnet" und "geschlossen" die richtige Richtung von sich aus, ein zusätzliches ".Reversed"-Profil ist hier nicht erforderlich.<br>
+ - Die Darstellung "Aufzählung" trägt keine Richtungsinformation. Sie wird wie ein Legacy-Profil ohne ".Reversed" behandelt (kleinster Wert = geöffnet, größter Wert = geschlossen) und ist damit nur für nicht-reversierte Rollläden geeignet. Für reversierte Rollläden ist stattdessen die Darstellung "Rolladen" zu verwenden.<br>
  - Die Statusvariablen dürfen nicht emuliert werden. Dies ist wichtig, um manuell ausgelöste Bewegungen eindeutig von automatisch ausgeführten Bewegungen unterscheiden zu können.
  - Zur Steuerung von Lamellen bei Jalousien ist eine eigene Statusvariable notwendig, über die die Stellung der Lamellen gesteuert werden kann. Für diese gelten die gleichen Voraussetzungen.
 
