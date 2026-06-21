@@ -47,6 +47,7 @@ Zusätzlich kann zur leichteren Verwaltung mehrerer Rollläden/Jalousien ein Gru
  - Die Statusvariable muss vom Typ Integer oder Float sein.
  - Es ist eine geeignete Darstellung zu verwenden. Geeignet ist die Darstellung "Legacy Profil" mit einem korrekten Minimal- und Maximalwert sowie die Darstellung "Rolladen".
  - Wird das Legacy-Profil genutzt, ist zu beachten, dass bei einem Rollladen, der beim Minimalwert geschlossen und beim Maximalwert geöffnet ist (z. B. typischerweise bei Homematic), ein Profil mit der Namensendung ".Reversed" zu verwenden ist.<br>
+ - Bei reversierten Rollläden (Minimalwert = geöffnet, Maximalwert = geschlossen bzw. umgekehrt, z. B. typischerweise bei Homematic) wird die Darstellung "Rolladen" empfohlen: Sie kennt über die hinterlegten Werte für "geöffnet" und "geschlossen" die richtige Richtung von sich aus, ein zusätzliches ".Reversed"-Profil ist hier nicht erforderlich. Andere Darstellungen (z. B. "Aufzählung") tragen diese Richtungsinformation nicht und werden daher für reversierte Rollläden nicht unterstützt.<br>
  - Die Statusvariablen dürfen nicht emuliert werden. Dies ist wichtig, um manuell ausgelöste Bewegungen eindeutig von automatisch ausgeführten Bewegungen unterscheiden zu können.
  - Zur Steuerung von Lamellen bei Jalousien ist eine eigene Statusvariable notwendig, über die die Stellung der Lamellen gesteuert werden kann. Für diese gelten die gleichen Voraussetzungen.
 
