@@ -148,8 +148,9 @@ class BlindController extends IPSModuleStrict
 
 
     //variable names
-    private const string VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
-    private const string VAR_IDENT_ACTIVATED    = 'ACTIVATED';
+    private const string VAR_IDENT_LAST_MESSAGE  = 'LAST_MESSAGE';
+    private const string VAR_IDENT_LAST_DECISION = 'LAST_DECISION';
+    private const string VAR_IDENT_ACTIVATED     = 'ACTIVATED';
 
     private const int MOVEMENT_WAIT_TIME         = 90; //Wartezeit bis zur Erreichung der Zielposition in Sekunden
     private const int IGNORE_MOVEMENT_TIME       = 40; //Nach einer Bewegung wird eine erneute gleiche Bewegung innerhalb dieser Zeit ignoriert
@@ -160,6 +161,9 @@ class BlindController extends IPSModuleStrict
     private ?array $profileBlindLevel;
 
     private ?array $profileSlatsLevel;
+
+    // Grund, warum eine physische Fahrt unterblieben ist (gesetzt in shouldPerformMovement/isSameMovementRecently)
+    private string $moveSkipReason = '';
 
 
     // Die folgenden Funktionen überschreiben die interne IPS_() Funktionen
@@ -580,6 +584,10 @@ class BlindController extends IPSModuleStrict
         // Attribut TimestampAutomatik auslesen
         $tsAutomatik = $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
 
+        // Grund einer eventuellen Bewegungssperre (für LAST_DECISION)
+        $blockReason          = '';
+        $this->moveSkipReason = '';
+
         // --- 2. Prüfen auf Tageswechsel oder manuelle Bewegungssperre ---
         if ($this->checkIsDayChange($dayState)) {
             //beim Tageswechsel ...
@@ -593,7 +601,7 @@ class BlindController extends IPSModuleStrict
             // während der Verzögerung ist die ursprüngliche Tageszeit anzunehmen
             $isDay = $dayState['isDay'];
 
-            $bNoMove = $this->shouldBlockMovement(
+            $blockResult = $this->shouldBlockMovement(
                 $positionsAct['BlindLevel'],
                 $positionsAct['SlatsLevel'],
                 $tsBlindLastMovement,
@@ -601,6 +609,8 @@ class BlindController extends IPSModuleStrict
                 $this->ReadAttributeInteger('AttrTimeStampIsDayChange'),
                 $tsAutomatik
             );
+            $bNoMove     = $blockResult['block'];
+            $blockReason = $blockResult['reason'];
         }
         $isDay = $dayState['isDay'];
 
@@ -653,6 +663,9 @@ class BlindController extends IPSModuleStrict
 
             $this->MoveBlind($blindLevel, $slatsLevel, $deactivationTimeAuto, $Hinweis);
         }
+
+        // --- 7. Entscheidung des Laufs dokumentieren (immer, auch wenn nicht gefahren wurde) ---
+        $this->writeLastDecision($bNoMove, $blockReason, $positionsNew, $Hinweis);
 
         //im Notfall wird die Automatik deaktiviert
         if ($bEmergency) {
@@ -1249,6 +1262,7 @@ class BlindController extends IPSModuleStrict
     {
         $this->RegisterVariableBoolean(self::VAR_IDENT_ACTIVATED, $this->Translate('Activated'), ['PRESENTATION' => VARIABLE_PRESENTATION_SWITCH]);
         $this->RegisterVariableString(self::VAR_IDENT_LAST_MESSAGE, $this->Translate('Last Message'));
+        $this->RegisterVariableString(self::VAR_IDENT_LAST_DECISION, $this->Translate('Last Decision'));
 
         $this->EnableAction(self::VAR_IDENT_ACTIVATED);
     }
@@ -2491,6 +2505,11 @@ class BlindController extends IPSModuleStrict
      * @return bool True, wenn die Bewegung blockiert werden soll, andernfalls False.
      * @throws \JsonException Bei Fehlern während der Status-Dekodierung.
      */
+    /**
+     * Prüft, ob eine automatische Fahrt wegen einer (zuvor erkannten) manuellen Bedienung gesperrt ist.
+     *
+     * @return array{block: bool, reason: string} block = true, wenn gesperrt; reason = Klartextbegründung (nur bei block = true gefüllt).
+     */
     private function shouldBlockMovement(
         float $blindLevelAct,
         ?float $slatsLevelAct,
@@ -2498,10 +2517,10 @@ class BlindController extends IPSModuleStrict
         bool $isDay,
         int $tsIsDayChanged,
         int $tsAutomatik
-    ): bool {
+    ): array {
         // 1. Karenzzeit nach automatischer Bewegung prüfen
         if ($tsBlindLastMovement <= strtotime('+5 sec', $tsAutomatik)) {
-            return false;
+            return ['block' => false, 'reason' => ''];
         }
 
         // 2. Manuellen Status synchronisieren (Logik für ATTR_MANUALMOVEMENT extrahiert)
@@ -2511,13 +2530,14 @@ class BlindController extends IPSModuleStrict
         $tsManual = $manualState['timeStamp'];
 
         if ($tsManual === null || $tsManual <= $tsIsDayChanged) {
-            return false;
+            return ['block' => false, 'reason' => ''];
         }
 
         // 3. Sperr-Logik
         if (!$isDay) {
-            $this->Logger_Dbg(__FUNCTION__, sprintf('Sperre: Manuelle Bewegung in der Nacht (%s)', date('H:i:s', $tsManual)));
-            return true;
+            $reason = sprintf('manuelle Bedienung in der Nacht (%s)', date('H:i', $tsManual));
+            $this->Logger_Dbg(__FUNCTION__, 'Sperre: ' . $reason);
+            return ['block' => true, 'reason' => $reason];
         }
 
         // Tagsüber: Sperre, nur wenn geschlossen oder innerhalb der Deaktivierungszeit
@@ -2526,14 +2546,24 @@ class BlindController extends IPSModuleStrict
         $isClosed = ($blindLevelAct === $this->profileBlindLevel['MaxValue']) &&
                     ($slatsLevelAct === ($this->profileSlatsLevel['MaxValue'] ?? null));
 
-        if ($isClosed || ($deactivationTimeManuSecs === 0) || (strtotime("+ $deactivationTimeManuSecs seconds", $tsManual) > time())) {
-            $this->Logger_Dbg(__FUNCTION__, 'Sperre: Manuelle Bewegung am Tag aktiv.');
-            return true;
+        if ($isClosed) {
+            $reason = sprintf('manuell vollständig geschlossen (%s)', date('H:i', $tsManual));
+        } elseif ($deactivationTimeManuSecs === 0) {
+            $reason = sprintf('manuelle Bedienung am Tag (%s), Sperre bis zum nächsten Tag/Nacht-Wechsel', date('H:i', $tsManual));
+        } elseif (strtotime("+ $deactivationTimeManuSecs seconds", $tsManual) > time()) {
+            $reason = sprintf(
+                'manuelle Bedienung am Tag (%s), Sperre bis %s',
+                date('H:i', $tsManual),
+                date('H:i', strtotime("+ $deactivationTimeManuSecs seconds", $tsManual))
+            );
+        } else {
+            // Zeit abgelaufen -> Automatik wieder freigeben
+            $this->resetManualMovement();
+            return ['block' => false, 'reason' => ''];
         }
 
-        // Zeit abgelaufen -> Automatik wieder freigeben
-        $this->resetManualMovement();
-        return false;
+        $this->Logger_Dbg(__FUNCTION__, 'Sperre: ' . $reason);
+        return ['block' => true, 'reason' => $reason];
     }
 
 
@@ -2770,6 +2800,7 @@ class BlindController extends IPSModuleStrict
 
         if ($isSame && $isRecent) {
             $this->Logger_Dbg(__FUNCTION__, "Move ignored! Same position recently.");
+            $this->moveSkipReason = 'gleiche Zielposition wurde gerade erst angefahren';
             return true;
         }
         return false;
@@ -2789,12 +2820,14 @@ class BlindController extends IPSModuleStrict
         // 1. Sperrzeit noch aktiv?
         if ($timeSinceAuto < $deactivation) {
             $this->Logger_Dbg(__FUNCTION__, "#$id($propName): Sperrzeit ($deactivation s) noch nicht erreicht ($timeSinceAuto s).");
+            $this->moveSkipReason = sprintf('Karenzzeit nach Automatikfahrt aktiv (noch %d s)', $deactivation - $timeSinceAuto);
             return false;
         }
 
         // 2. Toleranzbereich (bereits erreicht)?
         if ($diffPercentage <= (self::ALLOWED_TOLERANCE_MOVEMENT / 100)) {
             $this->Logger_Dbg(__FUNCTION__, "#$id($propName): Position $act bereits im Toleranzbereich.");
+            $this->moveSkipReason = 'Zielposition bereits erreicht';
             return false;
         }
 
@@ -2802,12 +2835,14 @@ class BlindController extends IPSModuleStrict
         $isEndPosition = in_array($new, [$profile['MinValue'], $profile['MaxValue']], false);
         if (!$isEndPosition && ($diffPercentage < $minMove)) {
             $this->Logger_Dbg(__FUNCTION__, sprintf("#$id($propName): Bewegung zu klein (%.2f%% < %.2f%%).", $diffPercentage * 100, $minMove * 100));
+            $this->moveSkipReason = sprintf('Änderung zu gering (%.0f %% < %.0f %%)', $diffPercentage * 100, $minMove * 100);
             return false;
         }
 
         // 4. Zu kleine Bewegung zur Endposition
         if ($diffPercentage < $minMoveEnd) {
             $this->Logger_Dbg(__FUNCTION__, sprintf("#$id($propName): Endposition fast erreicht (Differenz %.2f%%).", $diffPercentage * 100));
+            $this->moveSkipReason = sprintf('Endposition nahezu erreicht (Differenz %.0f %%)', $diffPercentage * 100);
             return false;
         }
 
@@ -2953,6 +2988,84 @@ class BlindController extends IPSModuleStrict
         }
 
         $this->Logger_Inf($logMessage);
+    }
+
+    /**
+     * Dokumentiert die Entscheidung des aktuellen Steuerungslaufs in der Statusvariable LAST_DECISION.
+     * Wird bei JEDEM Lauf geschrieben - auch dann, wenn der Rollladen nicht bewegt wurde - damit der
+     * Anwender nachvollziehen kann, warum sich der Rollladen bewegt hat oder eben nicht.
+     *
+     * @param bool   $bNoMove      true, wenn eine Bewegungssperre vorlag (es wurde kein Fahrbefehl ausgelöst).
+     * @param string $blockReason  Begründung der Sperre (aus shouldBlockMovement).
+     * @param array  $positionsNew Die ermittelte Zielposition (Rohwerte).
+     * @param string $hint         Der Grund der ermittelten Zielposition (WP/Tag/Nacht/Beschattung/...).
+     */
+    private function writeLastDecision(bool $bNoMove, string $blockReason, array $positionsNew, string $hint): void
+    {
+        $target  = $this->describeTargetPositions($positionsNew);
+        $hintTxt = $hint !== '' ? $hint : '';
+
+        if ($bNoMove) {
+            // Sperre: es wurde gar kein Fahrbefehl ausgelöst
+            $reason  = $blockReason !== '' ? $blockReason : 'Bewegungssperre aktiv';
+            $message = sprintf('Keine Fahrt: %s.', $reason);
+        } elseif ($this->moveSkipReason !== '') {
+            // Fahrbefehl wurde geprüft, aber als nicht erforderlich verworfen (bereits erreicht, Karenzzeit, zu kleine Bewegung)
+            $message = sprintf('Keine Fahrt: %s (Ziel: %s%s).', $this->moveSkipReason, $target, $hintTxt !== '' ? ', ' . $hintTxt : '');
+        } else {
+            // Fahrbefehl wurde ausgelöst
+            $message = sprintf('Fahrt: %s%s.', $target, $hintTxt !== '' ? sprintf(' (%s)', $hintTxt) : '');
+        }
+
+        $this->SetValue(self::VAR_IDENT_LAST_DECISION, $message);
+        $this->Logger_Dbg(__FUNCTION__, $message);
+    }
+
+    /**
+     * Erzeugt eine für den Anwender lesbare Beschreibung einer Zielposition (Behang und ggf. Lamellen).
+     */
+    private function describeTargetPositions(array $positions): string
+    {
+        $blindLevel = $positions['BlindLevel'];
+
+        if (!isset($positions['SlatsLevel']) || $this->profileSlatsLevel === null) {
+            return $this->describeLevel($blindLevel, $this->profileBlindLevel);
+        }
+
+        $slatsLevel = $positions['SlatsLevel'];
+
+        if (($blindLevel === $this->profileBlindLevel['MaxValue']) && ($slatsLevel === $this->profileSlatsLevel['MaxValue'])) {
+            return 'geschlossen';
+        }
+        if (($blindLevel === $this->profileBlindLevel['MinValue']) && ($slatsLevel === $this->profileSlatsLevel['MinValue'])) {
+            return 'geöffnet';
+        }
+
+        return sprintf(
+            'Höhe %s, Lamellen %s',
+            $this->describeLevel($blindLevel, $this->profileBlindLevel),
+            $this->describeLevel($slatsLevel, $this->profileSlatsLevel)
+        );
+    }
+
+    /**
+     * Wandelt einen Rohwert anhand des Profils in einen lesbaren Text um (geöffnet/geschlossen/X % geschlossen).
+     */
+    private function describeLevel(float $rawLevel, array $profile): string
+    {
+        $min = (float)$profile['MinValue']; // geöffnet
+        $max = (float)$profile['MaxValue']; // geschlossen
+
+        if (abs($rawLevel - $max) < PHP_FLOAT_EPSILON) {
+            return 'geschlossen';
+        }
+        if (abs($rawLevel - $min) < PHP_FLOAT_EPSILON) {
+            return 'geöffnet';
+        }
+
+        $range   = $max - $min;
+        $percent = abs($range) > PHP_FLOAT_EPSILON ? (($rawLevel - $min) / $range) * 100 : 0;
+        return sprintf('%.0f %% geschlossen', $percent);
     }
 
     private function checkTimeTable(): int

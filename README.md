@@ -317,6 +317,18 @@ Folgende Statusvariablen werden angelegt:
 Die Statusvariable beinhaltet einen Hinweis über die letzte Bewegung. Um die Bewegungen eines Rollladens zu kontrollieren, bietet es sich an, die Archivierung für diese Variable einzuschalten. 
 Dann werden im Webfront die Bewegungen in Form eines Logfiles dargestellt.  
 
+#####LAST_DECISION
+Die Statusvariable dokumentiert die Entscheidung des jeweils letzten Steuerungslaufs und beantwortet damit die Frage, **warum sich der Rollladen bewegt hat – oder eben nicht**. Sie wird bei jedem Lauf aktualisiert.
+
+Beispiele:
+- `Fahrt: geschlossen. (Nacht)`
+- `Fahrt: Höhe 30 % geschlossen, Lamellen 50 % geschlossen. (Beschattung nach Sonnenstand, 65000)`
+- `Keine Fahrt: manuelle Bedienung am Tag (14:05), Sperre bis 16:05.`
+- `Keine Fahrt: Zielposition bereits erreicht (Ziel: geöffnet, Tag).`
+- `Keine Fahrt: Karenzzeit nach Automatikfahrt aktiv (noch 540 s) (Ziel: geschlossen, Nacht).`
+
+Um den Verlauf der Entscheidungen im Webfront als Logfile darzustellen, empfiehlt es sich, die Archivierung für diese Variable einzuschalten.
+
 ## 7. Anhang
 
 ###  GUIDs der Module
