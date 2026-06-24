@@ -91,6 +91,13 @@ $deactivationTimeAuto: Anzahl der Sekunden, die mindestens seit der letzten auto
 $hint: Hinweis, der in die Statusvariable LAST_MESSAGE geschrieben wird. Ist der Hinweis leer, dann wird er nicht geschrieben.
 
 ```php
+BLC_ExplainControlBlind(int $InstanceID): string
+```
+Führt einen **Probelauf** der Steuerung durch und liefert den vollständigen, lesbaren Ablauf als Text zurück. Damit lässt sich nachvollziehen, warum sich der Rollladen aktuell bewegen würde – oder eben nicht.
+
+Der Probelauf ist **nebenwirkungsfrei**: Der Rollladen wird **nicht** bewegt, und es werden keine Zustände verändert (weder Statusvariablen noch interne Merker, Timer oder die Sperren für manuelle/automatische Bewegungen). Die Funktion kann daher jederzeit gefahrlos aufgerufen werden.
+
+```php
 BLCGM_GetBlinds(int $InstanceID): array
 ```
 Liefert eine Liste der im Gruppenmaster gelisteten Rollläden. Es werden nur die als ausgewählt markierten Einträge geliefert.
@@ -322,12 +329,46 @@ Die Statusvariable dokumentiert die Entscheidung des jeweils letzten Steuerungsl
 
 Beispiele:
 - `Fahrt: geschlossen. (Nacht)`
-- `Fahrt: Höhe 30 % geschlossen, Lamellen 50 % geschlossen. (Beschattung nach Sonnenstand, 65000)`
+- `Fahrt: Höhe 30 % geschlossen, Lamellen 50 % geschlossen. (Beschattung nach Sonnenstand)`
 - `Keine Fahrt: manuelle Bedienung am Tag (14:05), Sperre bis 16:05.`
 - `Keine Fahrt: Zielposition bereits erreicht (Ziel: geöffnet, Tag).`
 - `Keine Fahrt: Karenzzeit nach Automatikfahrt aktiv (noch 540 s) (Ziel: geschlossen, Nacht).`
 
 Um den Verlauf der Entscheidungen im Webfront als Logfile darzustellen, empfiehlt es sich, die Archivierung für diese Variable einzuschalten.
+
+### Entscheidung erklären (Probelauf)
+
+Im Konfigurationsformular steht unter den Aktionen der Schalter **„Entscheidung erklären (Probelauf, keine Fahrt)"** zur Verfügung. Er führt einen nebenwirkungsfreien Probelauf durch (der Rollladen wird **nicht** bewegt und es werden keine Zustände verändert) und zeigt den kompletten Ablauf der Entscheidung Schritt für Schritt an – von der aktuellen Position über Tag/Nacht-Erkennung, Bewegungssperren, Basis-Zielposition, Beschattung und Kontakte bis zum Ergebnis. So lässt sich auf einen Blick erkennen, **warum** sich der Rollladen aktuell bewegen würde oder nicht.
+
+Beispielausgabe, wenn beschattet wird:
+```
+Erklärung des Steuerungslaufs (Probelauf - der Rollladen wird nicht bewegt):
+
+Aktuelle Position: 30 % geschlossen
+Tageszeit: Tag (Wochenplan: Tag, Tagerkennung: Tag, Helligkeit: 12000 lx)
+Bewegungssperre: keine
+Basis-Zielposition: geöffnet (Tag)
+Beschattung: aktiv -> Höhe 60 % geschlossen (Beschattung nach Sonnenstand, Helligkeit 45000 lx ≥ Schwellwert 30000 lx)
+Ergebnis: Fahrt: Höhe 60 % geschlossen (Beschattung nach Sonnenstand).
+```
+
+In der Beschattungs-Zeile wird der für die Beschattungsentscheidung **tatsächlich verwendete** Helligkeitswert zusammen mit dem Schwellwert angezeigt. Dieser Wert kann von der in der Zeile „Tageszeit" genannten Helligkeit abweichen: Zum einen kann für die Beschattung ein anderer Helligkeitssensor konfiguriert sein als für die Tag/Nacht-Erkennung, zum anderen wird für die Beschattung – sofern eine Mittelung über mehrere Minuten eingestellt ist – ein effektiver Wert aus aktuellem und gemitteltem Messwert herangezogen.
+
+Beispielausgabe, wenn **nicht** beschattet wird – der Grund wird genau benannt (Aktivierung, Helligkeit, Azimut bzw. Sonnenhöhe):
+```
+Erklärung des Steuerungslaufs (Probelauf - der Rollladen wird nicht bewegt):
+
+Aktuelle Position: geöffnet
+Tageszeit: Tag (Wochenplan: Tag, Tagerkennung: Tag, Helligkeit: 8000 lx)
+Bewegungssperre: keine
+Basis-Zielposition: geöffnet (Tag, 8000 lx)
+Beschattung: keine (nach Sonnenstand: Helligkeit 8000 lx unter Schwellwert 30000 lx, Azimut 210.0° außerhalb 240.0°-290.0°)
+Ergebnis: Keine Fahrt: Zielposition bereits erreicht (Ziel: geöffnet, Tag, 8000 lx).
+```
+
+Eine Zeile für die Kontakte erscheint nur, wenn ein Kontakt (Fenster/Regen/Notfall) die Position tatsächlich beeinflusst.
+
+Derselbe Ablauf wird bei **jedem** Steuerungslauf zusätzlich in den Debug der Instanz geschrieben (Eintrag `ControlBlind: Ablauf: …`) und steht damit auch für die Fehlersuche zur Verfügung.
 
 ## 7. Anhang
 

@@ -165,6 +165,18 @@ class BlindController extends IPSModuleStrict
     // Grund, warum eine physische Fahrt unterblieben ist (gesetzt in shouldPerformMovement/isSameMovementRecently)
     private string $moveSkipReason = '';
 
+    // Grund, warum eine aktivierte Beschattung nicht (mehr) greift (gesetzt in getPositionsOfShadowing*)
+    private string $shadowingReason = '';
+
+    // entscheidungsrelevante Helligkeit (effektiver Wert) und Schwellwert der greifenden Beschattung, für die Erklärung (gesetzt in getPositionsOfShadowing*)
+    private string $shadowingBrightnessInfo = '';
+
+    // Steuerungslauf nur simulieren (Erklärung): Aktor wird nicht bewegt und keine Zustände (Attribute/Variablen/Timer) verändert
+    private bool $dryRun = false;
+
+    // Strukturierter Ablauf des letzten Steuerungslaufs (für Debug-Log und den "Erklären"-Button)
+    private array $decisionTrace = [];
+
 
     // Die folgenden Funktionen überschreiben die interne IPS_() Funktionen
     public function __construct($InstanceID)
@@ -575,8 +587,17 @@ class BlindController extends IPSModuleStrict
             $positionsAct['SlatsLevel'] = null;
         }
 
+        // Ablaufprotokoll für diesen Lauf zurücksetzen (für Debug-Log und "Erklären"-Button)
+        $this->decisionTrace = [];
+        if ($this->dryRun) {
+            $this->addTrace($this->Translate('Explanation of the control run (test run - the blind is not moved)'));
+            $this->addTrace('');
+        }
+        $this->addTrace(sprintf('Aktuelle Position: %s', $this->describeTargetPositions($positionsAct)));
+
         // --- 1. Tageszeit bestimmen ---
         $dayState = $this->determineDayState($positionsAct['BlindLevel']);
+        $this->addTrace('Tageszeit: ' . $this->buildDayStateTrace($dayState));
 
         //Zeitpunkt der letzten Rollladenbewegung (Höhe oder Lamellen)
         $tsBlindLastMovement = $this->GetBlindLastTimeStamp($blindLevelId, $slatsLevelId);
@@ -592,11 +613,14 @@ class BlindController extends IPSModuleStrict
         if ($this->checkIsDayChange($dayState)) {
             //beim Tageswechsel ...
             $deactivationTimeAuto = 0;
-            $this->WriteAttributeString(
-                self::ATTR_MANUALMOVEMENT,
-                json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null], JSON_THROW_ON_ERROR)
-            );
+            if (!$this->dryRun) {
+                $this->WriteAttributeString(
+                    self::ATTR_MANUALMOVEMENT,
+                    json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null], JSON_THROW_ON_ERROR)
+                );
+            }
             $bNoMove = false;
+            $this->addTrace('Bewegungssperre: keine (Tag/Nacht-Wechsel, erkannte manuelle Bedienung wird verworfen)');
         } else {
             // während der Verzögerung ist die ursprüngliche Tageszeit anzunehmen
             $isDay = $dayState['isDay'];
@@ -611,6 +635,7 @@ class BlindController extends IPSModuleStrict
             );
             $bNoMove     = $blockResult['block'];
             $blockReason = $blockResult['reason'];
+            $this->addTrace('Bewegungssperre: ' . ($bNoMove ? $blockReason : 'keine'));
         }
         $isDay = $dayState['isDay'];
 
@@ -633,10 +658,24 @@ class BlindController extends IPSModuleStrict
         $calcResult   = $this->calculateBasePosition($bNoMove, $positionsAct, $dayState);
         $positionsNew = $calcResult['positions'];
         $Hinweis      = $calcResult['hint'];
+        if (!$bNoMove) {
+            $this->addTrace(sprintf('Basis-Zielposition: %s (%s)', $this->describeTargetPositions($positionsNew), $Hinweis !== '' ? $Hinweis : '—'));
+        }
 
         // --- 4. Beschattungslogik anwenden (nur tagsüber und wenn keine Sperre) ---
         if ($isDay && !$bNoMove) {
             $shadowResult = $this->applyShadowingLogic($positionsAct['BlindLevel'], $positionsNew, $Hinweis);
+            if ($shadowResult['positions'] !== $positionsNew) {
+                $shadowDetail = $shadowResult['hint'];
+                if ($shadowResult['brightnessInfo'] !== '') {
+                    $shadowDetail .= ', ' . $shadowResult['brightnessInfo'];
+                }
+                $this->addTrace(sprintf('Beschattung: aktiv -> %s (%s)', $this->describeTargetPositions($shadowResult['positions']), $shadowDetail));
+            } elseif ($shadowResult['reason'] !== '') {
+                $this->addTrace('Beschattung: keine (' . $shadowResult['reason'] . ')');
+            } else {
+                $this->addTrace('Beschattung: keine (nicht konfiguriert)');
+            }
             $positionsNew = $shadowResult['positions'];
             $Hinweis      = $shadowResult['hint'];
         } else {
@@ -646,6 +685,10 @@ class BlindController extends IPSModuleStrict
 
         // --- 5. Kontakte (Fenster/Notfall) prüfen und Positionen ggf. überschreiben ---
         $contactResult = $this->applyContactLogic($positionsAct, $positionsNew, $deactivationTimeAuto, $bNoMove, $Hinweis);
+
+        if ($contactResult['hint'] !== $Hinweis) {
+            $this->addTrace(sprintf('Kontakte: aktiv -> %s (%s)', $this->describeTargetPositions($contactResult['positions']), $contactResult['hint']));
+        }
 
         $positionsNew         = $contactResult['positions'];
         $deactivationTimeAuto = $contactResult['deactivationTimeAuto'];
@@ -668,14 +711,45 @@ class BlindController extends IPSModuleStrict
         $this->writeLastDecision($bNoMove, $blockReason, $positionsNew, $Hinweis);
 
         //im Notfall wird die Automatik deaktiviert
-        if ($bEmergency) {
+        if ($bEmergency && !$this->dryRun) {
             $this->SetValue(self::VAR_IDENT_ACTIVATED, false);
             $this->SetInstanceStatusAndTimerEvent();
         }
 
+        // vollständiges Ablaufprotokoll ins Debug schreiben (hilft bei Support/Diagnose)
+        $this->Logger_Dbg(__FUNCTION__, 'Ablauf:' . ' | ' . implode(' | ', $this->decisionTrace));
+
         IPS_SemaphoreLeave($this->InstanceID . '- Blind');
 
         return true;
+    }
+
+    /**
+     * Simuliert einen Steuerungslauf ("Probelauf"), ohne den Rollladen zu bewegen oder Zustände zu verändern,
+     * und liefert den vollständigen, lesbaren Ablauf als Text zurück. Dient dazu, dem Anwender nachvollziehbar
+     * zu machen, warum sich der Rollladen aktuell bewegen würde - oder eben nicht.
+     *
+     * @return string Mehrzeiliges Ablaufprotokoll.
+     * @throws \JsonException
+     */
+    public function ExplainControlBlind(): string
+    {
+        if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
+            return $this->Translate('The instance is not active.');
+        }
+
+        $this->dryRun = true;
+        try {
+            $this->ControlBlind(true);
+        } finally {
+            $this->dryRun = false;
+        }
+
+        if ($this->decisionTrace === []) {
+            return $this->Translate('No decision could be determined (control run could not be performed).');
+        }
+
+        return implode(PHP_EOL, $this->decisionTrace);
     }
 
     private function determineDayState(float $currentBlindLevel): array
@@ -715,7 +789,7 @@ class BlindController extends IPSModuleStrict
             $hint = 'Nacht';
         }
 
-        if ($this->ReadAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME) === 0) {
+        if (!$this->dryRun && $this->ReadAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME) === 0) {
             $this->WriteAttributeBoolean(self::ATTR_LAST_ISDAYBYTIMESCHEDULE, $dayState['isDayByTimeSchedule']);
         }
 
@@ -729,7 +803,8 @@ class BlindController extends IPSModuleStrict
         }
 
         if (isset($dayState['isDayByDayDetection'], $dayState['brightness'])) {
-            $hint .= ', ' . $this->GetFormattedValue($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID));
+            // den tatsächlich verwendeten (ggf. gemittelten) Helligkeitswert anzeigen - konsistent mit der Tageszeit-Zeile
+            $hint .= ', ' . GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID), $dayState['brightness']);
         }
         return ['positions' => $positionsNew, 'hint' => $hint];
     }
@@ -774,33 +849,50 @@ class BlindController extends IPSModuleStrict
 
     private function applyShadowingLogic(float $currentBlindLevel, array $positionsNew, string $Hinweis): array
     {
+        $this->shadowingReason         = '';
+        $this->shadowingBrightnessInfo = '';
+        $brightnessInfo                = '';
+
         // 1. Beschattung nach Sonnenstand
         $positionsShadowingBySun = $this->getPositionsOfShadowingBySunPosition($currentBlindLevel);
+        $sunBrightnessInfo       = $this->shadowingBrightnessInfo; // entscheidungsrelevante Helligkeit der Sonnenstand-Beschattung
+        $this->shadowingBrightnessInfo = '';
         if ($positionsShadowingBySun !== null) {
             $positionsNew = $this->mergePositions($positionsNew, $positionsShadowingBySun);
 
             if ($positionsNew['BlindLevel'] === $positionsShadowingBySun['BlindLevel']) {
-                $Hinweis =
-                    IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION)) ? 'Beschattung nach Sonnenstand, '
-                                                                                                                    . $this->GetFormattedValue(
-                            $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION)
-                        ) : 'Beschattung nach Sonnenstand';
+                $Hinweis        = 'Beschattung nach Sonnenstand';
+                $brightnessInfo = $sunBrightnessInfo;
             }
         }
 
         // 2. Beschattung nach Helligkeit
-        $positionsShadowingBrightness = $this->getPositionsOfShadowingByBrightness($currentBlindLevel);
+        $positionsShadowingBrightness  = $this->getPositionsOfShadowingByBrightness($currentBlindLevel);
+        $brightnessShadowingInfo       = $this->shadowingBrightnessInfo; // entscheidungsrelevante Helligkeit der Helligkeits-Beschattung
+        $this->shadowingBrightnessInfo = '';
         if ($positionsShadowingBrightness !== null) {
             $positionsNew = $this->mergePositions($positionsNew, $positionsShadowingBrightness);
 
             if ($positionsNew['BlindLevel'] === $positionsShadowingBrightness['BlindLevel']) {
-                $Hinweis = 'Beschattung nach Helligkeit, ' . $this->GetFormattedValue(
-                        $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS)
-                    );
+                $Hinweis        = 'Beschattung nach Helligkeit';
+                $brightnessInfo = $brightnessShadowingInfo;
             }
         }
 
-        return ['positions' => $positionsNew, 'hint' => $Hinweis];
+        // Beschattung wurde berechnet, hat aber die Zielposition nicht verändert (Basisposition bereits restriktiver)
+        if (($positionsShadowingBySun !== null || $positionsShadowingBrightness !== null) && $this->shadowingReason === '') {
+            $this->shadowingReason = 'Beschattungsposition nicht restriktiver als die Basisposition';
+        }
+
+        return ['positions' => $positionsNew, 'hint' => $Hinweis, 'reason' => $this->shadowingReason, 'brightnessInfo' => $brightnessInfo];
+    }
+
+    /**
+     * Hängt einen Grund an, warum eine aktivierte Beschattung nicht greift.
+     */
+    private function addShadowingReason(string $reason): void
+    {
+        $this->shadowingReason = $this->shadowingReason === '' ? $reason : $this->shadowingReason . '; ' . $reason;
     }
 
     /**
@@ -861,7 +953,9 @@ class BlindController extends IPSModuleStrict
 
         // 1. Notfall hat höchste Priorität
         if ($levelContactEmergency !== null) {
-            $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
+            if (!$this->dryRun) {
+                $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
+            }
             $this->Logger_Dbg(
                 __FUNCTION__,
                 sprintf('NOTFALL: Kontakt geöffnet (posAct: %.2f, posNew: %.2f)', $positionsAct['BlindLevel'], $levelContactEmergency)
@@ -896,7 +990,9 @@ class BlindController extends IPSModuleStrict
                 if ($checkResult['resetDeactivation']) {
                     $deactivationTimeAuto = 0;
                 }
-                $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
+                if (!$this->dryRun) {
+                    $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
+                }
                 $this->Logger_Dbg(__FUNCTION__, 'Kontakt geöffnet (Open-Logik angewendet)');
             }
         } elseif ($positionsContactCloseBlind !== null) {
@@ -906,13 +1002,17 @@ class BlindController extends IPSModuleStrict
                 $positionsNew         = $checkResult['positions'];
                 $Hinweis              = 'Kontakt offen';
                 $deactivationTimeAuto = 0;
-                $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
+                if (!$this->dryRun) {
+                    $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
+                }
                 $this->Logger_Dbg(__FUNCTION__, 'Kontakt geöffnet (Close-Logik angewendet)');
             }
         } elseif ($this->ReadAttributeBoolean(self::ATTR_CONTACT_OPEN)) {
             // Reset, wenn kein Kontakt mehr aktiv ist
             $deactivationTimeAuto = 0;
-            $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, false);
+            if (!$this->dryRun) {
+                $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, false);
+            }
         }
 
         $result = [
@@ -1020,6 +1120,10 @@ class BlindController extends IPSModuleStrict
      */
     private function resetManualMovement(): void
     {
+        if ($this->dryRun) {
+            return;
+        }
+
         $this->WriteAttributeString(
             self::ATTR_MANUALMOVEMENT,
             json_encode(['timeStamp' => null, 'blindLevel' => null, 'slatsLevel' => null], JSON_THROW_ON_ERROR)
@@ -1810,6 +1914,10 @@ class BlindController extends IPSModuleStrict
         $daytimeChangeTime = time() + $interval;
         $this->Logger_Dbg(__FUNCTION__, sprintf('DayChange is delayed by %s s to %s!', $interval, date('H:i:s', $daytimeChangeTime)));
 
+        if ($this->dryRun) {
+            return;
+        }
+
         $this->WriteAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME, $daytimeChangeTime);
 
         $this->SetTimerInterval(self::TIMER_DELAYED_MOVEMENT, $interval * 1000);
@@ -1818,6 +1926,10 @@ class BlindController extends IPSModuleStrict
     private function deactivateDelayTimer(): void
     {
         $this->Logger_Dbg(__FUNCTION__, 'Delay Timer deactivated');
+
+        if ($this->dryRun) {
+            return;
+        }
 
         $this->WriteAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME, 0);
 
@@ -1860,8 +1972,10 @@ class BlindController extends IPSModuleStrict
                 $this->deactivateDelayTimer(); //Timer wieder ausschalten
 
             }
-            $this->WriteAttributeBoolean('AttrIsDay', $isDay);
-            $this->WriteAttributeInteger('AttrTimeStampIsDayChange', time());
+            if (!$this->dryRun) {
+                $this->WriteAttributeBoolean('AttrIsDay', $isDay);
+                $this->WriteAttributeInteger('AttrTimeStampIsDayChange', time());
+            }
             $this->Logger_Dbg(__FUNCTION__, 'DayChange!');
             $dayState['isDay'] = $isDay;
             return true;
@@ -2003,8 +2117,12 @@ class BlindController extends IPSModuleStrict
     {
         $activatorID = $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION);
 
-        if (!IPS_VariableExists($activatorID) || !GetValue($activatorID)) {
-            // keine Beschattung nach Sonnenstand gewünscht bzw. nicht notwendig
+        if (!IPS_VariableExists($activatorID)) {
+            // Beschattung nach Sonnenstand ist nicht konfiguriert
+            return null;
+        }
+        if (!GetValue($activatorID)) {
+            $this->addShadowingReason('nach Sonnenstand nicht aktiviert');
             return null;
         }
 
@@ -2063,6 +2181,16 @@ class BlindController extends IPSModuleStrict
         if (($brightness >= $thresholdBrightness) && $azimuthMatches
             && ($rSunAltitude >= $altitudeFrom)
             && ($rSunAltitude <= $altitudeTo)) {
+            // entscheidungsrelevante Helligkeit für die Erklärung festhalten (nur wenn ein Helligkeitssensor konfiguriert ist)
+            if ($brightness !== null && IPS_VariableExists($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION))) {
+                $this->shadowingBrightnessInfo = $this->buildShadowingBrightnessInfo(
+                    $this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION),
+                    $brightness,
+                    $this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION),
+                    $thresholdBrightness,
+                    $temperature
+                );
+            }
             // Simple variant
             if ($this->ReadPropertyInteger(self::PROP_DEPTHSUNLIGHT) === 0) {
                 $positions = $this->getBlindPositionsFromSunPositionSimple($rSunAltitude);
@@ -2117,7 +2245,66 @@ class BlindController extends IPSModuleStrict
             }
         }
 
+        // Beschattung ist aktiviert, aber die Bedingungen sind nicht erfüllt -> Grund(e) für die Erklärung sammeln
+        if ($positions === null) {
+            $reasons = [];
+            if ($brightness !== null && $brightness < $thresholdBrightness) {
+                $reasons[] = sprintf(
+                    'Helligkeit %s unter Schwellwert %s',
+                    $this->formatBrightnessForTrace($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION), $brightness),
+                    $this->formatBrightnessForTrace($this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION), $thresholdBrightness)
+                );
+            }
+            if (!$azimuthMatches) {
+                $reasons[] = sprintf('Azimut %.1f° außerhalb %.1f°-%.1f°', floor($rSunAzimuth * 10) / 10, $azimuthFrom, $azimuthTo);
+            }
+            if ($rSunAltitude < $altitudeFrom || $rSunAltitude > $altitudeTo) {
+                $reasons[] = sprintf('Sonnenhöhe %.1f° außerhalb %.1f°-%.1f°', floor($rSunAltitude * 10) / 10, $altitudeFrom, $altitudeTo);
+            }
+            if ($reasons !== []) {
+                $this->addShadowingReason('nach Sonnenstand: ' . implode(', ', $reasons));
+            }
+        }
+
         return $positions;
+    }
+
+    /**
+     * Formatiert einen Helligkeits-/Schwellwert für die Erklärungsausgabe.
+     * Wenn die zugehörige Variable existiert, wird deren Darstellung (z.B. Einheit "lx") über GetValueFormattedEx genutzt,
+     * sonst wird der Wert kompakt als Zahl ausgegeben.
+     */
+    private function formatBrightnessForTrace(int $variableID, float $value): string
+    {
+        if (IPS_VariableExists($variableID)) {
+            return GetValueFormattedEx($variableID, $value);
+        }
+        return rtrim(rtrim(sprintf('%.1f', $value), '0'), '.');
+    }
+
+    /**
+     * Erzeugt die entscheidungsrelevante Helligkeitsangabe einer greifenden Beschattung
+     * (effektiver, ggf. gemittelter Helligkeitswert und der Schwellwert), z.B. "Helligkeit 91317 lx ≥ Schwellwert 50000 lx".
+     *
+     * Bei hohen Außentemperaturen senkt die Temperaturkorrektur den Schwellwert (10 % je Grad über 24 °C). Übersteigt
+     * die Reduktion 100 %, wird der Schwellwert rechnerisch <= 0; die Beschattung erfolgt dann unabhängig von der
+     * Helligkeit (Hitzeschutz). Statt eines verwirrenden negativen lx-Wertes wird dies dann im Klartext ausgegeben.
+     */
+    private function buildShadowingBrightnessInfo(int $brightnessID, float $brightness, int $thresholdID, float $threshold, ?float $temperature = null): string
+    {
+        if ($temperature !== null && $temperature > 24 && $threshold <= 0) {
+            return sprintf(
+                'Helligkeit %s, Beschattung temperaturbedingt unabhängig von der Helligkeit (%s)',
+                $this->formatBrightnessForTrace($brightnessID, $brightness),
+                GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION), $temperature)
+            );
+        }
+
+        return sprintf(
+            'Helligkeit %s ≥ Schwellwert %s',
+            $this->formatBrightnessForTrace($brightnessID, $brightness),
+            $this->formatBrightnessForTrace($thresholdID, $threshold)
+        );
     }
 
     private function isAzimuthInRange(float $azimuth, float $from, float $to): bool
@@ -2422,8 +2609,12 @@ class BlindController extends IPSModuleStrict
     {
         $activatorID = $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS);
 
-        if (!IPS_VariableExists($activatorID) || !GetValue($activatorID)) {
-            // keine Beschattung bei Helligkeit gewünscht bzw. nicht notwendig
+        if (!IPS_VariableExists($activatorID)) {
+            // Beschattung nach Helligkeit ist nicht konfiguriert
+            return null;
+        }
+        if (!GetValue($activatorID)) {
+            $this->addShadowingReason('nach Helligkeit nicht aktiviert');
             return null;
         }
 
@@ -2453,6 +2644,7 @@ class BlindController extends IPSModuleStrict
             if ($brightness >= $thresholdLessBrightness) {
                 $positions['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS);
                 $positions['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS);
+                $this->shadowingBrightnessInfo = $this->buildShadowingBrightnessInfo($brightnessID, $brightness, $thresholdIDHighBrightness, (float)$thresholdLessBrightness);
                 $this->Logger_Dbg(
                     __FUNCTION__,
                     sprintf(
@@ -2473,6 +2665,7 @@ class BlindController extends IPSModuleStrict
             if ($brightness >= $thresholdBrightness) {
                 $positions['BlindLevel'] = $this->ReadPropertyFloat(self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS);
                 $positions['SlatsLevel'] = $this->ReadPropertyFloat(self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS);
+                $this->shadowingBrightnessInfo = $this->buildShadowingBrightnessInfo($brightnessID, $brightness, $thresholdIDLessBrightness, (float)$thresholdBrightness);
                 $this->Logger_Dbg(
                     __FUNCTION__,
                     sprintf(
@@ -2488,6 +2681,21 @@ class BlindController extends IPSModuleStrict
                 return $positions;
             }
         }
+
+        // aktiviert, aber Helligkeit unter den konfigurierten Schwellwerten
+        $threshold = IPS_VariableExists($thresholdIDLessBrightness) ? GetValue($thresholdIDLessBrightness)
+            : (IPS_VariableExists($thresholdIDHighBrightness) ? GetValue($thresholdIDHighBrightness) : null);
+        if ($threshold !== null) {
+            $thresholdIDForFormat = IPS_VariableExists($thresholdIDLessBrightness) ? $thresholdIDLessBrightness : $thresholdIDHighBrightness;
+            $this->addShadowingReason(
+                sprintf(
+                    'nach Helligkeit: Helligkeit %s unter Schwellwert %s',
+                    $this->formatBrightnessForTrace($brightnessID, $brightness),
+                    $this->formatBrightnessForTrace($thresholdIDForFormat, (float)$threshold)
+                )
+            );
+        }
+
         return null;
     }
 
@@ -2524,10 +2732,8 @@ class BlindController extends IPSModuleStrict
         }
 
         // 2. Manuellen Status synchronisieren (Logik für ATTR_MANUALMOVEMENT extrahiert)
-        $this->syncManualMovementAttribute($blindLevelAct, $slatsLevelAct, $tsBlindLastMovement);
-
-        $manualState = json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true, 512, JSON_THROW_ON_ERROR);
-        $tsManual = $manualState['timeStamp'];
+        $manualState = $this->syncManualMovementAttribute($blindLevelAct, $slatsLevelAct, $tsBlindLastMovement);
+        $tsManual    = $manualState['timeStamp'];
 
         if ($tsManual === null || $tsManual <= $tsIsDayChanged) {
             return ['block' => false, 'reason' => ''];
@@ -2574,22 +2780,24 @@ class BlindController extends IPSModuleStrict
      * @param float|null $slatsLevelAct       Aktuelle Lamellenposition des Aktors (null falls nicht vorhanden).
      * @param int        $tsBlindLastMovement Zeitstempel der letzten physischen Änderung am Aktor.
      *
+     * @return array{timeStamp: int|null, blindLevel: float|null, slatsLevel: float|null} Der wirksame manuelle Status.
      * @throws \JsonException Bei Fehlern während der JSON-Kodierung/Dekodierung.
      */
-    private function syncManualMovementAttribute(float $blindLevelAct, ?float $slatsLevelAct, int $tsBlindLastMovement): void
+    private function syncManualMovementAttribute(float $blindLevelAct, ?float $slatsLevelAct, int $tsBlindLastMovement): array
     {
         $currentManual = json_decode($this->ReadAttributeString(self::ATTR_MANUALMOVEMENT), true, 512, JSON_THROW_ON_ERROR);
 
         // Nur fortfahren, wenn ein neuer manueller Zeitstempel erkannt wurde
         if ($tsBlindLastMovement === $currentManual['timeStamp']) {
-            return;
+            return $currentManual;
         }
 
-        // Neuen Zustand speichern
-        $this->WriteAttributeString(
-            self::ATTR_MANUALMOVEMENT,
-            json_encode(['timeStamp' => $tsBlindLastMovement, 'blindLevel' => $blindLevelAct, 'slatsLevel' => $slatsLevelAct], JSON_THROW_ON_ERROR)
-        );
+        $newManual = ['timeStamp' => $tsBlindLastMovement, 'blindLevel' => $blindLevelAct, 'slatsLevel' => $slatsLevelAct];
+
+        // Neuen Zustand speichern (im Probelauf nicht persistieren)
+        if (!$this->dryRun) {
+            $this->WriteAttributeString(self::ATTR_MANUALMOVEMENT, json_encode($newManual, JSON_THROW_ON_ERROR));
+        }
 
         $this->Logger_Dbg(
             __FUNCTION__,
@@ -2602,8 +2810,12 @@ class BlindController extends IPSModuleStrict
             )
         );
 
-        // Informationstext generieren und loggen
-        $this->logManualMovementInfo($blindLevelAct, $slatsLevelAct);
+        // Informationstext generieren und loggen (im Probelauf nicht)
+        if (!$this->dryRun) {
+            $this->logManualMovementInfo($blindLevelAct, $slatsLevelAct);
+        }
+
+        return $newManual;
     }
 
     private function logManualMovementInfo(float $blindLevelAct, ?float $slatsLevelAct): void
@@ -2754,7 +2966,9 @@ class BlindController extends IPSModuleStrict
 
         // 1. Double-Movement-Check (Spamschutz)
         if ($this->isSameMovementRecently($propName, $percentClose)) {
-            $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, time());
+            if (!$this->dryRun) {
+                $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, time());
+            }
             return false;
         }
 
@@ -2765,6 +2979,11 @@ class BlindController extends IPSModuleStrict
         // 3. Bewegungs-Validierung (Early Returns für bessere Lesbarkeit)
         if (!$this->shouldPerformMovement($propName, $positionID, $positionAct, $positionNew, $profile, $tsAutomatic, $deactivationTimeAuto)) {
             return false;
+        }
+
+        // Im Probelauf ("Erklären") wird die Fahrt nur ermittelt, aber nicht ausgeführt
+        if ($this->dryRun) {
+            return true;
         }
 
         // 4. Ausführung
@@ -2991,6 +3210,31 @@ class BlindController extends IPSModuleStrict
     }
 
     /**
+     * Hängt eine Zeile an das Ablaufprotokoll des aktuellen Steuerungslaufs an.
+     */
+    private function addTrace(string $line): void
+    {
+        $this->decisionTrace[] = $line;
+    }
+
+    /**
+     * Erzeugt eine lesbare Beschreibung des ermittelten Tag-/Nacht-Zustands inklusive der zugrunde liegenden Quellen.
+     */
+    private function buildDayStateTrace(array $dayState): string
+    {
+        $parts   = [];
+        $parts[] = sprintf('Wochenplan: %s', $dayState['isDayByTimeSchedule'] ? 'Tag' : 'Nacht');
+        if ($dayState['isDayByDayDetection'] !== null) {
+            $parts[] = sprintf('Tagerkennung: %s', $dayState['isDayByDayDetection'] ? 'Tag' : 'Nacht');
+        }
+        if ($dayState['brightness'] !== null) {
+            $parts[] = sprintf('Helligkeit: %s', GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID), $dayState['brightness']));
+        }
+
+        return sprintf('%s (%s)', $dayState['isDay'] ? 'Tag' : 'Nacht', implode(', ', $parts));
+    }
+
+    /**
      * Dokumentiert die Entscheidung des aktuellen Steuerungslaufs in der Statusvariable LAST_DECISION.
      * Wird bei JEDEM Lauf geschrieben - auch dann, wenn der Rollladen nicht bewegt wurde - damit der
      * Anwender nachvollziehen kann, warum sich der Rollladen bewegt hat oder eben nicht.
@@ -3017,7 +3261,11 @@ class BlindController extends IPSModuleStrict
             $message = sprintf('Fahrt: %s%s.', $target, $hintTxt !== '' ? sprintf(' (%s)', $hintTxt) : '');
         }
 
-        $this->SetValue(self::VAR_IDENT_LAST_DECISION, $message);
+        $this->addTrace('Ergebnis: ' . $message);
+
+        if (!$this->dryRun) {
+            $this->SetValue(self::VAR_IDENT_LAST_DECISION, $message);
+        }
         $this->Logger_Dbg(__FUNCTION__, $message);
     }
 
@@ -3526,7 +3774,9 @@ class BlindController extends IPSModuleStrict
 
         $this->LogMessage($message, KL_ERROR);
 
-        $this->SetValue(self::VAR_IDENT_LAST_MESSAGE, $message);
+        if (!$this->dryRun) {
+            $this->SetValue(self::VAR_IDENT_LAST_MESSAGE, $message);
+        }
     }
 
     private function Logger_Inf(string $message): void
@@ -3538,7 +3788,9 @@ class BlindController extends IPSModuleStrict
             $this->LogMessage($message, KL_NOTIFY);
         }
 
-        $this->SetValue(self::VAR_IDENT_LAST_MESSAGE, $message);
+        if (!$this->dryRun) {
+            $this->SetValue(self::VAR_IDENT_LAST_MESSAGE, $message);
+        }
     }
 
     private function Logger_Dbg(string $message, string $data): void
