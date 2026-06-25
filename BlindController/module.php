@@ -133,6 +133,7 @@ class BlindController extends IPSModuleStrict
     private const string PROP_DELAYTIMEDAYNIGHTCHANGE           = 'DelayTimeDayNightChange';
     private const string PROP_DELAYTIMEDAYNIGHTCHANGEISRANDOMLY = 'DelayTimeDayNightChangeIsRandomly';
     private const string PROP_SHOWNOTUSEDELEMENTS               = 'ShowNotUsedElements';
+    private const string PROP_WRITELASTDECISION                 = 'WriteLastDecision';
 
     //attribute names
     private const string ATTR_MANUALMOVEMENT           = 'manualMovement';
@@ -148,8 +149,9 @@ class BlindController extends IPSModuleStrict
 
 
     //variable names
-    private const string VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
-    private const string VAR_IDENT_ACTIVATED    = 'ACTIVATED';
+    private const string VAR_IDENT_LAST_MESSAGE  = 'LAST_MESSAGE';
+    private const string VAR_IDENT_LAST_DECISION = 'LAST_DECISION';
+    private const string VAR_IDENT_ACTIVATED     = 'ACTIVATED';
 
     private const int MOVEMENT_WAIT_TIME         = 90; //Wartezeit bis zur Erreichung der Zielposition in Sekunden
     private const int IGNORE_MOVEMENT_TIME       = 40; //Nach einer Bewegung wird eine erneute gleiche Bewegung innerhalb dieser Zeit ignoriert
@@ -1234,6 +1236,7 @@ class BlindController extends IPSModuleStrict
         $this->RegisterPropertyFloat(self::PROP_MINMOVEMENT, 5.0);
         $this->RegisterPropertyFloat(self::PROP_MINMOVEMENTATENDPOSITION, 2.5);
         $this->RegisterPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS, false);
+        $this->RegisterPropertyBoolean(self::PROP_WRITELASTDECISION, false);
         $this->RegisterPropertyBoolean('WriteLogInformationToIPSLogger', false);
         $this->RegisterPropertyBoolean('WriteDebugInformationToLogfile', false);
         $this->RegisterPropertyBoolean('WriteDebugInformationToIPSLogger', false);
@@ -1366,10 +1369,11 @@ class BlindController extends IPSModuleStrict
         $this->RegisterVariableBoolean(self::VAR_IDENT_ACTIVATED, $this->Translate('Activated'), ['PRESENTATION' => VARIABLE_PRESENTATION_SWITCH]);
         $this->RegisterVariableString(self::VAR_IDENT_LAST_MESSAGE, $this->Translate('Last Message'));
 
-        // Aufräumen: die früher angelegte Statusvariable LAST_DECISION wird nicht mehr verwendet
-        $idLastDecision = @$this->GetIDForIdent('LAST_DECISION');
-        if ($idLastDecision !== false) {
-            $this->UnregisterVariable('LAST_DECISION');
+        // Statusvariable "Letzte Entscheidung" nur auf Wunsch anlegen; andernfalls eine evtl. vorhandene wieder entfernen
+        if ($this->ReadPropertyBoolean(self::PROP_WRITELASTDECISION)) {
+            $this->RegisterVariableString(self::VAR_IDENT_LAST_DECISION, $this->Translate('Last Decision'));
+        } elseif (@$this->GetIDForIdent(self::VAR_IDENT_LAST_DECISION) !== false) {
+            $this->UnregisterVariable(self::VAR_IDENT_LAST_DECISION);
         }
 
         $this->EnableAction(self::VAR_IDENT_ACTIVATED);
@@ -3240,8 +3244,12 @@ class BlindController extends IPSModuleStrict
 
     /**
      * Dokumentiert die Entscheidung des aktuellen Steuerungslaufs im Entscheidungs-Trace (Debug-Log und
-     * "Erklären"-Button). Wird bei JEDEM Lauf geschrieben - auch dann, wenn der Rollladen nicht bewegt wurde -
-     * damit nachvollziehbar bleibt, warum sich der Rollladen bewegt hat oder eben nicht.
+     * "Erklären"-Button) und - sofern aktiviert - in der Statusvariable LAST_DECISION. Damit bleibt
+     * nachvollziehbar, warum sich der Rollladen bewegt hat oder eben nicht.
+     *
+     * In die Statusvariable wird nur geschrieben, wenn sich die Entscheidung gegenüber dem letzten Lauf
+     * geändert hat. So werden wiederholt identische Einträge (z.B. dauerhaft "Zielposition bereits erreicht")
+     * vermieden.
      *
      * @param bool   $bNoMove      true, wenn eine Bewegungssperre vorlag (es wurde kein Fahrbefehl ausgelöst).
      * @param string $blockReason  Begründung der Sperre (aus shouldBlockMovement).
@@ -3267,6 +3275,13 @@ class BlindController extends IPSModuleStrict
 
         $this->addTrace('Ergebnis: ' . $message);
         $this->Logger_Dbg(__FUNCTION__, $message);
+
+        // Statusvariable nur bei aktivierter Option und nur bei einer geänderten Entscheidung aktualisieren
+        if (!$this->dryRun && $this->ReadPropertyBoolean(self::PROP_WRITELASTDECISION)
+            && @$this->GetIDForIdent(self::VAR_IDENT_LAST_DECISION) !== false
+            && $this->GetValue(self::VAR_IDENT_LAST_DECISION) !== $message) {
+            $this->SetValue(self::VAR_IDENT_LAST_DECISION, $message);
+        }
     }
 
     /**
