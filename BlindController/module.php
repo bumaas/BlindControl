@@ -148,9 +148,8 @@ class BlindController extends IPSModuleStrict
 
 
     //variable names
-    private const string VAR_IDENT_LAST_MESSAGE  = 'LAST_MESSAGE';
-    private const string VAR_IDENT_LAST_DECISION = 'LAST_DECISION';
-    private const string VAR_IDENT_ACTIVATED     = 'ACTIVATED';
+    private const string VAR_IDENT_LAST_MESSAGE = 'LAST_MESSAGE';
+    private const string VAR_IDENT_ACTIVATED    = 'ACTIVATED';
 
     private const int MOVEMENT_WAIT_TIME         = 90; //Wartezeit bis zur Erreichung der Zielposition in Sekunden
     private const int IGNORE_MOVEMENT_TIME       = 40; //Nach einer Bewegung wird eine erneute gleiche Bewegung innerhalb dieser Zeit ignoriert
@@ -605,7 +604,7 @@ class BlindController extends IPSModuleStrict
         // Attribut TimestampAutomatik auslesen
         $tsAutomatik = $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
 
-        // Grund einer eventuellen Bewegungssperre (für LAST_DECISION)
+        // Grund einer eventuellen Bewegungssperre (für den Entscheidungs-Trace)
         $blockReason          = '';
         $this->moveSkipReason = '';
 
@@ -708,7 +707,7 @@ class BlindController extends IPSModuleStrict
         }
 
         // --- 7. Entscheidung des Laufs dokumentieren (immer, auch wenn nicht gefahren wurde) ---
-        $this->writeLastDecision($bNoMove, $blockReason, $positionsNew, $Hinweis);
+        $this->traceDecisionResult($bNoMove, $blockReason, $positionsNew, $Hinweis);
 
         //im Notfall wird die Automatik deaktiviert
         if ($bEmergency && !$this->dryRun) {
@@ -1366,7 +1365,12 @@ class BlindController extends IPSModuleStrict
     {
         $this->RegisterVariableBoolean(self::VAR_IDENT_ACTIVATED, $this->Translate('Activated'), ['PRESENTATION' => VARIABLE_PRESENTATION_SWITCH]);
         $this->RegisterVariableString(self::VAR_IDENT_LAST_MESSAGE, $this->Translate('Last Message'));
-        $this->RegisterVariableString(self::VAR_IDENT_LAST_DECISION, $this->Translate('Last Decision'));
+
+        // Aufräumen: die früher angelegte Statusvariable LAST_DECISION wird nicht mehr verwendet
+        $idLastDecision = @$this->GetIDForIdent('LAST_DECISION');
+        if ($idLastDecision !== false) {
+            $this->UnregisterVariable('LAST_DECISION');
+        }
 
         $this->EnableAction(self::VAR_IDENT_ACTIVATED);
     }
@@ -3235,16 +3239,16 @@ class BlindController extends IPSModuleStrict
     }
 
     /**
-     * Dokumentiert die Entscheidung des aktuellen Steuerungslaufs in der Statusvariable LAST_DECISION.
-     * Wird bei JEDEM Lauf geschrieben - auch dann, wenn der Rollladen nicht bewegt wurde - damit der
-     * Anwender nachvollziehen kann, warum sich der Rollladen bewegt hat oder eben nicht.
+     * Dokumentiert die Entscheidung des aktuellen Steuerungslaufs im Entscheidungs-Trace (Debug-Log und
+     * "Erklären"-Button). Wird bei JEDEM Lauf geschrieben - auch dann, wenn der Rollladen nicht bewegt wurde -
+     * damit nachvollziehbar bleibt, warum sich der Rollladen bewegt hat oder eben nicht.
      *
      * @param bool   $bNoMove      true, wenn eine Bewegungssperre vorlag (es wurde kein Fahrbefehl ausgelöst).
      * @param string $blockReason  Begründung der Sperre (aus shouldBlockMovement).
      * @param array  $positionsNew Die ermittelte Zielposition (Rohwerte).
      * @param string $hint         Der Grund der ermittelten Zielposition (WP/Tag/Nacht/Beschattung/...).
      */
-    private function writeLastDecision(bool $bNoMove, string $blockReason, array $positionsNew, string $hint): void
+    private function traceDecisionResult(bool $bNoMove, string $blockReason, array $positionsNew, string $hint): void
     {
         $target  = $this->describeTargetPositions($positionsNew);
         $hintTxt = $hint !== '' ? $hint : '';
@@ -3262,10 +3266,6 @@ class BlindController extends IPSModuleStrict
         }
 
         $this->addTrace('Ergebnis: ' . $message);
-
-        if (!$this->dryRun) {
-            $this->SetValue(self::VAR_IDENT_LAST_DECISION, $message);
-        }
         $this->Logger_Dbg(__FUNCTION__, $message);
     }
 
