@@ -134,6 +134,7 @@ class BlindController extends IPSModuleStrict
     private const string PROP_DELAYTIMEDAYNIGHTCHANGEISRANDOMLY = 'DelayTimeDayNightChangeIsRandomly';
     private const string PROP_SHOWNOTUSEDELEMENTS               = 'ShowNotUsedElements';
     private const string PROP_WRITELASTDECISION                 = 'WriteLastDecision';
+    private const string PROP_WRITEDECISIONTRACE                = 'WriteDecisionTrace';
 
     //attribute names
     private const string ATTR_MANUALMOVEMENT           = 'manualMovement';
@@ -149,9 +150,10 @@ class BlindController extends IPSModuleStrict
 
 
     //variable names
-    private const string VAR_IDENT_LAST_MESSAGE  = 'LAST_MESSAGE';
-    private const string VAR_IDENT_LAST_DECISION = 'LAST_DECISION';
-    private const string VAR_IDENT_ACTIVATED     = 'ACTIVATED';
+    private const string VAR_IDENT_LAST_MESSAGE   = 'LAST_MESSAGE';
+    private const string VAR_IDENT_LAST_DECISION  = 'LAST_DECISION';
+    private const string VAR_IDENT_DECISION_TRACE = 'DECISION_TRACE';
+    private const string VAR_IDENT_ACTIVATED      = 'ACTIVATED';
 
     private const int MOVEMENT_WAIT_TIME         = 90; //Wartezeit bis zur Erreichung der Zielposition in Sekunden
     private const int IGNORE_MOVEMENT_TIME       = 40; //Nach einer Bewegung wird eine erneute gleiche Bewegung innerhalb dieser Zeit ignoriert
@@ -171,6 +173,9 @@ class BlindController extends IPSModuleStrict
 
     // entscheidungsrelevante Helligkeit (effektiver Wert) und Schwellwert der greifenden Beschattung, für die Erklärung (gesetzt in getPositionsOfShadowing*)
     private string $shadowingBrightnessInfo = '';
+
+    // Hinweis auf einen temperaturbedingten Hitze-/Wärmeschutz der Sonnenstand-Beschattung, für die Erklärung (gesetzt in getPositionsOfShadowingBySunPosition)
+    private string $shadowingHeatInfo = '';
 
     // Steuerungslauf nur simulieren (Erklärung): Aktor wird nicht bewegt und keine Zustände (Attribute/Variablen/Timer) verändert
     private bool $dryRun = false;
@@ -671,6 +676,9 @@ class BlindController extends IPSModuleStrict
                 if ($shadowResult['brightnessInfo'] !== '') {
                     $shadowDetail .= ', ' . $shadowResult['brightnessInfo'];
                 }
+                if ($shadowResult['heatInfo'] !== '') {
+                    $shadowDetail .= ', ' . $shadowResult['heatInfo'];
+                }
                 $this->addTrace(sprintf('Beschattung: aktiv -> %s (%s)', $this->describeTargetPositions($shadowResult['positions']), $shadowDetail));
             } elseif ($shadowResult['reason'] !== '') {
                 $this->addTrace('Beschattung: keine (' . $shadowResult['reason'] . ')');
@@ -687,9 +695,9 @@ class BlindController extends IPSModuleStrict
         // --- 5. Kontakte (Fenster/Notfall) prüfen und Positionen ggf. überschreiben ---
         $contactResult = $this->applyContactLogic($positionsAct, $positionsNew, $deactivationTimeAuto, $bNoMove, $Hinweis);
 
-        if ($contactResult['hint'] !== $Hinweis) {
-            $this->addTrace(sprintf('Kontakte: aktiv -> %s (%s)', $this->describeTargetPositions($contactResult['positions']), $contactResult['hint']));
-        }
+        // Kontaktstatus immer protokollieren - auch wenn kein Kontakt aktiv ist oder ein offener
+        // Kontakt die Zielposition nicht verändert (häufige Rückfrage: "warum sehe ich den Kontakt nicht?")
+        $this->addTrace('Kontakte: ' . $contactResult['trace']);
 
         $positionsNew         = $contactResult['positions'];
         $deactivationTimeAuto = $contactResult['deactivationTimeAuto'];
@@ -710,6 +718,9 @@ class BlindController extends IPSModuleStrict
 
         // --- 7. Entscheidung des Laufs dokumentieren (immer, auch wenn nicht gefahren wurde) ---
         $this->traceDecisionResult($bNoMove, $blockReason, $positionsNew, $Hinweis);
+
+        // vollständiges Ablaufprotokoll - sofern aktiviert - als HTML in der Statusvariable festhalten
+        $this->writeDecisionTraceVariable();
 
         //im Notfall wird die Automatik deaktiviert
         if ($bEmergency && !$this->dryRun) {
@@ -852,18 +863,23 @@ class BlindController extends IPSModuleStrict
     {
         $this->shadowingReason         = '';
         $this->shadowingBrightnessInfo = '';
+        $this->shadowingHeatInfo       = '';
         $brightnessInfo                = '';
+        $heatInfo                      = '';
 
         // 1. Beschattung nach Sonnenstand
         $positionsShadowingBySun = $this->getPositionsOfShadowingBySunPosition($currentBlindLevel);
         $sunBrightnessInfo       = $this->shadowingBrightnessInfo; // entscheidungsrelevante Helligkeit der Sonnenstand-Beschattung
+        $sunHeatInfo             = $this->shadowingHeatInfo;       // ggf. Hitze-/Wärmeschutz-Hinweis der Sonnenstand-Beschattung
         $this->shadowingBrightnessInfo = '';
+        $this->shadowingHeatInfo       = '';
         if ($positionsShadowingBySun !== null) {
             $positionsNew = $this->mergePositions($positionsNew, $positionsShadowingBySun);
 
             if ($positionsNew['BlindLevel'] === $positionsShadowingBySun['BlindLevel']) {
                 $Hinweis        = 'Beschattung nach Sonnenstand';
                 $brightnessInfo = $sunBrightnessInfo;
+                $heatInfo       = $sunHeatInfo;
             }
         }
 
@@ -885,7 +901,7 @@ class BlindController extends IPSModuleStrict
             $this->shadowingReason = 'Beschattungsposition nicht restriktiver als die Basisposition';
         }
 
-        return ['positions' => $positionsNew, 'hint' => $Hinweis, 'reason' => $this->shadowingReason, 'brightnessInfo' => $brightnessInfo];
+        return ['positions' => $positionsNew, 'hint' => $Hinweis, 'reason' => $this->shadowingReason, 'brightnessInfo' => $brightnessInfo, 'heatInfo' => $heatInfo];
     }
 
     /**
@@ -931,7 +947,7 @@ class BlindController extends IPSModuleStrict
      * @param bool   $bNoMove              Status, ob aktuell eine Bewegungssperre vorliegt.
      * @param string $Hinweis              Der bisherige Status-Hinweis für das Logging.
      *
-     * @return array{positions: array, deactivationTimeAuto: int, bNoMove: bool, hint: string, bEmergency: bool}
+     * @return array{positions: array, deactivationTimeAuto: int, bNoMove: bool, hint: string, bEmergency: bool, trace: string}
      * @throws \JsonException
      */
     private function applyContactLogic(array $positionsAct, array $positionsNew, int $deactivationTimeAuto, bool $bNoMove, string $Hinweis): array
@@ -952,6 +968,11 @@ class BlindController extends IPSModuleStrict
         $positionsContactOpenBlind  = $this->getPositionsOfOpenBlindContact();
         $positionsContactCloseBlind = $this->getPositionsOfCloseBlindContact();
 
+        // Konfigurationsstatus der Kontakte (für den immer ausgegebenen Trace)
+        $emergencyConfigured = IPS_VariableExists($this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID));
+        $openConfigured      = $this->getDefinedContacts('PROP_CONTACTOPEN', 'PROP_CONTACTOPENLEVEL', 'PROP_CONTACTOPENSLATSLEVEL') !== [];
+        $closeConfigured     = $this->getDefinedContacts('PROP_CONTACTCLOSE', 'PROP_CONTACTCLOSELEVEL', 'PROP_CONTACTCLOSESLATSLEVEL') !== [];
+
         // 1. Notfall hat höchste Priorität
         if ($levelContactEmergency !== null) {
             if (!$this->dryRun) {
@@ -968,7 +989,8 @@ class BlindController extends IPSModuleStrict
                 'deactivationTimeAuto' => 0,
                 'bNoMove'              => false,
                 'hint'                 => 'Notfallkontakt offen',
-                'bEmergency'           => true
+                'bEmergency'           => true,
+                'trace'                => sprintf('Notfallkontakt offen -> %s', $this->describeTargetPositions($positionsNew))
             ];
         }
 
@@ -982,6 +1004,7 @@ class BlindController extends IPSModuleStrict
         }
 
         // 3. Kontakte prüfen
+        $contactTrace = '';
         if ($positionsContactOpenBlind !== null) {
             $checkResult = $this->checkContactLimit($positionsAct, $positionsNew, $positionsContactOpenBlind, true);
             if ($checkResult['modified']) {
@@ -995,6 +1018,14 @@ class BlindController extends IPSModuleStrict
                     $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
                 }
                 $this->Logger_Dbg(__FUNCTION__, 'Kontakt geöffnet (Open-Logik angewendet)');
+                $contactTrace = sprintf('Kontakt offen -> %s', $this->describeTargetPositions($positionsNew));
+            } else {
+                // Kontakt ist offen, das Öffnungslevel ist aber nicht offener als die bereits ermittelte
+                // Zielposition - der Kontakt hat daher keine Wirkung.
+                $contactTrace = sprintf(
+                    'Kontakt offen, aber Zielposition bereits offen genug (%s) -> keine Änderung',
+                    $this->describeTargetPositions($positionsNew)
+                );
             }
         } elseif ($positionsContactCloseBlind !== null) {
             $checkResult = $this->checkContactLimit($positionsAct, $positionsNew, $positionsContactCloseBlind, false);
@@ -1007,6 +1038,14 @@ class BlindController extends IPSModuleStrict
                     $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
                 }
                 $this->Logger_Dbg(__FUNCTION__, 'Kontakt geöffnet (Close-Logik angewendet)');
+                $contactTrace = sprintf('Kontakt offen -> %s', $this->describeTargetPositions($positionsNew));
+            } else {
+                // Kontakt ist offen, das Schließlevel ist aber nicht restriktiver als die bereits
+                // ermittelte Zielposition - der Kontakt hat daher keine Wirkung.
+                $contactTrace = sprintf(
+                    'Kontakt offen, aber Zielposition bereits geschlossen genug (%s) -> keine Änderung',
+                    $this->describeTargetPositions($positionsNew)
+                );
             }
         } elseif ($this->ReadAttributeBoolean(self::ATTR_CONTACT_OPEN)) {
             // Reset, wenn kein Kontakt mehr aktiv ist
@@ -1016,12 +1055,22 @@ class BlindController extends IPSModuleStrict
             }
         }
 
+        // Fallback-Beschreibung, wenn kein offener Kontakt die Position beeinflusst hat
+        if ($contactTrace === '') {
+            if (!$emergencyConfigured && !$openConfigured && !$closeConfigured) {
+                $contactTrace = 'nicht konfiguriert';
+            } else {
+                $contactTrace = 'kein Kontakt offen';
+            }
+        }
+
         $result = [
             'positions'            => $positionsNew,
             'deactivationTimeAuto' => $deactivationTimeAuto,
             'bNoMove'              => $bNoMove,
             'hint'                 => $Hinweis,
-            'bEmergency'           => false
+            'bEmergency'           => false,
+            'trace'                => $contactTrace
         ];
 
         $this->Logger_Dbg(__FUNCTION__, 'Result: ' . json_encode($result, JSON_THROW_ON_ERROR));
@@ -1237,6 +1286,7 @@ class BlindController extends IPSModuleStrict
         $this->RegisterPropertyFloat(self::PROP_MINMOVEMENTATENDPOSITION, 2.5);
         $this->RegisterPropertyBoolean(self::PROP_SHOWNOTUSEDELEMENTS, false);
         $this->RegisterPropertyBoolean(self::PROP_WRITELASTDECISION, false);
+        $this->RegisterPropertyBoolean(self::PROP_WRITEDECISIONTRACE, false);
         $this->RegisterPropertyBoolean('WriteLogInformationToIPSLogger', false);
         $this->RegisterPropertyBoolean('WriteDebugInformationToLogfile', false);
         $this->RegisterPropertyBoolean('WriteDebugInformationToIPSLogger', false);
@@ -1374,6 +1424,14 @@ class BlindController extends IPSModuleStrict
             $this->RegisterVariableString(self::VAR_IDENT_LAST_DECISION, $this->Translate('Last Decision'));
         } elseif (@$this->GetIDForIdent(self::VAR_IDENT_LAST_DECISION) !== false) {
             $this->UnregisterVariable(self::VAR_IDENT_LAST_DECISION);
+        }
+
+        // Statusvariable "Letztes Ablaufprotokoll" (HTML) nur auf Wunsch anlegen; andernfalls eine evtl. vorhandene wieder entfernen.
+        // Die Presentation "Web Content" rendert den HTML-Inhalt in der Visualisierung formatiert (Nachfolger des Profils ~HTMLBox).
+        if ($this->ReadPropertyBoolean(self::PROP_WRITEDECISIONTRACE)) {
+            $this->RegisterVariableString(self::VAR_IDENT_DECISION_TRACE, $this->Translate('Last Decision Trace'), ['PRESENTATION' => VARIABLE_PRESENTATION_WEB_CONTENT]);
+        } elseif (@$this->GetIDForIdent(self::VAR_IDENT_DECISION_TRACE) !== false) {
+            $this->UnregisterVariable(self::VAR_IDENT_DECISION_TRACE);
         }
 
         $this->EnableAction(self::VAR_IDENT_ACTIVATED);
@@ -2230,6 +2288,7 @@ class BlindController extends IPSModuleStrict
             if (($temperature > 30.0) || ((round($levelAct, 1) === round($levelPositionHeat, 1)) && ($temperature > (30.0 - 0.5)))) {
                 $positions['BlindLevel'] = $levelPositionHeat;
                 $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 30°, levelAct: %.2f, level: %.2f', $levelAct, $positions['BlindLevel']));
+                $this->shadowingHeatInfo = sprintf('Hitzeschutz: %s > 30 °C', GetValueFormattedEx($temperatureID, $temperature));
                 return $positions;
             }
 
@@ -2249,6 +2308,7 @@ class BlindController extends IPSModuleStrict
                         $levelCorrectionHeat
                     )
                 );
+                $this->shadowingHeatInfo = sprintf('Wärmeschutz: %s > 27 °C', GetValueFormattedEx($temperatureID, $temperature));
                 return $positions;
             }
         }
@@ -2308,10 +2368,20 @@ class BlindController extends IPSModuleStrict
             );
         }
 
+        // Hinweis, dass der Schwellwert temperaturbedingt angepasst wurde (10 % je Grad über 24 °C bzw. unter 10 °C)
+        $tempNote = '';
+        if ($temperature !== null && ($temperature > 24 || $temperature < 10)) {
+            $tempNote = sprintf(
+                ' (temperaturkorrigiert, %s)',
+                GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION), $temperature)
+            );
+        }
+
         return sprintf(
-            'Helligkeit %s ≥ Schwellwert %s',
+            'Helligkeit %s ≥ Schwellwert %s%s',
             $this->formatBrightnessForTrace($brightnessID, $brightness),
-            $this->formatBrightnessForTrace($thresholdID, $threshold)
+            $this->formatBrightnessForTrace($thresholdID, $threshold),
+            $tempNote
         );
     }
 
@@ -3282,6 +3352,78 @@ class BlindController extends IPSModuleStrict
             && $this->GetValue(self::VAR_IDENT_LAST_DECISION) !== $message) {
             $this->SetValue(self::VAR_IDENT_LAST_DECISION, $message);
         }
+    }
+
+    /**
+     * Schreibt das vollständige Ablaufprotokoll des aktuellen Steuerungslaufs - sofern aktiviert - als HTML
+     * in die Statusvariable DECISION_TRACE. So kann der Anwender in der Visualisierung jederzeit nachvollziehen,
+     * wie die Entscheidung des letzten Laufs zustande gekommen ist.
+     *
+     * Es wird bei jedem (echten) Lauf geschrieben, da der Inhalt zusätzlich einen Zeitstempel enthält.
+     */
+    private function writeDecisionTraceVariable(): void
+    {
+        if ($this->dryRun
+            || !$this->ReadPropertyBoolean(self::PROP_WRITEDECISIONTRACE)
+            || @$this->GetIDForIdent(self::VAR_IDENT_DECISION_TRACE) === false) {
+            return;
+        }
+
+        $this->SetValue(self::VAR_IDENT_DECISION_TRACE, $this->buildDecisionTraceHtml());
+    }
+
+    /**
+     * Formatiert das aktuelle Ablaufprotokoll ($this->decisionTrace) als HTML-Dokument für die Statusvariable
+     * DECISION_TRACE. Jede Trace-Zeile der Form "Label: Wert" wird als eigene Tabellenzeile dargestellt; die
+     * Ergebniszeile wird hervorgehoben.
+     */
+    private function buildDecisionTraceHtml(): string
+    {
+        $rows = '';
+        foreach ($this->decisionTrace as $line) {
+            if ($line === '') {
+                continue;
+            }
+
+            $isResult  = str_starts_with($line, 'Ergebnis:');
+            $rowStyle  = $isResult ? ' style="font-weight:bold;"' : '';
+            $cellStyle = 'padding:2px 8px 2px 0;vertical-align:top;';
+
+            $pos = strpos($line, ': ');
+            if ($pos !== false) {
+                $label = htmlspecialchars(substr($line, 0, $pos), ENT_QUOTES, 'UTF-8');
+                $value = htmlspecialchars(substr($line, $pos + 2), ENT_QUOTES, 'UTF-8');
+                $rows  .= sprintf(
+                    '<tr%s><td style="%swhite-space:nowrap;">%s</td><td style="%s">%s</td></tr>',
+                    $rowStyle,
+                    $cellStyle,
+                    $label,
+                    $cellStyle,
+                    $value
+                );
+            } else {
+                $rows .= sprintf(
+                    '<tr%s><td colspan="2" style="%s">%s</td></tr>',
+                    $rowStyle,
+                    $cellStyle,
+                    htmlspecialchars($line, ENT_QUOTES, 'UTF-8')
+                );
+            }
+        }
+
+        $heading   = htmlspecialchars($this->Translate('Last Decision Trace'), ENT_QUOTES, 'UTF-8');
+        $timestamp = htmlspecialchars(date('d.m.Y H:i:s'), ENT_QUOTES, 'UTF-8');
+
+        return sprintf(
+            '<div style="font-family:sans-serif;font-size:13px;">'
+            . '<div style="font-weight:bold;margin-bottom:4px;">%s</div>'
+            . '<table style="border-collapse:collapse;">%s</table>'
+            . '<div style="color:#888;margin-top:6px;font-size:11px;">%s</div>'
+            . '</div>',
+            $heading,
+            $rows,
+            $timestamp
+        );
     }
 
     /**

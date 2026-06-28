@@ -273,6 +273,7 @@
         {"type": "NumberSpinner", "name": "MinMovementAtEndPosition", "caption": "Minimum of Movement to reach End Position", "digits": "1", "suffix": "%"},
         {"type": "CheckBox", "name": "ShowNotUsedElements", "caption": "Show not used elements"},
         {"type": "CheckBox", "name": "WriteLastDecision", "caption": "Create status variable \"Last Decision\" (documents why the blind moved or not)"},
+        {"type": "CheckBox", "name": "WriteDecisionTrace", "caption": "Create status variable \"Last Decision Trace\" (full HTML log of the last control run)"},
         {"type": "CheckBox", "name": "WriteLogInformationToIPSLogger", "caption": "Log and Error Information are written to the logfile of IPSLibrary instead of standard logfile"},
         {"type": "CheckBox", "name": "WriteDebugInformationToLogfile", "caption": "Debug information are written additionally to standard logfile"},
         {"type": "CheckBox", "name": "WriteDebugInformationToIPSLogger", "caption": "Debug information are written additionally to the logfile of IPSLibrary"}

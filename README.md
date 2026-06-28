@@ -15,7 +15,7 @@ Steuert einen Rollladen bzw. eine Jalousie nach vorgegebenen Einstellungen.
 3. [Installation](#3-installation)  
 4. [Funktionsreferenz](#4-funktionsreferenz)
 5. [Konfiguration](#5-konfiguration)  
-6. [Statusvariablen und Profile](#6-statusvariablen-und-profile)  
+6. [Statusvariablen und Darstellung](#6-statusvariablen-und-darstellung)  
 7. [Anhang](#7-anhang)
     1. [GUIDs der Module](#guids-der-module)
     2. [Spenden](#spenden)
@@ -314,7 +314,7 @@ Sonderfall: Werden gleichzeitig offene Kontakte zum Schließen und zum Öffnen e
 | WriteDebugInformationToIPSLogger                                                                                                                                          | boolean | false        | legt fest, ob die Debug Informationen zusätzlich zum Debugger auch an den IPSLogger der IPSLibrary übergeben werden sollen ((setzt eine installierte IPSLibrary voraus).                                                                                                                                                                                                                                                                                                                                                             |
 | WriteDebugInformationToLogfile                                                                                                                                            | boolean | false        | legt fest, ob die Debug Informationen zusätzlich in das Standard Logfile geschrieben werden sollen. Wichtig: dazu muss der Symcon Spezialschalter 'LogfileVerbose' aktiviert sein                                                                                                                                                                                                                                                                                                                                                    |
 
-## 6. Statusvariablen und Profile
+## 6. Statusvariablen und Darstellung
 
 Folgende Statusvariablen werden angelegt:
 
@@ -338,6 +338,13 @@ Beispiele:
 
 Um den Verlauf der Entscheidungen im Webfront als Logfile darzustellen, empfiehlt es sich, die Archivierung für diese Variable einzuschalten.
 
+#####DECISION_TRACE
+Diese Statusvariable ist **optional**. Sie wird nur angelegt, wenn im Konfigurationsformular die Option **„Statusvariable »Letztes Ablaufprotokoll« anlegen"** aktiviert ist (andernfalls wird eine ggf. vorhandene Variable wieder entfernt).
+
+Sie enthält den **vollständigen Ablauf des letzten Steuerungslaufs** – dieselben Schritte wie der „Erklären"-Probelauf (siehe unten), jedoch für den jeweils tatsächlich ausgeführten Lauf. Der Inhalt ist als **HTML** aufbereitet und wird über die Presentation **„Web Content"** dargestellt, sodass er in der Visualisierung formatiert (statt als Rohtext) erscheint.
+
+Im Unterschied zu `LAST_DECISION` (einzeilige Endentscheidung, nur bei einer *Änderung* aktualisiert) wird `DECISION_TRACE` bei **jedem** Steuerungslauf neu geschrieben und enthält zusätzlich einen Zeitstempel. So lässt sich jederzeit der komplette Entscheidungsweg des letzten Laufs nachvollziehen.
+
 ### Entscheidung erklären (Probelauf)
 
 Im Konfigurationsformular steht unter den Aktionen der Schalter **„Entscheidung erklären (Probelauf, keine Fahrt)"** zur Verfügung. Er führt einen nebenwirkungsfreien Probelauf durch (der Rollladen wird **nicht** bewegt und es werden keine Zustände verändert) und zeigt den kompletten Ablauf der Entscheidung Schritt für Schritt an – von der aktuellen Position über Tag/Nacht-Erkennung, Bewegungssperren, Basis-Zielposition, Beschattung und Kontakte bis zum Ergebnis. So lässt sich auf einen Blick erkennen, **warum** sich der Rollladen aktuell bewegen würde oder nicht.
@@ -356,6 +363,14 @@ Ergebnis: Fahrt: Höhe 60 % geschlossen (Beschattung nach Sonnenstand).
 
 In der Beschattungs-Zeile wird der für die Beschattungsentscheidung **tatsächlich verwendete** Helligkeitswert zusammen mit dem Schwellwert angezeigt. Dieser Wert kann von der in der Zeile „Tageszeit" genannten Helligkeit abweichen: Zum einen kann für die Beschattung ein anderer Helligkeitssensor konfiguriert sein als für die Tag/Nacht-Erkennung, zum anderen wird für die Beschattung – sofern eine Mittelung über mehrere Minuten eingestellt ist – ein effektiver Wert aus aktuellem und gemitteltem Messwert herangezogen.
 
+Ist ein **Temperatursensor** konfiguriert, fließt dessen Wert in die Beschattung nach Sonnenstand ein und wird im Trace sichtbar gemacht:
+- Der Helligkeits-Schwellwert wird temperaturabhängig angepasst (10 % je Grad über 24 °C bzw. unter 10 °C). Greift diese Anpassung, wird der Schwellwert mit dem Zusatz `(temperaturkorrigiert, 28 °C)` ausgewiesen.
+- Über 27 °C bzw. 30 °C wird der Behang zusätzlich abgesenkt; dies erscheint in der Beschattungszeile als Klartext, z. B. `Wärmeschutz: 28 °C > 27 °C` bzw. `Hitzeschutz: 31 °C > 30 °C`.
+
+```
+Beschattung: aktiv -> Höhe 90 % geschlossen (Beschattung nach Sonnenstand, Helligkeit 45000 lx ≥ Schwellwert 21000 lx (temperaturkorrigiert, 31 °C), Hitzeschutz: 31 °C > 30 °C)
+```
+
 Beispielausgabe, wenn **nicht** beschattet wird – der Grund wird genau benannt (Aktivierung, Helligkeit, Azimut bzw. Sonnenhöhe):
 ```
 Erklärung des Steuerungslaufs (Probelauf - der Rollladen wird nicht bewegt):
@@ -368,7 +383,7 @@ Beschattung: keine (nach Sonnenstand: Helligkeit 8000 lx unter Schwellwert 30000
 Ergebnis: Keine Fahrt: Zielposition bereits erreicht (Ziel: geöffnet, Tag, 8000 lx).
 ```
 
-Eine Zeile für die Kontakte erscheint nur, wenn ein Kontakt (Fenster/Regen/Notfall) die Position tatsächlich beeinflusst.
+Die Kontakt-Zeile wird **immer** ausgegeben und benennt den Kontaktstatus auch dann, wenn kein Kontakt die Position beeinflusst (z. B. `Kontakte: kein Kontakt offen` oder `Kontakte: nicht konfiguriert`). Beeinflusst ein offener Kontakt (Fenster/Regen/Notfall) die Position, wird die daraus resultierende Zielposition genannt.
 
 Derselbe Ablauf wird bei **jedem** Steuerungslauf zusätzlich in den Debug der Instanz geschrieben (Eintrag `ControlBlind: Ablauf: …`) und steht damit auch für die Fehlersuche zur Verfügung.
 
