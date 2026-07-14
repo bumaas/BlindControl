@@ -257,6 +257,27 @@
       ]
     },
     {
+      "type": "ExpansionPanel", "caption": "Window Handle (optional)",
+      "items": [
+        {"type": "Label", "caption": "Define a SODA window handle position variable. The values left/right are treated as open, up as tilted and down as closed."},
+        {"type": "SelectVariable", "name": "WindowHandlePositionID", "validVariableTypes": [3], "caption": "Window handle position ID"},
+        {
+          "type": "RowLayout", "items": [
+            {"type": "Label", "caption": "Position when the window handle is open (left/right)"},
+            {"type": "NumberSpinner", "name": "WindowHandleOpenLevel", "caption": "Minimum height when the window handle is open", "digits": "2"},
+            {"type": "NumberSpinner", "name": "WindowHandleOpenSlatsLevel", "caption": "Minimum slats position when the window handle is open", "digits": "2"}
+          ]
+        },
+        {
+          "type": "RowLayout", "items": [
+            {"type": "Label", "caption": "Position when the window handle is tilted (up)"},
+            {"type": "NumberSpinner", "name": "WindowHandleTiltedLevel", "caption": "Minimum height when the window handle is tilted", "digits": "2"},
+            {"type": "NumberSpinner", "name": "WindowHandleTiltedSlatsLevel", "caption": "Minimum slats position when the window handle is tilted", "digits": "2"}
+          ]
+        }
+      ]
+    },
+    {
       "type":  "ExpansionPanel", "caption": "Emergency Contact (optional)",
       "items": [
         {"type": "Label", "caption": "Define an emergency contact. The blind is opened immediately if the contact is open. Additionally the automatic is deactivated."},
@@ -337,6 +358,7 @@
     {"code": 237, "icon": "error", "caption": "Blind Level variable without profile"},
     {"code": 238, "icon": "error", "caption": "Profile of Blind Level variable has wrong min/max values"},
     {"code": 239, "icon": "error", "caption": "Profile of Slats Level variable has wrong min/max values"},
-    {"code": 240, "icon": "error", "caption": "Slats Level variable without profile"}
+    {"code": 240, "icon": "error", "caption": "Slats Level variable without profile"},
+    {"code": 241, "icon": "error", "caption": "Window handle position ID is not valid"}
   ]
 }

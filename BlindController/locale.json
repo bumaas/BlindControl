@@ -106,6 +106,15 @@
       "Define up to two contacts/variables. The blind is opened immediately to the given minimum height if one of the contacts are open.":
       "Angabe von bis zu zwei Kontakten. Der Rollladen wird sofort geöffnet und auf die gewünschte Minimalhöhe gefahren wenn einer der Kontakte offen ist.",
       "Contacts to close the blind have a higher priority than the ones to open": "Kontakte zum Schließen des Rollladens haben eine höhere Priorität als die zum Öffnen",
+      "Window Handle (optional)": "Fenstergriff (optional)",
+      "Define a SODA window handle position variable. The values left/right are treated as open, up as tilted and down as closed.": "Angabe der Positionsvariable eines SODA-Fenstergriffs. Die Werte left/right gelten als offen, up als gekippt und down als geschlossen.",
+      "Window handle position ID": "Fenstergriff Positions-ID",
+      "Position when the window handle is open (left/right)": "Position bei offenem Fenstergriff (left/right)",
+      "Minimum height when the window handle is open": "Minimalhöhe bei offenem Fenstergriff",
+      "Minimum slats position when the window handle is open": "Minimale Lamellenposition bei offenem Fenstergriff",
+      "Position when the window handle is tilted (up)": "Position bei gekipptem Fenstergriff (up)",
+      "Minimum height when the window handle is tilted": "Minimalhöhe bei gekipptem Fenstergriff",
+      "Minimum slats position when the window handle is tilted": "Minimale Lamellenposition bei gekipptem Fenstergriff",
       "Emergency Contact (optional)": "Notfall Kontakt (optional)",
       "Emergency contact ID": "Notfall Kontakt ID",
       "Define an emergency contact. The blind is opened immediately if the contact is open. Additionally the automatic is deactivated.":
@@ -149,6 +158,7 @@
       "Contact 1 ID is not valid":                                                    "'Kontakt 1 ID' ist ungültig",
       "Contact 2 ID is not valid":                                                    "'Kontakt 2 ID' ist ungültig",
       "Emergency Contact ID is not valid":                                            "'Notfall Contact ID' ist ungültig",
+      "Window handle position ID is not valid":                                       "'Fenstergriff Positions-ID' ist ungültig",
       "WakeUpTime ID is not valid":                                                   "'Aufstehzeit ID' ist ungültig",
       "SleepTime ID is not valid":                                                    "'Schlafenszeit ID' ist ungültig",
       "DayStart ID is not valid":                                                     "'Tagesanfangszeit ID' ist ungültig",
