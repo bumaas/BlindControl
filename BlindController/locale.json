@@ -109,6 +109,7 @@
       "Window Handle (optional)": "Fenstergriff (optional)",
       "Define a SODA window handle position variable. The values left/right are treated as open, up as tilted and down as closed.": "Angabe der Positionsvariable eines SODA-Fenstergriffs. Die Werte left/right gelten als offen, up als gekippt und down als geschlossen.",
       "Window handle position ID": "Fenstergriff Positions-ID",
+      "Delay before evaluating the window handle position": "Verzögerung vor Auswertung der Fenstergriffposition",
       "Position when the window handle is open (left/right)": "Position bei offenem Fenstergriff (left/right)",
       "Minimum height when the window handle is open": "Minimalhöhe bei offenem Fenstergriff",
       "Minimum slats position when the window handle is open": "Minimale Lamellenposition bei offenem Fenstergriff",

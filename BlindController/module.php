@@ -76,6 +76,7 @@ class BlindController extends IPSModuleStrict
     private const string PROP_WINDOWHANDLEOPENSLATSLEVEL        = 'WindowHandleOpenSlatsLevel';
     private const string PROP_WINDOWHANDLETILTEDLEVEL           = 'WindowHandleTiltedLevel';
     private const string PROP_WINDOWHANDLETILTEDSLATSLEVEL      = 'WindowHandleTiltedSlatsLevel';
+    private const string PROP_WINDOWHANDLEDELAY                 = 'WindowHandleDelay';
 
     //shadowing, according to sun position
     private const string PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION           = 'ActivatorIDShadowingBySunPosition';
@@ -153,6 +154,7 @@ class BlindController extends IPSModuleStrict
     //timer names
     private const string TIMER_UPDATE           = 'Update';
     private const string TIMER_DELAYED_MOVEMENT = 'DelayedMovement';
+    private const string TIMER_WINDOW_HANDLE    = 'WindowHandle';
 
 
     //variable names
@@ -216,6 +218,11 @@ class BlindController extends IPSModuleStrict
             self::TIMER_DELAYED_MOVEMENT,
             0,
             'BLC_ControlBlind(' . $this->InstanceID . ', true);'
+        );
+        $this->RegisterTimer(
+            self::TIMER_WINDOW_HANDLE,
+            0,
+            'BLC_ProcessWindowHandlePosition(' . $this->InstanceID . ');'
         );
     }
 
@@ -420,6 +427,17 @@ class BlindController extends IPSModuleStrict
             return;
         }
 
+        if ($SenderID === $this->ReadPropertyInteger(self::PROP_WINDOWHANDLEPOSITIONID)) {
+            $delay = $this->ReadPropertyInteger(self::PROP_WINDOWHANDLEDELAY);
+            if ($delay > 0 && IPS_GetKernelRunlevel() === KR_READY) {
+                // Neustart bei jedem Telegramm: Erst die letzte Position der Drehbewegung wird ausgewertet.
+                $this->SetTimerInterval(self::TIMER_WINDOW_HANDLE, 0);
+                $this->SetTimerInterval(self::TIMER_WINDOW_HANDLE, $delay * 1000);
+                $this->Logger_Dbg(__FUNCTION__, sprintf('Fenstergriff-Auswertung um %d Sekunde(n) verzögert', $delay));
+                return;
+            }
+        }
+
         // Prüfen, ob die Verzögerungszeit (DeactivationTimeAuto) berücksichtigt werden soll
         $isTriggerSource = in_array(
             $SenderID,
@@ -440,6 +458,15 @@ class BlindController extends IPSModuleStrict
             $considerDeactivation = $isTriggerSource ? 'false' : 'true';
             $this->RegisterOnceTimer('BlindControlTimer_ControlBlind',sprintf('BLC_ControlBlind(%s, %s);', $this->InstanceID, $considerDeactivation));
         }
+    }
+
+    /**
+     * Wertet nach Ablauf der Beruhigungszeit die zuletzt gemeldete Fenstergriffposition aus.
+     */
+    public function ProcessWindowHandlePosition(): void
+    {
+        $this->SetTimerInterval(self::TIMER_WINDOW_HANDLE, 0);
+        $this->ControlBlind(false);
     }
 
     /**
@@ -1309,6 +1336,7 @@ class BlindController extends IPSModuleStrict
         $this->RegisterPropertyFloat(self::PROP_WINDOWHANDLEOPENSLATSLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_WINDOWHANDLETILTEDLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_WINDOWHANDLETILTEDSLATSLEVEL, 0);
+        $this->RegisterPropertyInteger(self::PROP_WINDOWHANDLEDELAY, 1);
 
         //emergency contact
         $this->RegisterPropertyInteger(self::PROP_EMERGENCYCONTACTID, 0);
@@ -1882,6 +1910,7 @@ class BlindController extends IPSModuleStrict
         } else {
             $this->SetTimerInterval(self::TIMER_UPDATE, 0);
             $this->SetTimerInterval(self::TIMER_DELAYED_MOVEMENT, 0);
+            $this->SetTimerInterval(self::TIMER_WINDOW_HANDLE, 0);
             $this->SetStatus(IS_INACTIVE);
             return;
         }

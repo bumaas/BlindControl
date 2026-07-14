@@ -261,6 +261,7 @@
       "items": [
         {"type": "Label", "caption": "Define a SODA window handle position variable. The values left/right are treated as open, up as tilted and down as closed."},
         {"type": "SelectVariable", "name": "WindowHandlePositionID", "validVariableTypes": [3], "caption": "Window handle position ID"},
+        {"type": "NumberSpinner", "name": "WindowHandleDelay", "caption": "Delay before evaluating the window handle position", "suffix": "Seconds", "minimum": 0},
         {
           "type": "RowLayout", "items": [
             {"type": "Label", "caption": "Position when the window handle is open (left/right)"},
