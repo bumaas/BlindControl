@@ -77,6 +77,9 @@ class BlindController extends IPSModuleStrict
     private const string PROP_WINDOWHANDLETILTEDLEVEL           = 'WindowHandleTiltedLevel';
     private const string PROP_WINDOWHANDLETILTEDSLATSLEVEL      = 'WindowHandleTiltedSlatsLevel';
     private const string PROP_WINDOWHANDLEDELAY                 = 'WindowHandleDelay';
+    private const string PROP_WINDOWHANDLEOPENVALUES            = 'WindowHandleOpenValues';
+    private const string PROP_WINDOWHANDLETILTEDVALUES          = 'WindowHandleTiltedValues';
+    private const string PROP_WINDOWHANDLECLOSEDVALUES          = 'WindowHandleClosedValues';
 
     //shadowing, according to sun position
     private const string PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION           = 'ActivatorIDShadowingBySunPosition';
@@ -1337,6 +1340,9 @@ class BlindController extends IPSModuleStrict
         $this->RegisterPropertyFloat(self::PROP_WINDOWHANDLETILTEDLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_WINDOWHANDLETILTEDSLATSLEVEL, 0);
         $this->RegisterPropertyInteger(self::PROP_WINDOWHANDLEDELAY, 1);
+        $this->RegisterPropertyString(self::PROP_WINDOWHANDLEOPENVALUES, 'left,right');
+        $this->RegisterPropertyString(self::PROP_WINDOWHANDLETILTEDVALUES, 'up');
+        $this->RegisterPropertyString(self::PROP_WINDOWHANDLECLOSEDVALUES, 'down');
 
         //emergency contact
         $this->RegisterPropertyInteger(self::PROP_EMERGENCYCONTACTID, 0);
@@ -1665,7 +1671,7 @@ class BlindController extends IPSModuleStrict
         if ($ret = $this->checkVariableId(
             self::PROP_WINDOWHANDLEPOSITIONID,
             true,
-            [VARIABLETYPE_STRING],
+            [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT, VARIABLETYPE_STRING],
             false,
             self::STATUS_INST_WINDOWHANDLE_POSITION_ID_IS_INVALID
         )) {
@@ -2207,7 +2213,6 @@ class BlindController extends IPSModuleStrict
 
     /**
      * Liefert die für die aktuelle Fenstergriffstellung konfigurierte Öffnungsbegrenzung.
-     * Die SODA-Positionsvariable verwendet die Rohwerte up, left, right und down.
      *
      * @return array{positions: array{BlindLevel: float, SlatsLevel: float}, state: string}|null
      */
@@ -2218,38 +2223,33 @@ class BlindController extends IPSModuleStrict
             return null;
         }
 
-        $position = strtolower(trim(GetValueString($positionId)));
-        switch ($position) {
-            case 'left':
-            case 'right':
-                $result = [
-                    'positions' => [
-                        'BlindLevel' => $this->ReadPropertyFloat(self::PROP_WINDOWHANDLEOPENLEVEL),
-                        'SlatsLevel' => $this->ReadPropertyFloat(self::PROP_WINDOWHANDLEOPENSLATSLEVEL)
-                    ],
-                    'state' => sprintf('offen (%s)', $position)
-                ];
-                break;
+        $position     = GetValue($positionId);
+        $variableType = IPS_GetVariable($positionId)['VariableType'];
 
-            case 'up':
-                $result = [
-                    'positions' => [
-                        'BlindLevel' => $this->ReadPropertyFloat(self::PROP_WINDOWHANDLETILTEDLEVEL),
-                        'SlatsLevel' => $this->ReadPropertyFloat(self::PROP_WINDOWHANDLETILTEDSLATSLEVEL)
-                    ],
-                    'state' => 'gekippt (up)'
-                ];
-                break;
-
-            case 'down':
-                return null;
-
-            default:
-                $this->Logger_Dbg(
-                    __FUNCTION__,
-                    sprintf('Unbekannte Fenstergriffposition "%s" in Variable #%s (ignoriert)', $position, $positionId)
-                );
-                return null;
+        if ($this->matchesWindowHandleValue($position, $this->ReadPropertyString(self::PROP_WINDOWHANDLEOPENVALUES), $variableType)) {
+            $result = [
+                'positions' => [
+                    'BlindLevel' => $this->ReadPropertyFloat(self::PROP_WINDOWHANDLEOPENLEVEL),
+                    'SlatsLevel' => $this->ReadPropertyFloat(self::PROP_WINDOWHANDLEOPENSLATSLEVEL)
+                ],
+                'state' => sprintf('offen (%s)', $this->formatWindowHandleValue($position))
+            ];
+        } elseif ($this->matchesWindowHandleValue($position, $this->ReadPropertyString(self::PROP_WINDOWHANDLETILTEDVALUES), $variableType)) {
+            $result = [
+                'positions' => [
+                    'BlindLevel' => $this->ReadPropertyFloat(self::PROP_WINDOWHANDLETILTEDLEVEL),
+                    'SlatsLevel' => $this->ReadPropertyFloat(self::PROP_WINDOWHANDLETILTEDSLATSLEVEL)
+                ],
+                'state' => sprintf('gekippt (%s)', $this->formatWindowHandleValue($position))
+            ];
+        } elseif ($this->matchesWindowHandleValue($position, $this->ReadPropertyString(self::PROP_WINDOWHANDLECLOSEDVALUES), $variableType)) {
+            return null;
+        } else {
+            $this->Logger_Dbg(
+                __FUNCTION__,
+                sprintf('Unbekannte Fenstergriffposition "%s" in Variable #%s (ignoriert)', $this->formatWindowHandleValue($position), $positionId)
+            );
+            return null;
         }
 
         $this->Logger_Dbg(
@@ -2264,6 +2264,54 @@ class BlindController extends IPSModuleStrict
         );
 
         return $result;
+    }
+
+    /**
+     * Vergleicht einen Variablenwert mit einer kommaseparierten Liste konfigurierter Werte.
+     */
+    private function matchesWindowHandleValue(mixed $actualValue, string $configuredValues, int $variableType): bool
+    {
+        $values = array_filter(array_map('trim', explode(',', $configuredValues)), static fn(string $value): bool => $value !== '');
+
+        foreach ($values as $value) {
+            switch ($variableType) {
+                case VARIABLETYPE_BOOLEAN:
+                    $configuredValue = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                    if ($configuredValue !== null && $actualValue === $configuredValue) {
+                        return true;
+                    }
+                    break;
+
+                case VARIABLETYPE_INTEGER:
+                    if (filter_var($value, FILTER_VALIDATE_INT) !== false && $actualValue === (int)$value) {
+                        return true;
+                    }
+                    break;
+
+                case VARIABLETYPE_FLOAT:
+                    if (is_numeric($value) && abs((float)$actualValue - (float)$value) <= 0.000001) {
+                        return true;
+                    }
+                    break;
+
+                case VARIABLETYPE_STRING:
+                    if ($actualValue === $value) {
+                        return true;
+                    }
+                    break;
+            }
+        }
+
+        return false;
+    }
+
+    private function formatWindowHandleValue(mixed $value): string
+    {
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        return (string)$value;
     }
 
     /**
