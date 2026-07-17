@@ -156,6 +156,8 @@ Das Modul bezieht aus dem Wochenplan ausschließlich die Aktionszeiten und den A
 Der Verweis auf einen Wochenplan ist zwingend erforderlich. Wird kein spezifischer Wochenplan benötigt (z.B. weil die Rollläden ausschließlich zum Sonnenschutz heruntergefahren werden sollen), muss dennoch ein rudimentärer Wochenplan vorhanden sein, der den oben genannten Bedingungen genügt.
 Dies kann beispielsweise ein Wochenplan mit den Aktionen 1 und 2 sein, bei dem lediglich eine Zeitspanne der ID 2 über 24 Stunden (00:00 bis 24:00) definiert ist.
 
+**Hinweis:** Sollen die Rollläden ausschließlich zur Beschattung fahren (kein klassischer Tag/Nacht-Wechsel), genügt der oben beschriebene 24-h-Wochenplan. Ein Deaktivieren des Wochenplans in Symcon hat keine Wirkung, da nur dessen Aktionszeiten und Aktionstypen ausgewertet werden.
+
 ### 5.3 Tagerkennung (optional)
 Ergänzend zum Wochenplan kann eine Tagerkennung eingerichtet werden. Diese kommt zum Einsatz, wenn neben den festen Fahrzeiten auch die Helligkeit berücksichtigt werden soll.
 

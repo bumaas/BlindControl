@@ -766,7 +766,9 @@ class BlindController extends IPSModuleStrict
 
     private function determineDayState(float $currentBlindLevel): array
     {
-        $isDayByTimeSchedule = $this->getIsDayByTimeSchedule();
+        $scheduleAuf         = null;
+        $scheduleAb          = null;
+        $isDayByTimeSchedule = $this->getIsDayByTimeSchedule($scheduleAuf, $scheduleAb);
         $brightness          = null;
         $isDayByDayDetection = $this->getIsDayByDayDetection($brightness, $currentBlindLevel);
 
@@ -780,7 +782,9 @@ class BlindController extends IPSModuleStrict
             'isDay'               => $isDay,
             'isDayByTimeSchedule' => $isDayByTimeSchedule,
             'isDayByDayDetection' => $isDayByDayDetection,
-            'brightness'          => $brightness
+            'brightness'          => $brightness,
+            'scheduleAuf'         => $scheduleAuf,
+            'scheduleAb'          => $scheduleAb
         ];
     }
 
@@ -3301,7 +3305,11 @@ class BlindController extends IPSModuleStrict
     private function buildDayStateTrace(array $dayState): string
     {
         $parts   = [];
-        $parts[] = sprintf('Wochenplan: %s', $dayState['isDayByTimeSchedule'] ? 'Tag' : 'Nacht');
+        $wochenplan = sprintf('Wochenplan: %s', $dayState['isDayByTimeSchedule'] ? 'Tag' : 'Nacht');
+        if (!empty($dayState['scheduleAuf']) || !empty($dayState['scheduleAb'])) {
+            $wochenplan .= sprintf(' (%s–%s)', $dayState['scheduleAuf'] ?? '—', $dayState['scheduleAb'] ?? '—');
+        }
+        $parts[] = $wochenplan;
         if ($dayState['isDayByDayDetection'] !== null) {
             $parts[] = sprintf('Tagerkennung: %s', $dayState['isDayByDayDetection'] ? 'Tag' : 'Nacht');
         }
@@ -3593,9 +3601,11 @@ class BlindController extends IPSModuleStrict
         return $isDayDayDetection;
     }
 
-    private function getIsDayByTimeSchedule(): ?bool
+    private function getIsDayByTimeSchedule(?string &$heute_auf = null, ?string &$heute_ab = null): ?bool
     {
         //Ermitteln, welche Zeiten heute und gestern gelten
+        // heute_auf/heute_ab werden zusätzlich per Referenz zurückgegeben und fließen in den
+        // Ablauf-Trace (Tageszeit-Zeile) ein.
 
         $heute_auf = null;
         $heute_ab  = null;
