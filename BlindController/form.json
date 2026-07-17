@@ -259,26 +259,19 @@
     {
       "type": "ExpansionPanel", "caption": "Window Handle (optional)",
       "items": [
-        {"type": "Label", "caption": "Define a window handle position variable and assign its raw values. Multiple values can be separated by commas."},
+        {"type": "Label", "caption": "Define a window handle position variable and assign its raw values. Multiple values can be separated by commas. Any value that is neither open nor tilted is treated as closed."},
         {"type": "SelectVariable", "name": "WindowHandlePositionID", "validVariableTypes": [0, 1, 2, 3], "caption": "Window handle position ID"},
-        {
-          "type": "RowLayout", "items": [
-            {"type": "ValidationTextBox", "name": "WindowHandleOpenValues", "caption": "Value for open"},
-            {"type": "ValidationTextBox", "name": "WindowHandleTiltedValues", "caption": "Value for tilted"},
-            {"type": "ValidationTextBox", "name": "WindowHandleClosedValues", "caption": "Value for closed"}
-          ]
-        },
         {"type": "NumberSpinner", "name": "WindowHandleDelay", "caption": "Delay before evaluating the window handle position", "suffix": "Seconds", "minimum": 0},
         {
           "type": "RowLayout", "items": [
-            {"type": "Label", "caption": "Position when the window handle is open"},
+            {"type": "ValidationTextBox", "name": "WindowHandleOpenValues", "caption": "Value for open"},
             {"type": "NumberSpinner", "name": "WindowHandleOpenLevel", "caption": "Minimum height when the window handle is open", "digits": "2"},
             {"type": "NumberSpinner", "name": "WindowHandleOpenSlatsLevel", "caption": "Minimum slats position when the window handle is open", "digits": "2"}
           ]
         },
         {
           "type": "RowLayout", "items": [
-            {"type": "Label", "caption": "Position when the window handle is tilted"},
+            {"type": "ValidationTextBox", "name": "WindowHandleTiltedValues", "caption": "Value for tilted"},
             {"type": "NumberSpinner", "name": "WindowHandleTiltedLevel", "caption": "Minimum height when the window handle is tilted", "digits": "2"},
             {"type": "NumberSpinner", "name": "WindowHandleTiltedSlatsLevel", "caption": "Minimum slats position when the window handle is tilted", "digits": "2"}
           ]

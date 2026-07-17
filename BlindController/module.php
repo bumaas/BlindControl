@@ -79,7 +79,6 @@ class BlindController extends IPSModuleStrict
     private const string PROP_WINDOWHANDLEDELAY                 = 'WindowHandleDelay';
     private const string PROP_WINDOWHANDLEOPENVALUES            = 'WindowHandleOpenValues';
     private const string PROP_WINDOWHANDLETILTEDVALUES          = 'WindowHandleTiltedValues';
-    private const string PROP_WINDOWHANDLECLOSEDVALUES          = 'WindowHandleClosedValues';
 
     //shadowing, according to sun position
     private const string PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION           = 'ActivatorIDShadowingBySunPosition';
@@ -1346,7 +1345,6 @@ class BlindController extends IPSModuleStrict
         $this->RegisterPropertyInteger(self::PROP_WINDOWHANDLEDELAY, 1);
         $this->RegisterPropertyString(self::PROP_WINDOWHANDLEOPENVALUES, 'left,right');
         $this->RegisterPropertyString(self::PROP_WINDOWHANDLETILTEDVALUES, 'up');
-        $this->RegisterPropertyString(self::PROP_WINDOWHANDLECLOSEDVALUES, 'down');
 
         //emergency contact
         $this->RegisterPropertyInteger(self::PROP_EMERGENCYCONTACTID, 0);
@@ -2246,12 +2244,12 @@ class BlindController extends IPSModuleStrict
                 ],
                 'state' => sprintf('gekippt (%s)', $this->formatWindowHandleValue($position))
             ];
-        } elseif ($this->matchesWindowHandleValue($position, $this->ReadPropertyString(self::PROP_WINDOWHANDLECLOSEDVALUES), $variableType)) {
-            return null;
         } else {
+            // Jeder Wert, der weder als offen noch als gekippt konfiguriert ist, gilt als
+            // geschlossen -> keine Öffnungsbegrenzung, die regulär ermittelte Position gilt.
             $this->Logger_Dbg(
                 __FUNCTION__,
-                sprintf('Unbekannte Fenstergriffposition "%s" in Variable #%s (ignoriert)', $this->formatWindowHandleValue($position), $positionId)
+                sprintf('Fenstergriff #%s: Wert "%s" -> keine Öffnungsbegrenzung (geschlossen)', $positionId, $this->formatWindowHandleValue($position))
             );
             return null;
         }
