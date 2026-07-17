@@ -236,20 +236,64 @@
         {
           "type":  "ExpansionPanel", "caption": "Contacts to Open the Blind (optional)",
           "items": [
-            {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened immediately to the given minimum height if one of the contacts are open."},
+            {"type": "Label", "caption": "Define up to two contacts/variables. The blind is opened immediately to the given minimum height when a contact is open. To trigger different positions depending on the raw value of a variable (e.g. a window handle), expand the advanced section of the respective contact."},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ContactOpen1ID", "validVariableTypes": [0, 1, 2], "caption": "Contact 1 ID"},
+              {"type": "SelectVariable", "name": "ContactOpen1ID", "validVariableTypes": [0, 1, 2, 3], "caption": "Contact 1 ID"},
               {"type": "NumberSpinner", "name": "ContactOpenLevel1", "caption": "Minimum height when the contact is open", "digits": "2"},
               {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel1", "caption": "Minimum slats position when the contact is open", "digits": "2"}
             ]
             },
             {
+              "type": "ExpansionPanel", "caption": "Contact 1: advanced - multiple positions via raw values (optional)",
+              "items": [
+                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect (behaves as closed). Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1)."},
+                {"type": "ValidationTextBox", "name": "ContactOpenValues1_1", "caption": "Raw values for position 1 (uses the height above)"},
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "ValidationTextBox", "name": "ContactOpenValues1_2", "caption": "Raw values for position 2"},
+                  {"type": "NumberSpinner", "name": "ContactOpenLevel1_2", "caption": "Minimum height", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel1_2", "caption": "Minimum slats position", "digits": "2"}
+                ]
+                },
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "ValidationTextBox", "name": "ContactOpenValues1_3", "caption": "Raw values for position 3"},
+                  {"type": "NumberSpinner", "name": "ContactOpenLevel1_3", "caption": "Minimum height", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel1_3", "caption": "Minimum slats position", "digits": "2"}
+                ]
+                },
+                {"type": "NumberSpinner", "name": "ContactOpenDelay1", "caption": "Delay before evaluation (debounce)", "suffix": "Seconds", "minimum": 0}
+              ]
+            },
+            {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ContactOpen2ID", "validVariableTypes": [0, 1, 2], "caption": "Contact 2 ID"},
+              {"type": "SelectVariable", "name": "ContactOpen2ID", "validVariableTypes": [0, 1, 2, 3], "caption": "Contact 2 ID"},
               {"type": "NumberSpinner", "name": "ContactOpenLevel2", "caption": "Minimum height when the contact is open", "digits": "2"},
               {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel2", "caption": "Minimum slats position when the contact is open", "digits": "2"}
             ]
+            },
+            {
+              "type": "ExpansionPanel", "caption": "Contact 2: advanced - multiple positions via raw values (optional)",
+              "items": [
+                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect (behaves as closed). Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1)."},
+                {"type": "ValidationTextBox", "name": "ContactOpenValues2_1", "caption": "Raw values for position 1 (uses the height above)"},
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "ValidationTextBox", "name": "ContactOpenValues2_2", "caption": "Raw values for position 2"},
+                  {"type": "NumberSpinner", "name": "ContactOpenLevel2_2", "caption": "Minimum height", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel2_2", "caption": "Minimum slats position", "digits": "2"}
+                ]
+                },
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "ValidationTextBox", "name": "ContactOpenValues2_3", "caption": "Raw values for position 3"},
+                  {"type": "NumberSpinner", "name": "ContactOpenLevel2_3", "caption": "Minimum height", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel2_3", "caption": "Minimum slats position", "digits": "2"}
+                ]
+                },
+                {"type": "NumberSpinner", "name": "ContactOpenDelay2", "caption": "Delay before evaluation (debounce)", "suffix": "Seconds", "minimum": 0}
+              ]
             }
           ]
         },
