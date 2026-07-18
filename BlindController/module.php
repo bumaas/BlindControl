@@ -622,9 +622,30 @@ class BlindController extends IPSModuleStrict
 
         if (!IPS_SemaphoreEnter($this->InstanceID . '- Blind', 30 * 1000)) { //wir warten maximal 30 Sekunden
             $this->Logger_Dbg(__FUNCTION__, 'Cannot enter semaphore. The waiting time of 30s has expired');
+            if (!$this->dryRun) {
+                //der Lauf wird nicht verworfen, sondern erneut angestoßen (ein anderer Lauf kann bis zu 90 s auf das Erreichen der Endposition warten)
+                $this->RegisterOnceTimer(
+                    'BlindControlTimer_ControlBlind',
+                    sprintf('BLC_ControlBlind(%s, %s);', $this->InstanceID, $considerDeactivationTimeAuto ? 'true' : 'false')
+                );
+            }
             return false;
         }
 
+        try {
+            return $this->executeControlBlindRun($considerDeactivationTimeAuto);
+        } finally {
+            IPS_SemaphoreLeave($this->InstanceID . '- Blind');
+        }
+    }
+
+    /**
+     * Führt den eigentlichen Steuerungslauf aus. Darf nur unter gehaltener Semaphore aufgerufen werden.
+     *
+     * @throws \JsonException
+     */
+    private function executeControlBlindRun(bool $considerDeactivationTimeAuto): bool
+    {
         // globale Instanzvariablen setzen
         $this->profileBlindLevel = $this->GetPresentationInformation(self::PROP_BLINDLEVELID);
 
@@ -790,8 +811,6 @@ class BlindController extends IPSModuleStrict
         // vollständiges Ablaufprotokoll ins Debug schreiben (hilft bei Support/Diagnose)
         $this->Logger_Dbg(__FUNCTION__, 'Ablauf:' . ' | ' . implode(' | ', $this->decisionTrace));
 
-        IPS_SemaphoreLeave($this->InstanceID . '- Blind');
-
         return true;
     }
 
@@ -803,6 +822,7 @@ class BlindController extends IPSModuleStrict
      * @return string Mehrzeiliges Ablaufprotokoll.
      * @throws \JsonException
      */
+    /** @noinspection PhpUnused */
     public function ExplainControlBlind(): string
     {
         if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
@@ -1888,9 +1908,7 @@ class BlindController extends IPSModuleStrict
             self::PROP_HALFSHADERELEVANTBLINDLEVEL,
             self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL,
             self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
-            self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
-            self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
-            self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS
+            self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS
         ];
 
         // Öffnen-/Schließen-Kontakt-Wertegruppen (Höhen der Zusatzpositionen 2/3) mitprüfen
@@ -1899,10 +1917,6 @@ class BlindController extends IPSModuleStrict
                 $propertyBlindLevels[] = $this->openLevelProp($i, $j);
                 $propertyBlindLevels[] = $this->closeLevelProp($i, $j);
             }
-        }
-
-        if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
-            $propertyBlindLevels[] = self::PROP_DAYBLINDLEVEL;
         }
 
         if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)) {
@@ -1943,6 +1957,8 @@ class BlindController extends IPSModuleStrict
             self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
             self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL,
             self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL,
+            self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
+            self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
             self::PROP_CONTACTCLOSESLATSLEVEL1,
             self::PROP_CONTACTCLOSESLATSLEVEL2,
             self::PROP_CONTACTOPENSLATSLEVEL1,
@@ -2136,7 +2152,7 @@ class BlindController extends IPSModuleStrict
     {
         $value = $this->ReadPropertyFloat($propName);
 
-        if ((int)$value === 0) {
+        if ($value === 0.0) { //0 = nicht gesetzt
             return 0;
         }
 
@@ -2581,12 +2597,8 @@ class BlindController extends IPSModuleStrict
             return false;
         }
 
-        if ($prof = $this->GetProfileInformation_org($propName)) {
-            //$reversed = false; //todo: was ist mit reversed Kontakten?
-            $reversed = $prof['Reversed'];
-        } else {
-            $reversed = false;
-        }
+        $prof     = $this->GetPresentationInformation($propName);
+        $reversed = $prof['Reversed'] ?? false;
 
         $isOpen = $reversed ? !GetValue($contactId) : (bool)GetValue($contactId);
 
@@ -2745,7 +2757,7 @@ class BlindController extends IPSModuleStrict
             if (($temperature > 27.0)
                 || ((round($levelAct, 1) === round($positions['BlindLevel'] + $levelCorrectionHeat, 1))
                     && ($temperature > (27.0 - 0.5)))) {
-                $positions['BlindLevel'] = $this->clampToProfile($positions['BlindLevel'] + $levelCorrectionHeat, $this->profileBlindLevel);
+                $positions['BlindLevel'] = $this->clampToProfileOrNull($positions['BlindLevel'] + $levelCorrectionHeat, $this->profileBlindLevel);
                 $this->Logger_Dbg(
                     __FUNCTION__,
                     sprintf(
@@ -2939,8 +2951,8 @@ class BlindController extends IPSModuleStrict
         );
 
         return [
-            'BlindLevel' => $this->clampToProfile($blindLevel, $this->profileBlindLevel),
-            'SlatsLevel' => $this->clampToProfile($slatsLevel, $this->profileSlatsLevel)
+            'BlindLevel' => $this->clampToProfileOrNull($blindLevel, $this->profileBlindLevel),
+            'SlatsLevel' => $this->clampToProfileOrNull($slatsLevel, $this->profileSlatsLevel)
         ];
     }
 
@@ -2948,16 +2960,24 @@ class BlindController extends IPSModuleStrict
      * Begrenzt einen Wert auf die Min/Max Grenzen des Profils,
      * unabhängig davon, ob Min > Max (reversed) oder Min < Max ist.
      */
-    private function clampToProfile(float $value, ?array $profile): ?float
+    private function clampToProfile(float $value, array $profile): float
+    {
+        $limit1 = $profile['MinValue'];
+        $limit2 = $profile['MaxValue'];
+
+        return max(min($limit1, $limit2), min(max($limit1, $limit2), $value));
+    }
+
+    /**
+     * Wie clampToProfile(), akzeptiert aber ein fehlendes Profil und liefert dann null zurück.
+     */
+    private function clampToProfileOrNull(float $value, ?array $profile): ?float
     {
         if (is_null($profile)) {
             return null;
         }
 
-        $limit1 = $profile['MinValue'];
-        $limit2 = $profile['MaxValue'];
-
-        return max(min($limit1, $limit2), min(max($limit1, $limit2), $value));
+        return $this->clampToProfile($value, $profile);
     }
 
 
@@ -3107,7 +3127,7 @@ class BlindController extends IPSModuleStrict
         }
 
         // Begrenzung auf Profilgrenzen
-        $blindLevel = $this->clampToProfile($blindLevel, $this->profileBlindLevel);
+        $blindLevel = $this->clampToProfileOrNull($blindLevel, $this->profileBlindLevel);
 
         // Lamellenposition berechnen (immer linear)
         $slatsLevelMin = $this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL);
@@ -3208,8 +3228,13 @@ class BlindController extends IPSModuleStrict
         }
 
         // aktiviert, aber Helligkeit unter den konfigurierten Schwellwerten
-        $threshold = IPS_VariableExists($thresholdIDLessBrightness) ? GetValue($thresholdIDLessBrightness)
-            : (IPS_VariableExists($thresholdIDHighBrightness) ? GetValue($thresholdIDHighBrightness) : null);
+        if (IPS_VariableExists($thresholdIDLessBrightness)) {
+            $threshold = GetValue($thresholdIDLessBrightness);
+        } elseif (IPS_VariableExists($thresholdIDHighBrightness)) {
+            $threshold = GetValue($thresholdIDHighBrightness);
+        } else {
+            $threshold = null;
+        }
         if ($threshold !== null) {
             $thresholdIDForFormat = IPS_VariableExists($thresholdIDLessBrightness) ? $thresholdIDLessBrightness : $thresholdIDHighBrightness;
             $this->addShadowingReason(
@@ -3779,8 +3804,7 @@ class BlindController extends IPSModuleStrict
      */
     private function traceDecisionResult(bool $bNoMove, string $blockReason, array $positionsNew, string $hint): void
     {
-        $target  = $this->describeTargetPositions($positionsNew);
-        $hintTxt = $hint !== '' ? $hint : '';
+        $target = $this->describeTargetPositions($positionsNew);
 
         if ($bNoMove) {
             // Sperre: es wurde gar kein Fahrbefehl ausgelöst
@@ -3788,10 +3812,10 @@ class BlindController extends IPSModuleStrict
             $message = sprintf('Keine Fahrt: %s.', $reason);
         } elseif ($this->moveSkipReason !== '') {
             // Fahrbefehl wurde geprüft, aber als nicht erforderlich verworfen (bereits erreicht, Karenzzeit, zu kleine Bewegung)
-            $message = sprintf('Keine Fahrt: %s (Ziel: %s%s).', $this->moveSkipReason, $target, $hintTxt !== '' ? ', ' . $hintTxt : '');
+            $message = sprintf('Keine Fahrt: %s (Ziel: %s%s).', $this->moveSkipReason, $target, $hint !== '' ? ', ' . $hint : '');
         } else {
             // Fahrbefehl wurde ausgelöst
-            $message = sprintf('Fahrt: %s%s.', $target, $hintTxt !== '' ? sprintf(' (%s)', $hintTxt) : '');
+            $message = sprintf('Fahrt: %s%s.', $target, $hint !== '' ? sprintf(' (%s)', $hint) : '');
         }
 
         $this->addTrace('Ergebnis: ' . $message);
@@ -4183,58 +4207,6 @@ class BlindController extends IPSModuleStrict
      * @return array|null Returns an associative array containing profile information if the property exists and has a valid profile; otherwise,
      *                    returns null.
      */
-    private function GetProfileInformation_org(string $propName): ?array
-    {
-        if (!($variable = @IPS_GetVariable($this->ReadPropertyInteger($propName)))) {
-            return null;
-        }
-
-        if ($variable['VariableCustomProfile'] !== '') {
-            $profileName = $variable['VariableCustomProfile'];
-        } else {
-            $profileName = $variable['VariableProfile'];
-        }
-
-        if ($profileName === '') {
-            return null;
-        }
-
-        if ($profile = @IPS_GetVariableProfile($profileName)) {
-            $profileNameParts = explode('.', $profileName);
-        } else {
-            return null;
-        }
-
-        $reversed = strcasecmp('reversed', end($profileNameParts)) === 0; //Groß-/Kleinschreibung wird ignoriert
-        switch ($propName) {
-            case self::PROP_BLINDLEVELID:
-            case self::PROP_SLATSLEVELID:
-                return [
-                    'Name'        => $profileName,
-                    'ProfileType' => $profile['ProfileType'],
-                    'MinValue'    => $profile['MinValue'],
-                    'MaxValue'    => $profile['MaxValue'],
-                    'Reversed'    => $reversed
-                ];
-            case self::PROP_CONTACTCLOSE1ID:
-            case self::PROP_CONTACTCLOSE2ID:
-            case self::PROP_CONTACTOPEN1ID:
-            case self::PROP_CONTACTOPEN2ID:
-            case self::PROP_EMERGENCYCONTACTID:
-                return [
-                    'Name'        => $profileName,
-                    'ProfileType' => $profile['ProfileType'],
-                    'MinValue'    => $profile['MinValue'],
-                    'MaxValue'    => $profile['MaxValue'],
-                    'Reversed'    => $reversed
-                ];
-            default:
-                trigger_error('Unknown propName: ' . $propName);
-        }
-
-        return null;
-    }
-
     private function GetPresentationInformation(string $propName): ?array
     {
         if (!($presentation = @IPS_GetVariablePresentation($this->ReadPropertyInteger($propName)))) {
@@ -4309,6 +4281,7 @@ class BlindController extends IPSModuleStrict
         return [
             'MinValue' => $reversed ? $profile['MaxValue'] : $profile['MinValue'],
             'MaxValue' => $reversed ? $profile['MinValue'] : $profile['MaxValue'],
+            'Reversed' => $reversed,
         ];
     }
 
