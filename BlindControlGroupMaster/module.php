@@ -240,10 +240,16 @@ class BlindControlGroupMaster extends IPSModuleStrict
             $this->Logger_Dbg(__FUNCTION__, sprintf('Blind #%s, oldValue: %s, newValue: %s', $ID, $old_value, $Value));
 
             try {
-                if (!settype($Value, gettype(IPS_GetProperty($ID, $Property)))) {
+                if (gettype($old_value) === 'boolean' && is_string($Value)) {
+                    //settype würde jeden nicht-leeren String (auch "false") zu true machen
+                    $Value = filter_var($Value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                    if ($Value === null) {
+                        return false;
+                    }
+                } elseif (!settype($Value, gettype($old_value))) {
                     return false;
                 }
-                if (IPS_SetProperty($ID, $Property, $Value) && !IPS_ApplyChanges($ID)) {
+                if (!IPS_SetProperty($ID, $Property, $Value) || !IPS_ApplyChanges($ID)) {
                     return false;
                 }
 
