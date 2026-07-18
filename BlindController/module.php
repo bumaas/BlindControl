@@ -2278,10 +2278,15 @@ class BlindController extends IPSModuleStrict
             if (!$this->isContactOpen(constant("self::PROP_CONTACTOPEN{$i}ID"))) {
                 return null;
             }
-            return [
+            $position = [
                 'BlindLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTOPENLEVEL{$i}")),
                 'SlatsLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTOPENSLATSLEVEL{$i}"))
             ];
+            $this->Logger_Dbg(
+                __FUNCTION__,
+                sprintf('Öffnen-Kontakt %d (#%s): offen -> blindlevel: %s, slatslevel: %s', $i, $contactId, $position['BlindLevel'], $position['SlatsLevel'])
+            );
+            return $position;
         }
 
         // Wertegruppen-Modus: erste passende Gruppe bestimmt die Position
@@ -2294,16 +2299,22 @@ class BlindController extends IPSModuleStrict
                 continue;
             }
             if ($this->matchesConfiguredValue($value, $configured, $variableType)) {
-                $this->Logger_Dbg(
-                    __FUNCTION__,
-                    sprintf('Öffnen-Kontakt %d (#%s): Wert "%s" trifft Zustand %d', $i, $contactId, $this->formatConfiguredValue($value), $j)
-                );
-                return [
+                $position = [
                     'BlindLevel' => $this->ReadPropertyFloat($this->openLevelProp($i, $j)),
                     'SlatsLevel' => $this->ReadPropertyFloat($this->openSlatsProp($i, $j))
                 ];
+                $this->Logger_Dbg(
+                    __FUNCTION__,
+                    sprintf('Öffnen-Kontakt %d (#%s): Wert "%s" trifft Zustand %d -> blindlevel: %s, slatslevel: %s', $i, $contactId, $this->formatConfiguredValue($value), $j, $position['BlindLevel'], $position['SlatsLevel'])
+                );
+                return $position;
             }
         }
+
+        $this->Logger_Dbg(
+            __FUNCTION__,
+            sprintf('Öffnen-Kontakt %d (#%s): Wert "%s" trifft keinen Zustand -> keine Wirkung', $i, $contactId, $this->formatConfiguredValue(GetValue($contactId)))
+        );
 
         return null;
     }
@@ -2363,10 +2374,15 @@ class BlindController extends IPSModuleStrict
             if (!$this->isContactOpen(constant("self::PROP_CONTACTCLOSE{$i}ID"))) {
                 return null;
             }
-            return [
+            $position = [
                 'BlindLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTCLOSELEVEL{$i}")),
                 'SlatsLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTCLOSESLATSLEVEL{$i}"))
             ];
+            $this->Logger_Dbg(
+                __FUNCTION__,
+                sprintf('Schließen-Kontakt %d (#%s): offen -> blindlevel: %s, slatslevel: %s', $i, $contactId, $position['BlindLevel'], $position['SlatsLevel'])
+            );
+            return $position;
         }
 
         // Wertegruppen-Modus: erste passende Gruppe bestimmt die Position
@@ -2379,16 +2395,22 @@ class BlindController extends IPSModuleStrict
                 continue;
             }
             if ($this->matchesConfiguredValue($value, $configured, $variableType)) {
-                $this->Logger_Dbg(
-                    __FUNCTION__,
-                    sprintf('Schließen-Kontakt %d (#%s): Wert "%s" trifft Zustand %d', $i, $contactId, $this->formatConfiguredValue($value), $j)
-                );
-                return [
+                $position = [
                     'BlindLevel' => $this->ReadPropertyFloat($this->closeLevelProp($i, $j)),
                     'SlatsLevel' => $this->ReadPropertyFloat($this->closeSlatsProp($i, $j))
                 ];
+                $this->Logger_Dbg(
+                    __FUNCTION__,
+                    sprintf('Schließen-Kontakt %d (#%s): Wert "%s" trifft Zustand %d -> blindlevel: %s, slatslevel: %s', $i, $contactId, $this->formatConfiguredValue($value), $j, $position['BlindLevel'], $position['SlatsLevel'])
+                );
+                return $position;
             }
         }
+
+        $this->Logger_Dbg(
+            __FUNCTION__,
+            sprintf('Schließen-Kontakt %d (#%s): Wert "%s" trifft keinen Zustand -> keine Wirkung', $i, $contactId, $this->formatConfiguredValue(GetValue($contactId)))
+        );
 
         return null;
     }
@@ -2494,16 +2516,14 @@ class BlindController extends IPSModuleStrict
             $reversed = false;
         }
 
+        $isOpen = $reversed ? !GetValue($contactId) : (bool)GetValue($contactId);
+
         $this->Logger_Dbg(
             __FUNCTION__,
-            sprintf('%s (#%s): value: %s, reversed: %s', $propName, $contactId, (int)GetValue($contactId), (int)$reversed)
+            sprintf('%s (#%s): value: %s, reversed: %s, offen: %s', $propName, $contactId, (int)GetValue($contactId), (int)$reversed, (int)$isOpen)
         );
 
-        if ($reversed) {
-            return !GetValue($contactId);
-        }
-
-        return (bool)GetValue($contactId);
+        return $isOpen;
     }
 
     private function getLevelEmergencyContact(): ?float
