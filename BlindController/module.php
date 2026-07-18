@@ -298,6 +298,36 @@ class BlindController extends IPSModuleStrict
     }
 
     /**
+     * Formularfelder, deren Sichtbarkeit von einer konfigurierten Lamellen-Variable (PROP_SLATSLEVELID) abhängt.
+     * Gemeinsame Quelle für updateFormVisibility() und SetVisibilityOfNotUsedElements().
+     */
+    private function slatsDependentFields(): array
+    {
+        $fields = [
+            self::PROP_LOWSUNPOSITIONSLATSLEVEL,
+            self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
+            self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL,
+            self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL,
+            self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
+            self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
+            self::PROP_CONTACTCLOSESLATSLEVEL1,
+            self::PROP_CONTACTCLOSESLATSLEVEL2,
+            self::PROP_CONTACTOPENSLATSLEVEL1,
+            self::PROP_CONTACTOPENSLATSLEVEL2,
+            'SlatsLevel' // transientes Testfeld im Aktionsbereich
+        ];
+
+        for ($i = 1; $i <= 2; $i++) {
+            for ($j = 2; $j <= 3; $j++) {
+                $fields[] = $this->openSlatsProp($i, $j);
+                $fields[] = $this->closeSlatsProp($i, $j);
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
      * Aktualisiert die Sichtbarkeit von Konfigurationsfeldern basierend auf der Auswahl im Formular.
      *
      * @param string $Ident Die ID des betroffenen Elements/Property.
@@ -313,26 +343,7 @@ class BlindController extends IPSModuleStrict
 
         switch ($Ident) {
             case self::PROP_SLATSLEVELID:
-                $fields = [
-                    self::PROP_LOWSUNPOSITIONSLATSLEVEL,
-                    self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
-                    self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL,
-                    self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
-                    self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
-                    self::PROP_CONTACTCLOSESLATSLEVEL1,
-                    self::PROP_CONTACTCLOSESLATSLEVEL2,
-                    self::PROP_CONTACTOPENSLATSLEVEL1,
-                    self::PROP_CONTACTOPENSLATSLEVEL2
-                ];
-
-                for ($i = 1; $i <= 2; $i++) {
-                    for ($j = 2; $j <= 3; $j++) {
-                        $fields[] = $this->openSlatsProp($i, $j);
-                        $fields[] = $this->closeSlatsProp($i, $j);
-                    }
-                }
-
-                foreach ($fields as $field) {
+                foreach ($this->slatsDependentFields() as $field) {
                     $this->UpdateFormField($field, 'visible', $isVisible);
                 }
 
@@ -551,28 +562,7 @@ class BlindController extends IPSModuleStrict
 
         // 2. Lamellen-Abhängigkeiten (viele Felder hängen an PROP_SLATSLEVELID)
         $slatsExists = IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID));
-        $slatsFields = [
-            self::PROP_LOWSUNPOSITIONSLATSLEVEL,
-            self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
-            self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL,
-            self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL,
-            self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
-            self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
-            self::PROP_CONTACTCLOSESLATSLEVEL1,
-            self::PROP_CONTACTCLOSESLATSLEVEL2,
-            self::PROP_CONTACTOPENSLATSLEVEL1,
-            self::PROP_CONTACTOPENSLATSLEVEL2,
-            'SlatsLevel'
-        ];
-
-        for ($i = 1; $i <= 2; $i++) {
-            for ($j = 2; $j <= 3; $j++) {
-                $slatsFields[] = $this->openSlatsProp($i, $j);
-                $slatsFields[] = $this->closeSlatsProp($i, $j);
-            }
-        }
-
-        foreach ($slatsFields as $field) {
+        foreach ($this->slatsDependentFields() as $field) {
             $form = $this->MyUpdateFormField($form, $field, 'visible', $slatsExists || $bShow);
         }
 
