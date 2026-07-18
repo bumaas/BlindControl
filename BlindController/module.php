@@ -3437,8 +3437,14 @@ class BlindController extends IPSModuleStrict
         );
 
 
-        assert($percentBlindClose >= 0 && $percentBlindClose <= 100);
-        assert(is_null($percentSlatsClose) || ($percentSlatsClose >= 0 && $percentSlatsClose <= 100));
+        if ($percentBlindClose < 0 || $percentBlindClose > 100) {
+            $this->Logger_Err(sprintf('%s: percentBlindClose (%s) out of range 0-100', __FUNCTION__, $percentBlindClose));
+            return false;
+        }
+        if ($percentSlatsClose !== null && ($percentSlatsClose < 0 || $percentSlatsClose > 100)) {
+            $this->Logger_Err(sprintf('%s: percentSlatsClose (%s) out of range 0-100', __FUNCTION__, $percentSlatsClose));
+            return false;
+        }
 
         // Profile laden für die Umrechnung von Prozent in Aktor-Werte
         $this->profileBlindLevel = $this->GetPresentationInformation(self::PROP_BLINDLEVELID);
