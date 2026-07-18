@@ -1530,6 +1530,61 @@ class BlindController extends IPSModuleStrict
 
     private function SetInstanceStatusAndTimerEvent(): void
     {
+        if ($ret = $this->checkBlindLevelGroup()) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkSlatsLevelGroup()) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkTimeTableAndWakeupGroup()) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkBrightnessAndDayGroup()) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkContactGroup()) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkShadowingBySunPositionGroup()) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkShadowingByBrightnessGroup()) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkBlindLevelRangesGroup()) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkSlatsLevelRangesGroup()) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        if ($ret = $this->checkDeactivationTimesGroup()) {
+            $this->SetStatus($ret);
+            return;
+        }
+
+        $this->configureTimersAndFinalStatus();
+    }
+
+    private function checkBlindLevelGroup(): int
+    {
         if ($ret = $this->checkVariableId(
             self::PROP_BLINDLEVELID,
             false,
@@ -1537,20 +1592,22 @@ class BlindController extends IPSModuleStrict
             true,
             self::STATUS_INST_BLIND_LEVEL_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if (!$this->checkActionOfStatusVariable(self::PROP_BLINDLEVELID)) {
-            $this->SetStatus(self::STATUS_INST_BLIND_LEVEL_ID_IS_INVALID);
-            return;
+            return self::STATUS_INST_BLIND_LEVEL_ID_IS_INVALID;
         }
 
         if (!$this->checkEmulateStatusOfVariableAction(self::PROP_BLINDLEVELID)) {
-            $this->SetStatus(self::STATUS_INST_BLIND_LEVEL_IS_EMULATED);
-            return;
+            return self::STATUS_INST_BLIND_LEVEL_IS_EMULATED;
         }
 
+        return 0;
+    }
+
+    private function checkSlatsLevelGroup(): int
+    {
         if ($ret = $this->checkVariableId(
             self::PROP_SLATSLEVELID,
             true,
@@ -1558,24 +1615,25 @@ class BlindController extends IPSModuleStrict
             true,
             self::STATUS_INST_SLATSLEVEL_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
             if (!$this->checkActionOfStatusVariable(self::PROP_SLATSLEVELID)) {
-                $this->SetStatus(self::STATUS_INST_SLATSLEVEL_ID_IS_INVALID);
-                return;
+                return self::STATUS_INST_SLATSLEVEL_ID_IS_INVALID;
             }
             if (!$this->checkEmulateStatusOfVariableAction(self::PROP_SLATSLEVELID)) {
-                $this->SetStatus(self::STATUS_INST_SLATS_LEVEL_IS_EMULATED);
-                return;
+                return self::STATUS_INST_SLATS_LEVEL_IS_EMULATED;
             }
         }
 
+        return 0;
+    }
+
+    private function checkTimeTableAndWakeupGroup(): int
+    {
         if ($ret = $this->checkEventId(self::PROP_WEEKLYTIMETABLEEVENTID, false, EVENTTYPE_SCHEDULE, self::STATUS_INST_TIMETABLE_ID_IS_INVALID)) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1585,8 +1643,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_WAKEUPTIME_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1596,8 +1653,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_SLEEPTIME_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1607,10 +1663,14 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_HOLYDAY_INDICATOR_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
+        return 0;
+    }
+
+    private function checkBrightnessAndDayGroup(): int
+    {
         if ($ret = $this->checkVariableId(
             self::PROP_BRIGHTNESSID,
             true,
@@ -1618,8 +1678,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_BRIGHTNESS_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1629,8 +1688,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_DAYSTART_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1640,8 +1698,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_DAYEND_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1651,8 +1708,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_BRIGHTNESS_THRESHOLD_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1662,10 +1718,14 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_ISDAY_INDICATOR_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
+        return 0;
+    }
+
+    private function checkContactGroup(): int
+    {
         if ($ret = $this->checkVariableId(
             self::PROP_CONTACTOPEN1ID,
             true,
@@ -1673,8 +1733,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_CONTACT1_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1684,8 +1743,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_CONTACT2_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1695,10 +1753,14 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_EMERGENCY_CONTACT_ID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
+        return 0;
+    }
+
+    private function checkShadowingBySunPositionGroup(): int
+    {
         if ($ret = $this->checkVariableId(
             self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION,
             true,
@@ -1706,8 +1768,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_ACTIVATORIDSHADOWINGBYSUNPOSITION_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1717,8 +1778,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_AZIMUTHID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1728,8 +1788,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_ALTITUDEID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1739,8 +1798,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_BRIGTHNESSIDSHADOWINGBYSUNPOSITION_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1750,8 +1808,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1761,10 +1818,14 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_ROOMTEMPERATUREID_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
+        return 0;
+    }
+
+    private function checkShadowingByBrightnessGroup(): int
+    {
         if ($ret = $this->checkVariableId(
             self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS,
             true,
@@ -1772,8 +1833,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_ACTIVATORIDSHADOWINGBRIGHTNESS_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1783,8 +1843,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_BRIGHTNESSIDSHADOWINGBRIGHTNESS_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1794,8 +1853,7 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_THRESHOLDIDHIGHBRIGHTNESS_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkVariableId(
@@ -1805,133 +1863,147 @@ class BlindController extends IPSModuleStrict
             false,
             self::STATUS_INST_THRESHOLDIDLESSRIGHTNESS_IS_INVALID
         )) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
+        return 0;
+    }
+
+    private function checkBlindLevelRangesGroup(): int
+    {
         $this->profileBlindLevel = $this->GetPresentationInformation(self::PROP_BLINDLEVELID);
-        if ($this->profileBlindLevel !== null) {
-            $propertyBlindLevels = [
-                self::PROP_DAYBLINDLEVEL,
-                self::PROP_CONTACTOPENLEVEL1,
-                self::PROP_CONTACTOPENLEVEL2,
-                self::PROP_CONTACTCLOSELEVEL1,
-                self::PROP_CONTACTCLOSELEVEL2,
-                self::PROP_LOWSUNPOSITIONBLINDLEVEL,
-                self::PROP_HIGHSUNPOSITIONBLINDLEVEL,
-                self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL,
-                self::PROP_HALFSHADERELEVANTBLINDLEVEL,
-                self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL,
-                self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
-                self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
-                self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
-                self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS
-            ];
-
-            // Öffnen-/Schließen-Kontakt-Wertegruppen (Höhen der Zusatzpositionen 2/3) mitprüfen
-            for ($i = 1; $i <= 2; $i++) {
-                for ($j = 2; $j <= 3; $j++) {
-                    $propertyBlindLevels[] = $this->openLevelProp($i, $j);
-                    $propertyBlindLevels[] = $this->closeLevelProp($i, $j);
-                }
-            }
-
-            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
-                $propertyBlindLevels[] = self::PROP_DAYBLINDLEVEL;
-            }
-
-            if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)) {
-                $propertyBlindLevels[] = self::PROP_NIGHTBLINDLEVEL;
-            }
-
-            foreach ($propertyBlindLevels as $propertyBlindLevel) {
-                if ($ret = $this->checkRangeFloat(
-                    $propertyBlindLevel,
-                    min($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue']),
-                    max($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue']),
-                    self::STATUS_INST_BLINDLEVEL_IS_OUT_OF_RANGE
-                )) {
-                    $this->SetStatus($ret);
-                    return;
-                }
-            }
-            if ($this->profileBlindLevel['MinValue'] === $this->profileBlindLevel['MaxValue']) {
-                $this->SetStatus(self::STATUS_INST_BLINDLEVEL_ID_PROFILE_MIN_MAX_INVALID);
-                return;
-            }
-        } else {
-            $this->SetStatus(self::STATUS_INST_BLINDLEVEL_ID_PROFILE_NOT_SET);
-            return;
+        if ($this->profileBlindLevel === null) {
+            return self::STATUS_INST_BLINDLEVEL_ID_PROFILE_NOT_SET;
         }
 
-        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
-            $this->profileSlatsLevel = $this->GetPresentationInformation(self::PROP_SLATSLEVELID);
-            if ($this->profileSlatsLevel !== null) {
-                $propertySlatsLevels = [
-                    self::PROP_LOWSUNPOSITIONSLATSLEVEL,
-                    self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
-                    self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL,
-                    self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL,
-                    self::PROP_CONTACTCLOSESLATSLEVEL1,
-                    self::PROP_CONTACTCLOSESLATSLEVEL2,
-                    self::PROP_CONTACTOPENSLATSLEVEL1,
-                    self::PROP_CONTACTOPENSLATSLEVEL2
-                ];
+        $propertyBlindLevels = [
+            self::PROP_DAYBLINDLEVEL,
+            self::PROP_CONTACTOPENLEVEL1,
+            self::PROP_CONTACTOPENLEVEL2,
+            self::PROP_CONTACTCLOSELEVEL1,
+            self::PROP_CONTACTCLOSELEVEL2,
+            self::PROP_LOWSUNPOSITIONBLINDLEVEL,
+            self::PROP_HIGHSUNPOSITIONBLINDLEVEL,
+            self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL,
+            self::PROP_HALFSHADERELEVANTBLINDLEVEL,
+            self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL,
+            self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
+            self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS,
+            self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS,
+            self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS
+        ];
 
-                // Öffnen-/Schließen-Kontakt-Wertegruppen (Lamellen der Zusatzpositionen 2/3) mitprüfen
-                for ($i = 1; $i <= 2; $i++) {
-                    for ($j = 2; $j <= 3; $j++) {
-                        $propertySlatsLevels[] = $this->openSlatsProp($i, $j);
-                        $propertySlatsLevels[] = $this->closeSlatsProp($i, $j);
-                    }
-                }
-
-                if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
-                    $propertySlatsLevels[] = self::PROP_DAYSLATSLEVEL;
-                }
-
-                if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)) {
-                    $propertySlatsLevels[] = self::PROP_NIGHTSLATSLEVEL;
-                }
-
-                foreach ($propertySlatsLevels as $propertySlatsLevel) {
-                    if ($ret = $this->checkRangeFloat(
-                        $propertySlatsLevel,
-                        min($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue']),
-                        max($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue']),
-                        self::STATUS_INST_SLATSLEVEL_IS_OUT_OF_RANGE
-                    )) {
-                        $this->SetStatus($ret);
-                        return;
-                    }
-                }
-                if ($this->profileSlatsLevel['MinValue'] === $this->profileSlatsLevel['MaxValue']) {
-                    $this->SetStatus(self::STATUS_INST_SLATSLEVEL_ID_PROFILE_MIN_MAX_INVALID);
-                    return;
-                }
-            } else {
-                $this->SetStatus(self::STATUS_INST_SLATSLEVEL_ID_PROFILE_NOT_SET);
-                return;
+        // Öffnen-/Schließen-Kontakt-Wertegruppen (Höhen der Zusatzpositionen 2/3) mitprüfen
+        for ($i = 1; $i <= 2; $i++) {
+            for ($j = 2; $j <= 3; $j++) {
+                $propertyBlindLevels[] = $this->openLevelProp($i, $j);
+                $propertyBlindLevels[] = $this->closeLevelProp($i, $j);
             }
         }
 
+        if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
+            $propertyBlindLevels[] = self::PROP_DAYBLINDLEVEL;
+        }
+
+        if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)) {
+            $propertyBlindLevels[] = self::PROP_NIGHTBLINDLEVEL;
+        }
+
+        foreach ($propertyBlindLevels as $propertyBlindLevel) {
+            if ($ret = $this->checkRangeFloat(
+                $propertyBlindLevel,
+                min($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue']),
+                max($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue']),
+                self::STATUS_INST_BLINDLEVEL_IS_OUT_OF_RANGE
+            )) {
+                return $ret;
+            }
+        }
+
+        if ($this->profileBlindLevel['MinValue'] === $this->profileBlindLevel['MaxValue']) {
+            return self::STATUS_INST_BLINDLEVEL_ID_PROFILE_MIN_MAX_INVALID;
+        }
+
+        return 0;
+    }
+
+    private function checkSlatsLevelRangesGroup(): int
+    {
+        if (!IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
+            return 0;
+        }
+
+        $this->profileSlatsLevel = $this->GetPresentationInformation(self::PROP_SLATSLEVELID);
+        if ($this->profileSlatsLevel === null) {
+            return self::STATUS_INST_SLATSLEVEL_ID_PROFILE_NOT_SET;
+        }
+
+        $propertySlatsLevels = [
+            self::PROP_LOWSUNPOSITIONSLATSLEVEL,
+            self::PROP_HIGHSUNPOSITIONSLATSLEVEL,
+            self::PROP_MINIMUMSHADERELEVANTSLATSLEVEL,
+            self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL,
+            self::PROP_CONTACTCLOSESLATSLEVEL1,
+            self::PROP_CONTACTCLOSESLATSLEVEL2,
+            self::PROP_CONTACTOPENSLATSLEVEL1,
+            self::PROP_CONTACTOPENSLATSLEVEL2
+        ];
+
+        // Öffnen-/Schließen-Kontakt-Wertegruppen (Lamellen der Zusatzpositionen 2/3) mitprüfen
+        for ($i = 1; $i <= 2; $i++) {
+            for ($j = 2; $j <= 3; $j++) {
+                $propertySlatsLevels[] = $this->openSlatsProp($i, $j);
+                $propertySlatsLevels[] = $this->closeSlatsProp($i, $j);
+            }
+        }
+
+        if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS)) {
+            $propertySlatsLevels[] = self::PROP_DAYSLATSLEVEL;
+        }
+
+        if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)) {
+            $propertySlatsLevels[] = self::PROP_NIGHTSLATSLEVEL;
+        }
+
+        foreach ($propertySlatsLevels as $propertySlatsLevel) {
+            if ($ret = $this->checkRangeFloat(
+                $propertySlatsLevel,
+                min($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue']),
+                max($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue']),
+                self::STATUS_INST_SLATSLEVEL_IS_OUT_OF_RANGE
+            )) {
+                return $ret;
+            }
+        }
+
+        if ($this->profileSlatsLevel['MinValue'] === $this->profileSlatsLevel['MaxValue']) {
+            return self::STATUS_INST_SLATSLEVEL_ID_PROFILE_MIN_MAX_INVALID;
+        }
+
+        return 0;
+    }
+
+    private function checkDeactivationTimesGroup(): int
+    {
         if ($ret =
             $this->checkRangeInteger(self::PROP_DEACTIVATIONMANUALMOVEMENT, 0, 100000, self::STATUS_INST_DEACTIVATION_TIME_MANUAL_IS_INVALID)) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret =
             $this->checkRangeInteger(self::PROP_DEACTIVATIONAUTOMATICMOVEMENT, 0, 100000, self::STATUS_INST_DEACTIVATION_TIME_AUTOMATIC_IS_INVALID)) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
         if ($ret = $this->checkTimeTable()) {
-            $this->SetStatus($ret);
-            return;
+            return $ret;
         }
 
+        return 0;
+    }
+
+    private function configureTimersAndFinalStatus(): void
+    {
         if ($this->GetValue(self::VAR_IDENT_ACTIVATED)) {
             $this->SetTimerInterval(self::TIMER_UPDATE, $this->ReadPropertyInteger(self::PROP_UPDATEINTERVAL) * 60 * 1000);
         } else {
