@@ -2687,9 +2687,9 @@ class BlindController extends IPSModuleStrict
         $this->Logger_Dbg(
             __FUNCTION__,
             sprintf(
-                'active: %d, brightness(act/thresh): %.1f/%.1f, azimuth: %.1f (%.1f - %.1f), altitude: %.1f (%.1f - %.1f), temperature: %s',
+                'active: %d, brightness(act/thresh): %s/%.1f, azimuth: %.1f (%.1f - %.1f), altitude: %.1f (%.1f - %.1f), temperature: %s',
                 (int)GetValue($activatorID),
-                $brightness,
+                $brightness === null ? 'null' : sprintf('%.1f', $brightness),
                 $thresholdBrightness,
                 floor($rSunAzimuth * 10) / 10,
                 $azimuthFrom,
@@ -2703,7 +2703,9 @@ class BlindController extends IPSModuleStrict
 
         $positions      = null;
         $azimuthMatches = $this->isAzimuthInRange($rSunAzimuth, $azimuthFrom, $azimuthTo);
-        if (($brightness >= $thresholdBrightness) && $azimuthMatches
+        // ohne Helligkeitssensor ($brightness === null) entscheidet allein der Sonnenstand
+        $brightnessOk = ($brightness === null) || ($brightness >= $thresholdBrightness);
+        if ($brightnessOk && $azimuthMatches
             && ($rSunAltitude >= $altitudeFrom)
             && ($rSunAltitude <= $altitudeTo)) {
             // entscheidungsrelevante Helligkeit für die Erklärung festhalten (nur wenn ein Helligkeitssensor konfiguriert ist)
