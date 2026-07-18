@@ -74,23 +74,9 @@ class BlindControlGroupMaster extends IPSModuleStrict
             $properties[] = ['value' => $property, 'caption' => $property];
         }
 
-        if (IPS_GetKernelVersion() < '5.20') {
-            $form['elements'][] = [
-                'type'  => 'RowLayout',
-                'items' => [
-                    [
-                        'type'    => 'Label',
-                        'caption' => 'In this instance, the parameters for a group of blinds can be read and changed. The description of the individual parameters can be found in the documentation.'],
-                    [
-                        'type'    => 'Button',
-                        'caption' => 'Show Documentation',
-                        'onClick' => "echo 'https://github.com/bumaas/BlindControl/blob/master/README.md';",
-                        'link'    => true]]];
-        } else {
-            $form['elements'][] = [
-                'type'    => 'Label',
-                'caption' => 'In this instance, the parameters for a group of blinds can be read and changed.'];
-        }
+        $form['elements'][] = [
+            'type'    => 'Label',
+            'caption' => 'In this instance, the parameters for a group of blinds can be read and changed.'];
 
         $form['elements'][] = [
             'type'     => 'List',
