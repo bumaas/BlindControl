@@ -85,8 +85,8 @@ braucht Tests.
 
 ## 8. To-do-Liste (Bestandscode-Angleichung)
 
-- [ ] `BlindControlGroupMaster` auf gemeinsames Logging-Schema (`Logger_Err/Inf/Dbg`) umstellen.
-- [ ] `BlindControlGroupMaster`: Property-Konstanten (`PROP_*`) statt Literal-Strings einführen.
+- [x] `BlindControlGroupMaster` auf gemeinsames Logging-Schema (`Logger_Err/Inf/Dbg`) umstellen.
+- [x] `BlindControlGroupMaster`: Property-Konstanten (`PROP_*`) statt Literal-Strings einführen.
 - [x] `SetInstanceStatusAndTimerEvent()` (~420 Zeilen) in kleinere Validierungsmethoden pro
       Property-Gruppe aufteilen.
 - [ ] Erste PHPUnit-Tests für 2–3 reine Berechnungsmethoden als Referenzbeispiel anlegen

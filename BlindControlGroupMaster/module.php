@@ -4,6 +4,8 @@ declare(strict_types=1);
 /** @noinspection AutoloadingIssuesInspection */
 class BlindControlGroupMaster extends IPSModuleStrict
 {
+    private const string PROP_BLINDS = 'Blinds';
+
     /** @noinspection PhpUnused */
     public function Create(): void
     {
@@ -13,7 +15,8 @@ class BlindControlGroupMaster extends IPSModuleStrict
         //These lines are parsed on Symcon Startup or Instance creation
         //You cannot use variables here. Just static values.
 
-        $this->RegisterPropertyString('Blinds', '');
+        $this->RegisterPropertyString(self::PROP_BLINDS, '');
+        $this->RegisterPropertyBoolean('WriteDebugInformationToLogfile', false);
 
     }
 
@@ -91,7 +94,7 @@ class BlindControlGroupMaster extends IPSModuleStrict
 
         $form['elements'][] = [
             'type'     => 'List',
-            'name'     => 'Blinds',
+            'name'     => self::PROP_BLINDS,
             'caption'  => 'Blinds',
             'rowCount' => '15',
             'add'      => true,
@@ -161,9 +164,9 @@ class BlindControlGroupMaster extends IPSModuleStrict
     private function GetListValues(): array
     {
         $listValues = [];
-        if ($this->ReadPropertyString('Blinds') !== '') {
+        if ($this->ReadPropertyString(self::PROP_BLINDS) !== '') {
             //Annotate existing elements
-            $shutters = json_decode($this->ReadPropertyString('Blinds'), true, 512, JSON_THROW_ON_ERROR);
+            $shutters = json_decode($this->ReadPropertyString(self::PROP_BLINDS), true, 512, JSON_THROW_ON_ERROR);
             foreach ($shutters as $shutter) {
                 //We only need to add annotations. Remaining data is merged from persistance automatically.
                 //Order is determinted by the order of array elements
@@ -189,7 +192,7 @@ class BlindControlGroupMaster extends IPSModuleStrict
     public function GetBlinds(): array
     {
         $arr    = [];
-        $blindsJson = $this->ReadPropertyString('Blinds');
+        $blindsJson = $this->ReadPropertyString(self::PROP_BLINDS);
         if ($blindsJson === '') {
             return [];
         }
@@ -217,7 +220,7 @@ class BlindControlGroupMaster extends IPSModuleStrict
     /** @noinspection PhpUnused */
     public function SetPropertyOfBlinds(string $Property, mixed $Value): bool
     {
-        $this->LogMessage(__CLASS__ . '::' . __FUNCTION__ . ': ' . $this->InstanceID . ' ' . $Property . ' ' . $Value, KL_DEBUG);
+        $this->Logger_Dbg(__FUNCTION__, sprintf('%s %s %s', $this->InstanceID, $Property, $Value));
 
         $shutters = $this->GetBlinds();
 
@@ -234,9 +237,7 @@ class BlindControlGroupMaster extends IPSModuleStrict
             $ID        = $shutter['instanceID'];
             $old_value = IPS_GetProperty($ID, $Property);
 
-            $this->LogMessage(
-                sprintf('%s: Blind #%s, oldValue: %s, newValue: %s', __CLASS__ . '::' . __FUNCTION__, $ID, $old_value, $Value), KL_DEBUG
-            );
+            $this->Logger_Dbg(__FUNCTION__, sprintf('Blind #%s, oldValue: %s, newValue: %s', $ID, $old_value, $Value));
 
             try {
                 if (!settype($Value, gettype(IPS_GetProperty($ID, $Property)))) {
@@ -256,7 +257,7 @@ class BlindControlGroupMaster extends IPSModuleStrict
     /** @noinspection PhpUnused */
     public function GetPropertyOfBlinds(string $Property): ?array
     {
-        $this->LogMessage(__CLASS__ . '::' . __FUNCTION__ . ': ' . $this->InstanceID . ' ' . $Property, KL_DEBUG);
+        $this->Logger_Dbg(__FUNCTION__, sprintf('%s %s', $this->InstanceID, $Property));
 
         $shutters = $this->GetBlinds();
 
@@ -278,14 +279,34 @@ class BlindControlGroupMaster extends IPSModuleStrict
     /** @noinspection PhpUnused */
     public function SetBlindsActive(bool $active): void
     {
-        $this->LogMessage(__CLASS__ . '::' . __FUNCTION__ . ': ' . $this->InstanceID . ' Active' . (int) $active, KL_DEBUG);
+        $this->Logger_Dbg(__FUNCTION__, sprintf('%s Active%s', $this->InstanceID, (int) $active));
 
         $shutters = $this->GetBlinds();
 
         foreach ($shutters as $shutter) {
             $ID = $shutter['instanceID'];
-            $this->LogMessage(__CLASS__ . '::' . __FUNCTION__ . ': Shutter: ' . $ID, KL_DEBUG);
+            $this->Logger_Dbg(__FUNCTION__, 'Shutter: ' . $ID);
             IPS_RequestAction($ID, 'ACTIVATED', $active);
+        }
+    }
+
+    private function Logger_Err(string $message): void
+    {
+        $this->SendDebug('LOG_ERR', $message, 0);
+        $this->LogMessage($message, KL_ERROR);
+    }
+
+    private function Logger_Inf(string $message): void
+    {
+        $this->SendDebug('LOG_INFO', $message, 0);
+        $this->LogMessage($message, KL_NOTIFY);
+    }
+
+    private function Logger_Dbg(string $message, string $data): void
+    {
+        $this->SendDebug($message, $data, 0);
+        if ($this->ReadPropertyBoolean('WriteDebugInformationToLogfile')) {
+            $this->LogMessage(sprintf('%s: %s', $message, $data), KL_DEBUG);
         }
     }
 }
