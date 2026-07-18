@@ -949,7 +949,7 @@ class BlindController extends IPSModuleStrict
         if ($positionsShadowingBySun !== null) {
             $positionsNew = $this->mergePositions($positionsNew, $positionsShadowingBySun);
 
-            if ($positionsNew['BlindLevel'] === $positionsShadowingBySun['BlindLevel']) {
+            if ($this->levelsEqual($positionsNew['BlindLevel'], $positionsShadowingBySun['BlindLevel'])) {
                 $Hinweis        = 'Beschattung nach Sonnenstand';
                 $brightnessInfo = $sunBrightnessInfo;
                 $heatInfo       = $sunHeatInfo;
@@ -963,7 +963,7 @@ class BlindController extends IPSModuleStrict
         if ($positionsShadowingBrightness !== null) {
             $positionsNew = $this->mergePositions($positionsNew, $positionsShadowingBrightness);
 
-            if ($positionsNew['BlindLevel'] === $positionsShadowingBrightness['BlindLevel']) {
+            if ($this->levelsEqual($positionsNew['BlindLevel'], $positionsShadowingBrightness['BlindLevel'])) {
                 $Hinweis        = 'Beschattung nach Helligkeit';
                 $brightnessInfo = $brightnessShadowingInfo;
             }
@@ -3291,8 +3291,8 @@ class BlindController extends IPSModuleStrict
         // Tagsüber: Sperre, nur wenn geschlossen oder innerhalb der Deaktivierungszeit
         $deactivationTimeManuSecs = $this->ReadPropertyInteger(self::PROP_DEACTIVATIONMANUALMOVEMENT) * 60;
 
-        $isClosed = ($blindLevelAct === $this->profileBlindLevel['MaxValue']) &&
-                    ($slatsLevelAct === ($this->profileSlatsLevel['MaxValue'] ?? null));
+        $isClosed = $this->levelsEqual($blindLevelAct, $this->profileBlindLevel['MaxValue']) &&
+                    $this->levelsEqual($slatsLevelAct, $this->profileSlatsLevel['MaxValue'] ?? null);
 
         if ($isClosed) {
             $reason = sprintf('manuell vollständig geschlossen (%s)', date('H:i', $tsManual));
@@ -3366,9 +3366,9 @@ class BlindController extends IPSModuleStrict
         $blindLevelOpened = $this->profileBlindLevel['MinValue'];
 
         if ($slatsLevelAct === null) {
-            if ($blindLevelAct === $blindLevelClosed) {
+            if ($this->levelsEqual($blindLevelAct, $blindLevelClosed)) {
                 $this->Logger_Inf(sprintf('\'%s\' wurde manuell geschlossen.', $this->objectName));
-            } elseif ($blindLevelAct === $blindLevelOpened) {
+            } elseif ($this->levelsEqual($blindLevelAct, $blindLevelOpened)) {
                 $this->Logger_Inf(sprintf('\'%s\' wurde manuell geöffnet.', $this->objectName));
             } else {
                 $percent = ($blindLevelAct - $blindLevelOpened) / ($blindLevelClosed - $blindLevelOpened);
@@ -3381,9 +3381,9 @@ class BlindController extends IPSModuleStrict
         $slatsLevelClosed = $this->profileSlatsLevel['MaxValue'];
         $slatsLevelOpened = $this->profileSlatsLevel['MinValue'];
 
-        if (($blindLevelAct === $blindLevelClosed) && ($slatsLevelAct === $slatsLevelClosed)) {
+        if ($this->levelsEqual($blindLevelAct, $blindLevelClosed) && $this->levelsEqual($slatsLevelAct, $slatsLevelClosed)) {
             $this->Logger_Inf(sprintf('\'%s\' wurde manuell geschlossen.', $this->objectName));
-        } elseif (($blindLevelAct === $blindLevelOpened) && ($slatsLevelAct === $slatsLevelOpened)) {
+        } elseif ($this->levelsEqual($blindLevelAct, $blindLevelOpened) && $this->levelsEqual($slatsLevelAct, $slatsLevelOpened)) {
             $this->Logger_Inf(sprintf('\'%s\' wurde manuell geöffnet.', $this->objectName));
         } else {
             $blindPercent = ($blindLevelAct - $blindLevelOpened) / ($blindLevelClosed - $blindLevelOpened);
@@ -3731,9 +3731,9 @@ class BlindController extends IPSModuleStrict
         $max = (float)$profile['MaxValue'];
 
         // Status-Text ermitteln
-        if (abs($rLevelneu - $max) < PHP_FLOAT_EPSILON) {
+        if ($this->levelsEqual($rLevelneu, $max)) {
             $actionText = 'geschlossen';
-        } elseif (abs($rLevelneu - $min) < PHP_FLOAT_EPSILON) {
+        } elseif ($this->levelsEqual($rLevelneu, $min)) {
             $actionText = 'geöffnet';
         } else {
             // Division durch Null verhindern, falls Min == Max (unwahrscheinlich, aber sicher ist sicher)
@@ -3900,6 +3900,22 @@ class BlindController extends IPSModuleStrict
     }
 
     /**
+     * Toleranz für Levelvergleiche: Aktoren und Float-Arithmetik liefern Positionswerte nicht immer exakt.
+     */
+    private const float LEVEL_EPSILON = 0.001;
+
+    /**
+     * Vergleicht zwei Levelwerte epsilon-tolerant; null gilt nur zu null als gleich.
+     */
+    private function levelsEqual(float|int|null $a, float|int|null $b): bool
+    {
+        if ($a === null || $b === null) {
+            return $a === $b;
+        }
+        return abs($a - $b) < self::LEVEL_EPSILON;
+    }
+
+    /**
      * Erzeugt eine für den Anwender lesbare Beschreibung einer Zielposition (Behang und ggf. Lamellen).
      */
     private function describeTargetPositions(array $positions): string
@@ -3912,10 +3928,10 @@ class BlindController extends IPSModuleStrict
 
         $slatsLevel = $positions['SlatsLevel'];
 
-        if (($blindLevel === $this->profileBlindLevel['MaxValue']) && ($slatsLevel === $this->profileSlatsLevel['MaxValue'])) {
+        if ($this->levelsEqual($blindLevel, $this->profileBlindLevel['MaxValue']) && $this->levelsEqual($slatsLevel, $this->profileSlatsLevel['MaxValue'])) {
             return 'geschlossen';
         }
-        if (($blindLevel === $this->profileBlindLevel['MinValue']) && ($slatsLevel === $this->profileSlatsLevel['MinValue'])) {
+        if ($this->levelsEqual($blindLevel, $this->profileBlindLevel['MinValue']) && $this->levelsEqual($slatsLevel, $this->profileSlatsLevel['MinValue'])) {
             return 'geöffnet';
         }
 
@@ -3934,10 +3950,10 @@ class BlindController extends IPSModuleStrict
         $min = (float)$profile['MinValue']; // geöffnet
         $max = (float)$profile['MaxValue']; // geschlossen
 
-        if (abs($rawLevel - $max) < PHP_FLOAT_EPSILON) {
+        if ($this->levelsEqual($rawLevel, $max)) {
             return 'geschlossen';
         }
-        if (abs($rawLevel - $min) < PHP_FLOAT_EPSILON) {
+        if ($this->levelsEqual($rawLevel, $min)) {
             return 'geöffnet';
         }
 
