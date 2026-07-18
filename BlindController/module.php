@@ -45,7 +45,6 @@ class BlindController extends IPSModuleStrict
     private const int STATUS_INST_BLINDLEVEL_ID_PROFILE_MIN_MAX_INVALID                  = 238;
     private const int STATUS_INST_SLATSLEVEL_ID_PROFILE_MIN_MAX_INVALID                  = 239;
     private const int STATUS_INST_SLATSLEVEL_ID_PROFILE_NOT_SET                          = 240;
-    private const int STATUS_INST_WINDOWHANDLE_POSITION_ID_IS_INVALID                    = 241;
 
     // -- property names --
     private const string PROP_BLINDLEVELID                      = 'BlindLevelID';
@@ -71,14 +70,6 @@ class BlindController extends IPSModuleStrict
     private const string PROP_CONTACTOPENSLATSLEVEL2            = 'ContactOpenSlatsLevel2';
     private const string PROP_EMERGENCYCONTACTID                = 'EmergencyContactID';
     private const string PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY = 'ContactsToCloseHaveHigherPriority';
-    private const string PROP_WINDOWHANDLEPOSITIONID            = 'WindowHandlePositionID';
-    private const string PROP_WINDOWHANDLEOPENLEVEL             = 'WindowHandleOpenLevel';
-    private const string PROP_WINDOWHANDLEOPENSLATSLEVEL        = 'WindowHandleOpenSlatsLevel';
-    private const string PROP_WINDOWHANDLETILTEDLEVEL           = 'WindowHandleTiltedLevel';
-    private const string PROP_WINDOWHANDLETILTEDSLATSLEVEL      = 'WindowHandleTiltedSlatsLevel';
-    private const string PROP_WINDOWHANDLEDELAY                 = 'WindowHandleDelay';
-    private const string PROP_WINDOWHANDLEOPENVALUES            = 'WindowHandleOpenValues';
-    private const string PROP_WINDOWHANDLETILTEDVALUES          = 'WindowHandleTiltedValues';
 
     //shadowing, according to sun position
     private const string PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION           = 'ActivatorIDShadowingBySunPosition';
@@ -156,9 +147,10 @@ class BlindController extends IPSModuleStrict
     //timer names
     private const string TIMER_UPDATE           = 'Update';
     private const string TIMER_DELAYED_MOVEMENT = 'DelayedMovement';
-    private const string TIMER_WINDOW_HANDLE    = 'WindowHandle';
     private const string TIMER_OPEN_CONTACT1    = 'OpenContact1';
     private const string TIMER_OPEN_CONTACT2    = 'OpenContact2';
+    private const string TIMER_CLOSE_CONTACT1   = 'CloseContact1';
+    private const string TIMER_CLOSE_CONTACT2   = 'CloseContact2';
 
 
     //variable names
@@ -223,13 +215,10 @@ class BlindController extends IPSModuleStrict
             0,
             'BLC_ControlBlind(' . $this->InstanceID . ', true);'
         );
-        $this->RegisterTimer(
-            self::TIMER_WINDOW_HANDLE,
-            0,
-            'BLC_ProcessWindowHandlePosition(' . $this->InstanceID . ');'
-        );
-        $this->RegisterTimer(self::TIMER_OPEN_CONTACT1, 0, 'BLC_ProcessOpenContact1(' . $this->InstanceID . ');');
-        $this->RegisterTimer(self::TIMER_OPEN_CONTACT2, 0, 'BLC_ProcessOpenContact2(' . $this->InstanceID . ');');
+        // Entprellungs-Timer feuern über RequestAction (Timer-Name = Ident)
+        foreach ([self::TIMER_OPEN_CONTACT1, self::TIMER_OPEN_CONTACT2, self::TIMER_CLOSE_CONTACT1, self::TIMER_CLOSE_CONTACT2] as $timer) {
+            $this->RegisterTimer($timer, 0, sprintf('IPS_RequestAction(%d, "%s", 0);', $this->InstanceID, $timer));
+        }
     }
 
     public function ApplyChanges(): void
@@ -266,6 +255,15 @@ class BlindController extends IPSModuleStrict
 
             case 'MoveBlindToShadowingPosition':
                 $this->MoveBlindToShadowingPosition((int)$Value);
+                break;
+
+            case self::TIMER_OPEN_CONTACT1:
+            case self::TIMER_OPEN_CONTACT2:
+            case self::TIMER_CLOSE_CONTACT1:
+            case self::TIMER_CLOSE_CONTACT2:
+                // Ablauf der Beruhigungszeit: zuletzt gemeldeten Kontaktzustand auswerten
+                $this->SetTimerInterval($Ident, 0);
+                $this->ControlBlind(false);
                 break;
 
             case self::PROP_SLATSLEVELID:
@@ -324,14 +322,13 @@ class BlindController extends IPSModuleStrict
                     self::PROP_CONTACTCLOSESLATSLEVEL1,
                     self::PROP_CONTACTCLOSESLATSLEVEL2,
                     self::PROP_CONTACTOPENSLATSLEVEL1,
-                    self::PROP_CONTACTOPENSLATSLEVEL2,
-                    self::PROP_WINDOWHANDLEOPENSLATSLEVEL,
-                    self::PROP_WINDOWHANDLETILTEDSLATSLEVEL
+                    self::PROP_CONTACTOPENSLATSLEVEL2
                 ];
 
                 for ($i = 1; $i <= 2; $i++) {
                     for ($j = 2; $j <= 3; $j++) {
                         $fields[] = $this->openSlatsProp($i, $j);
+                        $fields[] = $this->closeSlatsProp($i, $j);
                     }
                 }
 
@@ -439,17 +436,6 @@ class BlindController extends IPSModuleStrict
             return;
         }
 
-        if ($SenderID === $this->ReadPropertyInteger(self::PROP_WINDOWHANDLEPOSITIONID)) {
-            $delay = $this->ReadPropertyInteger(self::PROP_WINDOWHANDLEDELAY);
-            if ($delay > 0 && IPS_GetKernelRunlevel() === KR_READY) {
-                // Neustart bei jedem Telegramm: Erst die letzte Position der Drehbewegung wird ausgewertet.
-                $this->SetTimerInterval(self::TIMER_WINDOW_HANDLE, 0);
-                $this->SetTimerInterval(self::TIMER_WINDOW_HANDLE, $delay * 1000);
-                $this->Logger_Dbg(__FUNCTION__, sprintf('Fenstergriff-Auswertung um %d Sekunde(n) verzögert', $delay));
-                return;
-            }
-        }
-
         // Separate Entprellung je Öffnen-Kontakt: nur die zuletzt gemeldete Position auswerten
         for ($i = 1; $i <= 2; $i++) {
             if ($SenderID === $this->ReadPropertyInteger(constant("self::PROP_CONTACTOPEN{$i}ID"))) {
@@ -464,6 +450,20 @@ class BlindController extends IPSModuleStrict
             }
         }
 
+        // Separate Entprellung je Schließen-Kontakt: nur die zuletzt gemeldete Position auswerten
+        for ($i = 1; $i <= 2; $i++) {
+            if ($SenderID === $this->ReadPropertyInteger(constant("self::PROP_CONTACTCLOSE{$i}ID"))) {
+                $delay = $this->ReadPropertyInteger($this->closeDelayProp($i));
+                if ($delay > 0 && IPS_GetKernelRunlevel() === KR_READY) {
+                    $timer = $i === 1 ? self::TIMER_CLOSE_CONTACT1 : self::TIMER_CLOSE_CONTACT2;
+                    $this->SetTimerInterval($timer, 0);
+                    $this->SetTimerInterval($timer, $delay * 1000);
+                    $this->Logger_Dbg(__FUNCTION__, sprintf('Schließen-Kontakt %d: Auswertung um %d Sekunde(n) verzögert', $i, $delay));
+                    return;
+                }
+            }
+        }
+
         // Prüfen, ob die Verzögerungszeit (DeactivationTimeAuto) berücksichtigt werden soll
         $isTriggerSource = in_array(
             $SenderID,
@@ -472,7 +472,6 @@ class BlindController extends IPSModuleStrict
                 $this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID),
                 $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID),
                 $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
-                $this->ReadPropertyInteger(self::PROP_WINDOWHANDLEPOSITIONID),
                 $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
                 $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS),
                 $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION)
@@ -484,33 +483,6 @@ class BlindController extends IPSModuleStrict
             $considerDeactivation = $isTriggerSource ? 'false' : 'true';
             $this->RegisterOnceTimer('BlindControlTimer_ControlBlind',sprintf('BLC_ControlBlind(%s, %s);', $this->InstanceID, $considerDeactivation));
         }
-    }
-
-    /**
-     * Wertet nach Ablauf der Beruhigungszeit die zuletzt gemeldete Fenstergriffposition aus.
-     */
-    public function ProcessWindowHandlePosition(): void
-    {
-        $this->SetTimerInterval(self::TIMER_WINDOW_HANDLE, 0);
-        $this->ControlBlind(false);
-    }
-
-    /**
-     * Wertet nach Ablauf der Beruhigungszeit den zuletzt gemeldeten Zustand von Öffnen-Kontakt 1 aus.
-     */
-    public function ProcessOpenContact1(): void
-    {
-        $this->SetTimerInterval(self::TIMER_OPEN_CONTACT1, 0);
-        $this->ControlBlind(false);
-    }
-
-    /**
-     * Wertet nach Ablauf der Beruhigungszeit den zuletzt gemeldeten Zustand von Öffnen-Kontakt 2 aus.
-     */
-    public function ProcessOpenContact2(): void
-    {
-        $this->SetTimerInterval(self::TIMER_OPEN_CONTACT2, 0);
-        $this->ControlBlind(false);
     }
 
     /**
@@ -590,14 +562,13 @@ class BlindController extends IPSModuleStrict
             self::PROP_CONTACTCLOSESLATSLEVEL2,
             self::PROP_CONTACTOPENSLATSLEVEL1,
             self::PROP_CONTACTOPENSLATSLEVEL2,
-            self::PROP_WINDOWHANDLEOPENSLATSLEVEL,
-            self::PROP_WINDOWHANDLETILTEDSLATSLEVEL,
             'SlatsLevel'
         ];
 
         for ($i = 1; $i <= 2; $i++) {
             for ($j = 2; $j <= 3; $j++) {
                 $slatsFields[] = $this->openSlatsProp($i, $j);
+                $slatsFields[] = $this->closeSlatsProp($i, $j);
             }
         }
 
@@ -1059,27 +1030,12 @@ class BlindController extends IPSModuleStrict
         $levelContactEmergency      = $this->getLevelEmergencyContact();
         $positionsContactOpenBlind  = $this->getPositionsOfOpenBlindContact();
         $positionsContactCloseBlind = $this->getPositionsOfCloseBlindContact();
-        $windowHandleResult         = $this->getWindowHandlePositions();
         $openingTraceLabel          = 'Kontakt offen';
-
-        if ($windowHandleResult !== null) {
-            if ($positionsContactOpenBlind !== null) {
-                $positionsContactOpenBlind = $this->combineOpeningLimits(
-                    $positionsContactOpenBlind,
-                    $windowHandleResult['positions']
-                );
-                $openingTraceLabel = sprintf('Kontakt offen / Fenstergriff %s', $windowHandleResult['state']);
-            } else {
-                $positionsContactOpenBlind = $windowHandleResult['positions'];
-                $openingTraceLabel         = sprintf('Fenstergriff %s', $windowHandleResult['state']);
-            }
-        }
 
         // Konfigurationsstatus der Kontakte (für den immer ausgegebenen Trace)
         $emergencyConfigured = IPS_VariableExists($this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID));
         $openConfigured      = $this->getDefinedContacts('PROP_CONTACTOPEN', 'PROP_CONTACTOPENLEVEL', 'PROP_CONTACTOPENSLATSLEVEL') !== [];
         $closeConfigured     = $this->getDefinedContacts('PROP_CONTACTCLOSE', 'PROP_CONTACTCLOSELEVEL', 'PROP_CONTACTCLOSESLATSLEVEL') !== [];
-        $handleConfigured    = IPS_VariableExists($this->ReadPropertyInteger(self::PROP_WINDOWHANDLEPOSITIONID));
 
         // 1. Notfall hat höchste Priorität
         if ($levelContactEmergency !== null) {
@@ -1166,7 +1122,7 @@ class BlindController extends IPSModuleStrict
 
         // Fallback-Beschreibung, wenn kein offener Kontakt die Position beeinflusst hat
         if ($contactTrace === '') {
-            if (!$emergencyConfigured && !$openConfigured && !$closeConfigured && !$handleConfigured) {
+            if (!$emergencyConfigured && !$openConfigured && !$closeConfigured) {
                 $contactTrace = 'nicht konfiguriert';
             } else {
                 $contactTrace = 'kein Kontakt offen';
@@ -1376,6 +1332,19 @@ class BlindController extends IPSModuleStrict
         $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSESLATSLEVEL2, 0);
         $this->RegisterPropertyBoolean(self::PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY, false);
 
+        //contacts close - value groups (up to three positions per contact) + per-contact debounce
+        //Position 1 nutzt die oben registrierten ContactCloseLevel{i}/ContactCloseSlatsLevel{i}
+        for ($i = 1; $i <= 2; $i++) {
+            $this->RegisterPropertyInteger($this->closeDelayProp($i), 0);
+            for ($j = 1; $j <= 3; $j++) {
+                $this->RegisterPropertyString($this->closeValuesProp($i, $j), '');
+            }
+            for ($j = 2; $j <= 3; $j++) {
+                $this->RegisterPropertyFloat($this->closeLevelProp($i, $j), 0);
+                $this->RegisterPropertyFloat($this->closeSlatsProp($i, $j), 0);
+            }
+        }
+
         //contacts open
         $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN1ID, 0);
         $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN2ID, 0);
@@ -1396,16 +1365,6 @@ class BlindController extends IPSModuleStrict
                 $this->RegisterPropertyFloat($this->openSlatsProp($i, $j), 0);
             }
         }
-
-        //window handle
-        $this->RegisterPropertyInteger(self::PROP_WINDOWHANDLEPOSITIONID, 0);
-        $this->RegisterPropertyFloat(self::PROP_WINDOWHANDLEOPENLEVEL, 0);
-        $this->RegisterPropertyFloat(self::PROP_WINDOWHANDLEOPENSLATSLEVEL, 0);
-        $this->RegisterPropertyFloat(self::PROP_WINDOWHANDLETILTEDLEVEL, 0);
-        $this->RegisterPropertyFloat(self::PROP_WINDOWHANDLETILTEDSLATSLEVEL, 0);
-        $this->RegisterPropertyInteger(self::PROP_WINDOWHANDLEDELAY, 1);
-        $this->RegisterPropertyString(self::PROP_WINDOWHANDLEOPENVALUES, 'left,right');
-        $this->RegisterPropertyString(self::PROP_WINDOWHANDLETILTEDVALUES, 'up');
 
         //emergency contact
         $this->RegisterPropertyInteger(self::PROP_EMERGENCYCONTACTID, 0);
@@ -1446,7 +1405,6 @@ class BlindController extends IPSModuleStrict
 
             $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE1ID),
             $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
-            $this->ReadPropertyInteger(self::PROP_WINDOWHANDLEPOSITIONID),
 
             $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION),
             $this->ReadPropertyInteger(self::PROP_AZIMUTHID),
@@ -1484,7 +1442,6 @@ class BlindController extends IPSModuleStrict
             self::PROP_CONTACTCLOSE2ID                             => $this->ReadPropertyInteger(self::PROP_CONTACTCLOSE2ID),
             self::PROP_CONTACTOPEN1ID                              => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN1ID),
             self::PROP_CONTACTOPEN2ID                              => $this->ReadPropertyInteger(self::PROP_CONTACTOPEN2ID),
-            self::PROP_WINDOWHANDLEPOSITIONID                     => $this->ReadPropertyInteger(self::PROP_WINDOWHANDLEPOSITIONID),
             self::PROP_EMERGENCYCONTACTID                          => $this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID),
             self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION           => $this->ReadPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION),
             self::PROP_AZIMUTHID                                   => $this->ReadPropertyInteger(self::PROP_AZIMUTHID),
@@ -1732,17 +1689,6 @@ class BlindController extends IPSModuleStrict
         }
 
         if ($ret = $this->checkVariableId(
-            self::PROP_WINDOWHANDLEPOSITIONID,
-            true,
-            [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT, VARIABLETYPE_STRING],
-            false,
-            self::STATUS_INST_WINDOWHANDLE_POSITION_ID_IS_INVALID
-        )) {
-            $this->SetStatus($ret);
-            return;
-        }
-
-        if ($ret = $this->checkVariableId(
             self::PROP_EMERGENCYCONTACTID,
             true,
             [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
@@ -1871,8 +1817,6 @@ class BlindController extends IPSModuleStrict
                 self::PROP_CONTACTOPENLEVEL2,
                 self::PROP_CONTACTCLOSELEVEL1,
                 self::PROP_CONTACTCLOSELEVEL2,
-                self::PROP_WINDOWHANDLEOPENLEVEL,
-                self::PROP_WINDOWHANDLETILTEDLEVEL,
                 self::PROP_LOWSUNPOSITIONBLINDLEVEL,
                 self::PROP_HIGHSUNPOSITIONBLINDLEVEL,
                 self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL,
@@ -1884,10 +1828,11 @@ class BlindController extends IPSModuleStrict
                 self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS
             ];
 
-            // Öffnen-Kontakt-Wertegruppen (Höhen der Zusatzpositionen 2/3) mitprüfen
+            // Öffnen-/Schließen-Kontakt-Wertegruppen (Höhen der Zusatzpositionen 2/3) mitprüfen
             for ($i = 1; $i <= 2; $i++) {
                 for ($j = 2; $j <= 3; $j++) {
                     $propertyBlindLevels[] = $this->openLevelProp($i, $j);
+                    $propertyBlindLevels[] = $this->closeLevelProp($i, $j);
                 }
             }
 
@@ -1930,15 +1875,14 @@ class BlindController extends IPSModuleStrict
                     self::PROP_CONTACTCLOSESLATSLEVEL1,
                     self::PROP_CONTACTCLOSESLATSLEVEL2,
                     self::PROP_CONTACTOPENSLATSLEVEL1,
-                    self::PROP_CONTACTOPENSLATSLEVEL2,
-                    self::PROP_WINDOWHANDLEOPENSLATSLEVEL,
-                    self::PROP_WINDOWHANDLETILTEDSLATSLEVEL
+                    self::PROP_CONTACTOPENSLATSLEVEL2
                 ];
 
-                // Öffnen-Kontakt-Wertegruppen (Lamellen der Zusatzpositionen 2/3) mitprüfen
+                // Öffnen-/Schließen-Kontakt-Wertegruppen (Lamellen der Zusatzpositionen 2/3) mitprüfen
                 for ($i = 1; $i <= 2; $i++) {
                     for ($j = 2; $j <= 3; $j++) {
                         $propertySlatsLevels[] = $this->openSlatsProp($i, $j);
+                        $propertySlatsLevels[] = $this->closeSlatsProp($i, $j);
                     }
                 }
 
@@ -1993,9 +1937,10 @@ class BlindController extends IPSModuleStrict
         } else {
             $this->SetTimerInterval(self::TIMER_UPDATE, 0);
             $this->SetTimerInterval(self::TIMER_DELAYED_MOVEMENT, 0);
-            $this->SetTimerInterval(self::TIMER_WINDOW_HANDLE, 0);
             $this->SetTimerInterval(self::TIMER_OPEN_CONTACT1, 0);
             $this->SetTimerInterval(self::TIMER_OPEN_CONTACT2, 0);
+            $this->SetTimerInterval(self::TIMER_CLOSE_CONTACT1, 0);
+            $this->SetTimerInterval(self::TIMER_CLOSE_CONTACT2, 0);
             $this->SetStatus(IS_INACTIVE);
             return;
         }
@@ -2234,50 +2179,6 @@ class BlindController extends IPSModuleStrict
     }
 
 
-    private function getBlindPositions(array $contacts): ?array
-    {
-        $contactOpen    = null;
-        $blindPositions = null;
-
-        foreach ($contacts as $propName => $contact) {
-            if ($this->isContactOpen($propName)) {
-                $contactOpen = true;
-
-                if (isset($blindPositions)) {
-                    $blindPositions['BlindLevel'] =
-                        $this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue']) ? max(
-                            $blindPositions['BlindLevel'],
-                            $contact['blindlevel']
-                        ) : min($blindPositions['BlindLevel'], $contact['blindlevel']);
-
-                    if (isset($this->profileSlatsLevel)) {
-                        $blindPositions['SlatsLevel'] =
-                            $this->isMinMaxReversed($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue']) ? max(
-                                $blindPositions['SlatsLevel'],
-                                $contact['slatslevel']
-                            ) : min($blindPositions['SlatsLevel'], $contact['slatslevel']);
-                    }
-                } else {
-                    $blindPositions['BlindLevel'] = $contact['blindlevel'];
-                    $blindPositions['SlatsLevel'] = $contact['slatslevel'];
-                }
-
-                $this->Logger_Dbg(
-                    __FUNCTION__,
-                    sprintf(
-                        'contact is open: #%s, value: %s, blindlevel: %s, slatslevel: %s',
-                        $contact['id'],
-                        $this->GetFormattedValue($contact['id']),
-                        $contact['blindlevel'],
-                        $contact['slatslevel']
-                    )
-                );
-            }
-        }
-
-        return $contactOpen ? $blindPositions : null;
-    }
-
     // Property-Namen der Öffnen-Kontakt-Wertegruppen (i = Kontakt 1/2, j = Zustand 1..3)
     private function openValuesProp(int $i, int $j): string
     {
@@ -2298,6 +2199,28 @@ class BlindController extends IPSModuleStrict
     private function openDelayProp(int $i): string
     {
         return sprintf('ContactOpenDelay%d', $i);
+    }
+
+    // Property-Namen der Schließen-Kontakt-Wertegruppen (i = Kontakt 1/2, j = Zustand 1..3)
+    private function closeValuesProp(int $i, int $j): string
+    {
+        return sprintf('ContactCloseValues%d_%d', $i, $j);
+    }
+
+    private function closeLevelProp(int $i, int $j): string
+    {
+        // Position 1 nutzt das bestehende Property (kein "_1"-Suffix) -> keine Migration nötig
+        return $j === 1 ? sprintf('ContactCloseLevel%d', $i) : sprintf('ContactCloseLevel%d_%d', $i, $j);
+    }
+
+    private function closeSlatsProp(int $i, int $j): string
+    {
+        return $j === 1 ? sprintf('ContactCloseSlatsLevel%d', $i) : sprintf('ContactCloseSlatsLevel%d_%d', $i, $j);
+    }
+
+    private function closeDelayProp(int $i): string
+    {
+        return sprintf('ContactCloseDelay%d', $i);
     }
 
     /**
@@ -2385,65 +2308,89 @@ class BlindController extends IPSModuleStrict
         return null;
     }
 
+    /**
+     * Ermittelt die Schließbegrenzung der Schließen-Kontakte.
+     *
+     * Je Kontakt können bis zu drei Wertegruppen mit eigener Position konfiguriert sein.
+     * Ist für einen Kontakt keine Wertegruppe gesetzt, gilt das klassische Boolean/Reversed-
+     * Verhalten mit ContactCloseLevel{i}/ContactCloseSlatsLevel{i}. Mehrere gleichzeitig offene
+     * Kontakte werden zur am weitesten geschlossenen Position kombiniert (combineClosingLimits()).
+     */
     private function getPositionsOfCloseBlindContact(): ?array
     {
-        $contacts = $this->getDefinedContacts('PROP_CONTACTCLOSE', 'PROP_CONTACTCLOSELEVEL', 'PROP_CONTACTCLOSESLATSLEVEL');
-        return $this->getBlindPositions($contacts);
+        $blindPositions = null;
+
+        for ($i = 1; $i <= 2; $i++) {
+            $contactId = $this->ReadPropertyInteger(constant("self::PROP_CONTACTCLOSE{$i}ID"));
+            if (!IPS_VariableExists($contactId)) {
+                continue;
+            }
+
+            $position = $this->getSingleCloseContactPosition($i, $contactId);
+            if ($position === null) {
+                continue;
+            }
+
+            if ($blindPositions === null) {
+                $blindPositions = $position;
+            } else {
+                $blindPositions = $this->combineClosingLimits($blindPositions, $position);
+            }
+        }
+
+        return $blindPositions;
     }
 
     /**
-     * Liefert die für die aktuelle Fenstergriffstellung konfigurierte Öffnungsbegrenzung.
+     * Liefert die Position eines einzelnen Schließen-Kontakts oder null, wenn er nicht "offen" ist.
      *
-     * @return array{positions: array{BlindLevel: float, SlatsLevel: float}, state: string}|null
+     * @return array{BlindLevel: float, SlatsLevel: float}|null
      */
-    private function getWindowHandlePositions(): ?array
+    private function getSingleCloseContactPosition(int $i, int $contactId): ?array
     {
-        $positionId = $this->ReadPropertyInteger(self::PROP_WINDOWHANDLEPOSITIONID);
-        if (!IPS_VariableExists($positionId)) {
-            return null;
+        // Wertegruppen einsammeln (leere ignorieren)
+        $hasValueGroups = false;
+        for ($j = 1; $j <= 3; $j++) {
+            if (trim($this->ReadPropertyString($this->closeValuesProp($i, $j))) !== '') {
+                $hasValueGroups = true;
+                break;
+            }
         }
 
-        $position     = GetValue($positionId);
-        $variableType = IPS_GetVariable($positionId)['VariableType'];
-
-        if ($this->matchesConfiguredValue($position, $this->ReadPropertyString(self::PROP_WINDOWHANDLEOPENVALUES), $variableType)) {
-            $result = [
-                'positions' => [
-                    'BlindLevel' => $this->ReadPropertyFloat(self::PROP_WINDOWHANDLEOPENLEVEL),
-                    'SlatsLevel' => $this->ReadPropertyFloat(self::PROP_WINDOWHANDLEOPENSLATSLEVEL)
-                ],
-                'state' => sprintf('offen (%s)', $this->formatConfiguredValue($position))
+        // Klassisches Boolean-Verhalten, wenn keine Wertegruppe konfiguriert ist:
+        // Es gilt dann die bestehende Ein/Aus-Position (ContactCloseLevel{i}/SlatsLevel{i}).
+        if (!$hasValueGroups) {
+            if (!$this->isContactOpen(constant("self::PROP_CONTACTCLOSE{$i}ID"))) {
+                return null;
+            }
+            return [
+                'BlindLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTCLOSELEVEL{$i}")),
+                'SlatsLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTCLOSESLATSLEVEL{$i}"))
             ];
-        } elseif ($this->matchesConfiguredValue($position, $this->ReadPropertyString(self::PROP_WINDOWHANDLETILTEDVALUES), $variableType)) {
-            $result = [
-                'positions' => [
-                    'BlindLevel' => $this->ReadPropertyFloat(self::PROP_WINDOWHANDLETILTEDLEVEL),
-                    'SlatsLevel' => $this->ReadPropertyFloat(self::PROP_WINDOWHANDLETILTEDSLATSLEVEL)
-                ],
-                'state' => sprintf('gekippt (%s)', $this->formatConfiguredValue($position))
-            ];
-        } else {
-            // Jeder Wert, der weder als offen noch als gekippt konfiguriert ist, gilt als
-            // geschlossen -> keine Öffnungsbegrenzung, die regulär ermittelte Position gilt.
-            $this->Logger_Dbg(
-                __FUNCTION__,
-                sprintf('Fenstergriff #%s: Wert "%s" -> keine Öffnungsbegrenzung (geschlossen)', $positionId, $this->formatConfiguredValue($position))
-            );
-            return null;
         }
 
-        $this->Logger_Dbg(
-            __FUNCTION__,
-            sprintf(
-                'Fenstergriff #%s: %s, blindlevel: %s, slatslevel: %s',
-                $positionId,
-                $result['state'],
-                $result['positions']['BlindLevel'],
-                $result['positions']['SlatsLevel']
-            )
-        );
+        // Wertegruppen-Modus: erste passende Gruppe bestimmt die Position
+        $value        = GetValue($contactId);
+        $variableType = IPS_GetVariable($contactId)['VariableType'];
 
-        return $result;
+        for ($j = 1; $j <= 3; $j++) {
+            $configured = $this->ReadPropertyString($this->closeValuesProp($i, $j));
+            if (trim($configured) === '') {
+                continue;
+            }
+            if ($this->matchesConfiguredValue($value, $configured, $variableType)) {
+                $this->Logger_Dbg(
+                    __FUNCTION__,
+                    sprintf('Schließen-Kontakt %d (#%s): Wert "%s" trifft Zustand %d', $i, $contactId, $this->formatConfiguredValue($value), $j)
+                );
+                return [
+                    'BlindLevel' => $this->ReadPropertyFloat($this->closeLevelProp($i, $j)),
+                    'SlatsLevel' => $this->ReadPropertyFloat($this->closeSlatsProp($i, $j))
+                ];
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -2507,6 +2454,26 @@ class BlindController extends IPSModuleStrict
             $first['SlatsLevel'] = $this->isMinMaxReversed($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'])
                 ? max($first['SlatsLevel'], $second['SlatsLevel'])
                 : min($first['SlatsLevel'], $second['SlatsLevel']);
+        }
+
+        return $first;
+    }
+
+    /**
+     * Verknüpft zwei Schließbegrenzungen. Es gewinnt jeweils die weiter geschlossene Position,
+     * damit die Anforderung aller gleichzeitig offenen Schließen-Kontakte erfüllt wird
+     * (exakt invertiert zu combineOpeningLimits).
+     */
+    private function combineClosingLimits(array $first, array $second): array
+    {
+        $first['BlindLevel'] = $this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])
+            ? min($first['BlindLevel'], $second['BlindLevel'])
+            : max($first['BlindLevel'], $second['BlindLevel']);
+
+        if (isset($this->profileSlatsLevel)) {
+            $first['SlatsLevel'] = $this->isMinMaxReversed($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'])
+                ? min($first['SlatsLevel'], $second['SlatsLevel'])
+                : max($first['SlatsLevel'], $second['SlatsLevel']);
         }
 
         return $first;

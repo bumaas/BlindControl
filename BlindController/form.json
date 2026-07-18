@@ -216,20 +216,64 @@
         {
           "type":  "ExpansionPanel", "caption": "Contacts to Close the Blind (optional)",
           "items": [
-            {"type": "Label", "caption": "Define up to two contacts/variables. The blind is closed immediately to the given maximum height if one of the contacts are open."},
+            {"type": "Label", "caption": "Define up to two contacts/variables. The blind is closed immediately to the given maximum height if one of the contacts are open. To trigger different positions depending on the raw value of a variable, expand the advanced section of the respective contact."},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ContactClose1ID", "validVariableTypes": [0, 1, 2], "caption": "Contact 1 ID"},
+              {"type": "SelectVariable", "name": "ContactClose1ID", "validVariableTypes": [0, 1, 2, 3], "caption": "Contact 1 ID"},
               {"type": "NumberSpinner", "name": "ContactCloseLevel1", "caption": "Maximum height when the contact is open", "digits": "2"},
               {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel1", "caption": "Maximum slats position when the contact is open", "digits": "2"}
             ]
             },
             {
+              "type": "ExpansionPanel", "caption": "Contact 1: advanced - multiple positions via raw values (optional)",
+              "items": [
+                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect (behaves as closed). Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1)."},
+                {"type": "ValidationTextBox", "name": "ContactCloseValues1_1", "caption": "Raw values for position 1 (uses the height above)"},
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "ValidationTextBox", "name": "ContactCloseValues1_2", "caption": "Raw values for position 2"},
+                  {"type": "NumberSpinner", "name": "ContactCloseLevel1_2", "caption": "Maximum height", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel1_2", "caption": "Maximum slats position", "digits": "2"}
+                ]
+                },
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "ValidationTextBox", "name": "ContactCloseValues1_3", "caption": "Raw values for position 3"},
+                  {"type": "NumberSpinner", "name": "ContactCloseLevel1_3", "caption": "Maximum height", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel1_3", "caption": "Maximum slats position", "digits": "2"}
+                ]
+                },
+                {"type": "NumberSpinner", "name": "ContactCloseDelay1", "caption": "Delay before evaluation (debounce)", "suffix": "Seconds", "minimum": 0}
+              ]
+            },
+            {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ContactClose2ID", "validVariableTypes": [0, 1, 2], "caption": "Contact 2 ID"},
+              {"type": "SelectVariable", "name": "ContactClose2ID", "validVariableTypes": [0, 1, 2, 3], "caption": "Contact 2 ID"},
               {"type": "NumberSpinner", "name": "ContactCloseLevel2", "caption": "Maximum height when the contact is open", "digits": "2"},
               {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel2", "caption": "Maximum slats position when the contact is open", "digits": "2"}
             ]
+            },
+            {
+              "type": "ExpansionPanel", "caption": "Contact 2: advanced - multiple positions via raw values (optional)",
+              "items": [
+                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect (behaves as closed). Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1)."},
+                {"type": "ValidationTextBox", "name": "ContactCloseValues2_1", "caption": "Raw values for position 1 (uses the height above)"},
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "ValidationTextBox", "name": "ContactCloseValues2_2", "caption": "Raw values for position 2"},
+                  {"type": "NumberSpinner", "name": "ContactCloseLevel2_2", "caption": "Maximum height", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel2_2", "caption": "Maximum slats position", "digits": "2"}
+                ]
+                },
+                {
+                  "type": "RowLayout", "items": [
+                  {"type": "ValidationTextBox", "name": "ContactCloseValues2_3", "caption": "Raw values for position 3"},
+                  {"type": "NumberSpinner", "name": "ContactCloseLevel2_3", "caption": "Maximum height", "digits": "2"},
+                  {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel2_3", "caption": "Maximum slats position", "digits": "2"}
+                ]
+                },
+                {"type": "NumberSpinner", "name": "ContactCloseDelay2", "caption": "Delay before evaluation (debounce)", "suffix": "Seconds", "minimum": 0}
+              ]
             }
           ]
         },
@@ -298,28 +342,6 @@
           ]
         },
         {"type": "CheckBox", "name": "ContactsToCloseHaveHigherPriority", "caption": "Contacts to close the blind have a higher priority than the ones to open"}
-      ]
-    },
-    {
-      "type": "ExpansionPanel", "caption": "Window Handle (optional)",
-      "items": [
-        {"type": "Label", "caption": "Define a window handle position variable and assign its raw values. Multiple values can be separated by commas. Any value that is neither open nor tilted is treated as closed."},
-        {"type": "SelectVariable", "name": "WindowHandlePositionID", "validVariableTypes": [0, 1, 2, 3], "caption": "Window handle position ID"},
-        {"type": "NumberSpinner", "name": "WindowHandleDelay", "caption": "Delay before evaluating the window handle position", "suffix": "Seconds", "minimum": 0},
-        {
-          "type": "RowLayout", "items": [
-            {"type": "ValidationTextBox", "name": "WindowHandleOpenValues", "caption": "Value for open"},
-            {"type": "NumberSpinner", "name": "WindowHandleOpenLevel", "caption": "Minimum height when the window handle is open", "digits": "2"},
-            {"type": "NumberSpinner", "name": "WindowHandleOpenSlatsLevel", "caption": "Minimum slats position when the window handle is open", "digits": "2"}
-          ]
-        },
-        {
-          "type": "RowLayout", "items": [
-            {"type": "ValidationTextBox", "name": "WindowHandleTiltedValues", "caption": "Value for tilted"},
-            {"type": "NumberSpinner", "name": "WindowHandleTiltedLevel", "caption": "Minimum height when the window handle is tilted", "digits": "2"},
-            {"type": "NumberSpinner", "name": "WindowHandleTiltedSlatsLevel", "caption": "Minimum slats position when the window handle is tilted", "digits": "2"}
-          ]
-        }
       ]
     },
     {
