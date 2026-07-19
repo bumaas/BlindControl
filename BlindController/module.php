@@ -1216,8 +1216,9 @@ class BlindController extends IPSModuleStrict
     }
 
     /**
-     * Formatiert die Labels der auslösenden Kontakte für Trace/Hinweis,
-     * z. B. "Öffnen-Kontakt 1 offen" oder "Schließen-Kontakt 1 + Schließen-Kontakt 2 offen".
+     * Formatiert die Labels der auslösenden Kontakte für Trace/Hinweis. Die Labels enthalten
+     * die per GetValueFormattedEx() ermittelte Beschriftung des aktuellen Variablenwertes,
+     * z. B. "Öffnen-Kontakt 1 (Geöffnet)" oder "Schließen-Kontakt 1 (Regen) + Schließen-Kontakt 2 (Gekippt)".
      */
     private function formatContactLabels(array $labels): string
     {
@@ -1225,7 +1226,7 @@ class BlindController extends IPSModuleStrict
             return 'Kontakt offen';
         }
 
-        return implode(' + ', $labels) . ' offen';
+        return implode(' + ', $labels);
     }
 
     private function calculateNormalizedLevel(float $position, array $profile): int
@@ -2392,7 +2393,7 @@ class BlindController extends IPSModuleStrict
             $position = [
                 'BlindLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTOPENLEVEL{$i}")),
                 'SlatsLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTOPENSLATSLEVEL{$i}")),
-                'label'      => sprintf('Öffnen-Kontakt %d', $i)
+                'label'      => sprintf('Öffnen-Kontakt %d (%s)', $i, GetValueFormattedEx($contactId, GetValue($contactId)))
             ];
             $this->Logger_Dbg(
                 __FUNCTION__,
@@ -2414,7 +2415,7 @@ class BlindController extends IPSModuleStrict
                 $position = [
                     'BlindLevel' => $this->ReadPropertyFloat($this->openLevelProp($i, $j)),
                     'SlatsLevel' => $this->ReadPropertyFloat($this->openSlatsProp($i, $j)),
-                    'label'      => sprintf('Öffnen-Kontakt %d (Zustand %d)', $i, $j)
+                    'label'      => sprintf('Öffnen-Kontakt %d (%s)', $i, GetValueFormattedEx($contactId, $value))
                 ];
                 $this->Logger_Dbg(
                     __FUNCTION__,
@@ -2497,7 +2498,7 @@ class BlindController extends IPSModuleStrict
             $position = [
                 'BlindLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTCLOSELEVEL{$i}")),
                 'SlatsLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTCLOSESLATSLEVEL{$i}")),
-                'label'      => sprintf('Schließen-Kontakt %d', $i)
+                'label'      => sprintf('Schließen-Kontakt %d (%s)', $i, GetValueFormattedEx($contactId, GetValue($contactId)))
             ];
             $this->Logger_Dbg(
                 __FUNCTION__,
@@ -2519,7 +2520,7 @@ class BlindController extends IPSModuleStrict
                 $position = [
                     'BlindLevel' => $this->ReadPropertyFloat($this->closeLevelProp($i, $j)),
                     'SlatsLevel' => $this->ReadPropertyFloat($this->closeSlatsProp($i, $j)),
-                    'label'      => sprintf('Schließen-Kontakt %d (Zustand %d)', $i, $j)
+                    'label'      => sprintf('Schließen-Kontakt %d (%s)', $i, GetValueFormattedEx($contactId, $value))
                 ];
                 $this->Logger_Dbg(
                     __FUNCTION__,
@@ -4307,6 +4308,18 @@ class BlindController extends IPSModuleStrict
                     'MinValue' => min($values),
                     'MaxValue' => max($values)
                 ];
+
+            case VARIABLE_PRESENTATION_VALUE_PRESENTATION:
+                // "Wertanzeige" (IPS 8): Min/Max gibt es nur bei numerischen Wertanzeigen.
+                // Zustandswerte und Beschriftungen (OPTIONS) sind hier bewusst nicht relevant -
+                // dafür ist GetValueFormattedEx() zuständig.
+                if (isset($presentation['MIN'], $presentation['MAX'])) {
+                    return [
+                        'MinValue' => $presentation['MIN'],
+                        'MaxValue' => $presentation['MAX']
+                    ];
+                }
+                return null;
 
             default:
                 //assert(false, sprintf('unsupported presentation: %s with "%s"', $presentation['PRESENTATION'], $propName));
