@@ -1040,7 +1040,6 @@ class BlindController extends IPSModuleStrict
         $levelContactEmergency      = $this->getLevelEmergencyContact();
         $positionsContactOpenBlind  = $this->getPositionsOfOpenBlindContact();
         $positionsContactCloseBlind = $this->getPositionsOfCloseBlindContact();
-        $openingTraceLabel          = 'Kontakt offen';
 
         // Konfigurationsstatus der Kontakte (für den immer ausgegebenen Trace)
         $emergencyConfigured = IPS_VariableExists($this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID));
@@ -1080,6 +1079,16 @@ class BlindController extends IPSModuleStrict
             }
         }
 
+        // Beschreibende Labels der auslösenden Kontakte (Funktion + Nummer, ggf. Zustand) für Trace/Hinweis
+        $openingTraceLabel = $this->formatContactLabels($positionsContactOpenBlind['labels'] ?? []);
+        $closingTraceLabel = $this->formatContactLabels($positionsContactCloseBlind['labels'] ?? []);
+        if ($positionsContactOpenBlind !== null) {
+            unset($positionsContactOpenBlind['labels']);
+        }
+        if ($positionsContactCloseBlind !== null) {
+            unset($positionsContactCloseBlind['labels']);
+        }
+
         // 3. Kontakte prüfen
         $contactTrace = '';
         if ($positionsContactOpenBlind !== null) {
@@ -1110,18 +1119,19 @@ class BlindController extends IPSModuleStrict
             if ($checkResult['modified']) {
                 $bNoMove              = false;
                 $positionsNew         = $checkResult['positions'];
-                $Hinweis              = 'Kontakt offen';
+                $Hinweis              = $closingTraceLabel;
                 $deactivationTimeAuto = 0;
                 if (!$this->dryRun) {
                     $this->WriteAttributeBoolean(self::ATTR_CONTACT_OPEN, true);
                 }
                 $this->Logger_Dbg(__FUNCTION__, 'Kontakt geöffnet (Close-Logik angewendet)');
-                $contactTrace = sprintf('Kontakt offen -> %s', $this->describeTargetPositions($positionsNew));
+                $contactTrace = sprintf('%s -> %s', $closingTraceLabel, $this->describeTargetPositions($positionsNew));
             } else {
                 // Kontakt ist offen, das Schließlevel ist aber nicht restriktiver als die bereits
                 // ermittelte Zielposition - der Kontakt hat daher keine Wirkung.
                 $contactTrace = sprintf(
-                    'Kontakt offen, aber Zielposition bereits geschlossen genug (%s) -> keine Änderung',
+                    '%s, aber Zielposition bereits geschlossen genug (%s) -> keine Änderung',
+                    $closingTraceLabel,
                     $this->describeTargetPositions($positionsNew)
                 );
             }
@@ -1203,6 +1213,19 @@ class BlindController extends IPSModuleStrict
         }
 
         return ['positions' => $targetPositions, 'modified' => $modified, 'resetDeactivation' => $resetDeactivation];
+    }
+
+    /**
+     * Formatiert die Labels der auslösenden Kontakte für Trace/Hinweis,
+     * z. B. "Öffnen-Kontakt 1 offen" oder "Schließen-Kontakt 1 + Schließen-Kontakt 2 offen".
+     */
+    private function formatContactLabels(array $labels): string
+    {
+        if ($labels === []) {
+            return 'Kontakt offen';
+        }
+
+        return implode(' + ', $labels) . ' offen';
     }
 
     private function calculateNormalizedLevel(float $position, array $profile): int
@@ -2315,6 +2338,7 @@ class BlindController extends IPSModuleStrict
     private function getPositionsOfOpenBlindContact(): ?array
     {
         $blindPositions = null;
+        $labels         = [];
 
         for ($i = 1; $i <= 2; $i++) {
             $contactId = $this->ReadPropertyInteger(constant("self::PROP_CONTACTOPEN{$i}ID"));
@@ -2326,6 +2350,8 @@ class BlindController extends IPSModuleStrict
             if ($position === null) {
                 continue;
             }
+            $labels[] = $position['label'];
+            unset($position['label']);
 
             if ($blindPositions === null) {
                 $blindPositions = $position;
@@ -2334,13 +2360,17 @@ class BlindController extends IPSModuleStrict
             }
         }
 
+        if ($blindPositions !== null) {
+            $blindPositions['labels'] = $labels;
+        }
+
         return $blindPositions;
     }
 
     /**
      * Liefert die Position eines einzelnen Öffnen-Kontakts oder null, wenn er nicht "offen" ist.
      *
-     * @return array{BlindLevel: float, SlatsLevel: float}|null
+     * @return array{BlindLevel: float, SlatsLevel: float, label: string}|null
      */
     private function getSingleOpenContactPosition(int $i, int $contactId): ?array
     {
@@ -2361,7 +2391,8 @@ class BlindController extends IPSModuleStrict
             }
             $position = [
                 'BlindLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTOPENLEVEL{$i}")),
-                'SlatsLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTOPENSLATSLEVEL{$i}"))
+                'SlatsLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTOPENSLATSLEVEL{$i}")),
+                'label'      => sprintf('Öffnen-Kontakt %d', $i)
             ];
             $this->Logger_Dbg(
                 __FUNCTION__,
@@ -2382,7 +2413,8 @@ class BlindController extends IPSModuleStrict
             if ($this->matchesConfiguredValue($value, $configured, $variableType)) {
                 $position = [
                     'BlindLevel' => $this->ReadPropertyFloat($this->openLevelProp($i, $j)),
-                    'SlatsLevel' => $this->ReadPropertyFloat($this->openSlatsProp($i, $j))
+                    'SlatsLevel' => $this->ReadPropertyFloat($this->openSlatsProp($i, $j)),
+                    'label'      => sprintf('Öffnen-Kontakt %d (Zustand %d)', $i, $j)
                 ];
                 $this->Logger_Dbg(
                     __FUNCTION__,
@@ -2411,6 +2443,7 @@ class BlindController extends IPSModuleStrict
     private function getPositionsOfCloseBlindContact(): ?array
     {
         $blindPositions = null;
+        $labels         = [];
 
         for ($i = 1; $i <= 2; $i++) {
             $contactId = $this->ReadPropertyInteger(constant("self::PROP_CONTACTCLOSE{$i}ID"));
@@ -2422,6 +2455,8 @@ class BlindController extends IPSModuleStrict
             if ($position === null) {
                 continue;
             }
+            $labels[] = $position['label'];
+            unset($position['label']);
 
             if ($blindPositions === null) {
                 $blindPositions = $position;
@@ -2430,13 +2465,17 @@ class BlindController extends IPSModuleStrict
             }
         }
 
+        if ($blindPositions !== null) {
+            $blindPositions['labels'] = $labels;
+        }
+
         return $blindPositions;
     }
 
     /**
      * Liefert die Position eines einzelnen Schließen-Kontakts oder null, wenn er nicht "offen" ist.
      *
-     * @return array{BlindLevel: float, SlatsLevel: float}|null
+     * @return array{BlindLevel: float, SlatsLevel: float, label: string}|null
      */
     private function getSingleCloseContactPosition(int $i, int $contactId): ?array
     {
@@ -2457,7 +2496,8 @@ class BlindController extends IPSModuleStrict
             }
             $position = [
                 'BlindLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTCLOSELEVEL{$i}")),
-                'SlatsLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTCLOSESLATSLEVEL{$i}"))
+                'SlatsLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTCLOSESLATSLEVEL{$i}")),
+                'label'      => sprintf('Schließen-Kontakt %d', $i)
             ];
             $this->Logger_Dbg(
                 __FUNCTION__,
@@ -2478,7 +2518,8 @@ class BlindController extends IPSModuleStrict
             if ($this->matchesConfiguredValue($value, $configured, $variableType)) {
                 $position = [
                     'BlindLevel' => $this->ReadPropertyFloat($this->closeLevelProp($i, $j)),
-                    'SlatsLevel' => $this->ReadPropertyFloat($this->closeSlatsProp($i, $j))
+                    'SlatsLevel' => $this->ReadPropertyFloat($this->closeSlatsProp($i, $j)),
+                    'label'      => sprintf('Schließen-Kontakt %d (Zustand %d)', $i, $j)
                 ];
                 $this->Logger_Dbg(
                     __FUNCTION__,
