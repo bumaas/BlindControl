@@ -1058,6 +1058,9 @@ class BlindController extends IPSModuleStrict
             );
 
             $positionsNew['BlindLevel'] = $levelContactEmergency;
+            if (isset($this->profileSlatsLevel)) {
+                $positionsNew['SlatsLevel'] = (float)$this->profileSlatsLevel['MinValue'];
+            }
             return [
                 'positions'            => $positionsNew,
                 'deactivationTimeAuto' => 0,
@@ -2609,8 +2612,8 @@ class BlindController extends IPSModuleStrict
 
         // Wenn der Kontakt offen ist (Logik inkl. Reversed-Profil in isContactOpen)
         if ($this->isContactOpen(self::PROP_EMERGENCYCONTACTID)) {
-            $level = $this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])
-                ? (float)$this->profileBlindLevel['MinValue'] : (float)$this->profileBlindLevel['MaxValue'];
+            // MinValue ist per Konvention immer die Offen-Position (bei Shutter-Darstellung OPEN_OUTSIDE_VALUE)
+            $level = (float)$this->profileBlindLevel['MinValue'];
 
             $this->Logger_Dbg(
                 __FUNCTION__,
