@@ -227,7 +227,7 @@
             {
               "type": "ExpansionPanel", "caption": "Contact 1: advanced - multiple positions via raw values (optional)",
               "items": [
-                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect (behaves as closed). Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1)."},
+                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1)."},
                 {"type": "ValidationTextBox", "name": "ContactCloseValues1_1", "caption": "Raw values for position 1 (uses the height above)"},
                 {
                   "type": "RowLayout", "items": [
@@ -256,7 +256,7 @@
             {
               "type": "ExpansionPanel", "caption": "Contact 2: advanced - multiple positions via raw values (optional)",
               "items": [
-                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect (behaves as closed). Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1)."},
+                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1)."},
                 {"type": "ValidationTextBox", "name": "ContactCloseValues2_1", "caption": "Raw values for position 1 (uses the height above)"},
                 {
                   "type": "RowLayout", "items": [
@@ -291,7 +291,7 @@
             {
               "type": "ExpansionPanel", "caption": "Contact 1: advanced - multiple positions via raw values (optional)",
               "items": [
-                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect (behaves as closed). Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1)."},
+                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1)."},
                 {"type": "ValidationTextBox", "name": "ContactOpenValues1_1", "caption": "Raw values for position 1 (uses the height above)"},
                 {
                   "type": "RowLayout", "items": [
@@ -320,7 +320,7 @@
             {
               "type": "ExpansionPanel", "caption": "Contact 2: advanced - multiple positions via raw values (optional)",
               "items": [
-                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect (behaves as closed). Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1)."},
+                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1)."},
                 {"type": "ValidationTextBox", "name": "ContactOpenValues2_1", "caption": "Raw values for position 1 (uses the height above)"},
                 {
                   "type": "RowLayout", "items": [
