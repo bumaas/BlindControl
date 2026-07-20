@@ -167,7 +167,7 @@ class BlindController extends IPSModuleStrict
 
     private ?array $profileBlindLevel;
 
-    private ?array $profileSlatsLevel;
+    private ?array $profileSlatsLevel = null;
 
     // Grund, warum eine physische Fahrt unterblieben ist (gesetzt in shouldPerformMovement/isSameMovementRecently)
     private string $moveSkipReason = '';
@@ -779,7 +779,7 @@ class BlindController extends IPSModuleStrict
         if (!$bNoMove) {
             $blindLevel = $this->calculateNormalizedLevel($positionsNew['BlindLevel'], $this->profileBlindLevel);
             $slatsLevel = null;
-            if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
+            if ($this->profileSlatsLevel !== null) {
                 $slatsLevel = $this->calculateNormalizedLevel($positionsNew['SlatsLevel'], $this->profileSlatsLevel);
             }
 
@@ -1001,7 +1001,7 @@ class BlindController extends IPSModuleStrict
             $current['BlindLevel'] = max($current['BlindLevel'], $shadowing['BlindLevel']);
         }
 
-        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
+        if ($this->profileSlatsLevel !== null) {
             if ($this->isMinMaxReversed($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'])) {
                 $current['SlatsLevel'] = min($current['SlatsLevel'], $shadowing['SlatsLevel']);
             } else {
@@ -1057,7 +1057,7 @@ class BlindController extends IPSModuleStrict
             );
 
             $positionsNew['BlindLevel'] = $levelContactEmergency;
-            if (isset($this->profileSlatsLevel)) {
+            if ($this->profileSlatsLevel !== null) {
                 $positionsNew['SlatsLevel'] = (float)$this->profileSlatsLevel['MinValue'];
             }
             return [
@@ -1196,7 +1196,7 @@ class BlindController extends IPSModuleStrict
         }
 
         // Prüflogik für Lamellen (falls vorhanden)
-        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
+        if ($this->profileSlatsLevel !== null) {
             $reversedSlats = $this->isMinMaxReversed($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue']);
             // Bestimmen, ob das Lamellen-Limit eine Untergrenze oder Obergrenze darstellt
             $isLowerLimitSlats = ($isOpeningContact && !$reversedSlats) || (!$isOpeningContact && $reversedSlats);
@@ -1951,7 +1951,7 @@ class BlindController extends IPSModuleStrict
             }
         }
 
-        if ($this->profileBlindLevel['MinValue'] === $this->profileBlindLevel['MaxValue']) {
+        if ($this->levelsEqual($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])) {
             return self::STATUS_INST_BLINDLEVEL_ID_PROFILE_MIN_MAX_INVALID;
         }
 
@@ -2009,7 +2009,7 @@ class BlindController extends IPSModuleStrict
             }
         }
 
-        if ($this->profileSlatsLevel['MinValue'] === $this->profileSlatsLevel['MaxValue']) {
+        if ($this->levelsEqual($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'])) {
             return self::STATUS_INST_SLATSLEVEL_ID_PROFILE_MIN_MAX_INVALID;
         }
 
@@ -2250,10 +2250,14 @@ class BlindController extends IPSModuleStrict
                     $dayState['isDay'] = $this->ReadAttributeBoolean('AttrIsDay');
                     return false;
                 }
-
-                $this->deactivateDelayTimer(); //Timer wieder ausschalten
-
             }
+
+            // Der Wechsel wird jetzt vollzogen: eine ggf. noch aktive Verzögerung aufräumen —
+            // auch wenn sie in einem früheren Lauf gestartet wurde und der Wechsel jetzt ohne Verzögerung erfolgt
+            if ($this->ReadAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME) !== 0) {
+                $this->deactivateDelayTimer();
+            }
+
             if (!$this->dryRun) {
                 $this->WriteAttributeBoolean('AttrIsDay', $isDay);
                 $this->WriteAttributeInteger('AttrTimeStampIsDayChange', time());
@@ -2261,6 +2265,12 @@ class BlindController extends IPSModuleStrict
             $this->Logger_Dbg(__FUNCTION__, 'DayChange!');
             $dayState['isDay'] = $isDay;
             return true;
+        }
+
+        // Kein Wechsel (mehr) anstehend: eine ggf. noch laufende Verzögerung aufräumen, damit weder
+        // der Timer weiterfeuert noch ein abgelaufener Zeitstempel den nächsten echten Wechsel verfälscht
+        if ($this->ReadAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME) !== 0) {
+            $this->deactivateDelayTimer();
         }
 
         $dayState['isDay'] = $isDay;
@@ -2595,7 +2605,7 @@ class BlindController extends IPSModuleStrict
             ? max($first['BlindLevel'], $second['BlindLevel'])
             : min($first['BlindLevel'], $second['BlindLevel']);
 
-        if (isset($this->profileSlatsLevel)) {
+        if ($this->profileSlatsLevel !== null) {
             $first['SlatsLevel'] = $this->isMinMaxReversed($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'])
                 ? max($first['SlatsLevel'], $second['SlatsLevel'])
                 : min($first['SlatsLevel'], $second['SlatsLevel']);
@@ -2615,7 +2625,7 @@ class BlindController extends IPSModuleStrict
             ? min($first['BlindLevel'], $second['BlindLevel'])
             : max($first['BlindLevel'], $second['BlindLevel']);
 
-        if (isset($this->profileSlatsLevel)) {
+        if ($this->profileSlatsLevel !== null) {
             $first['SlatsLevel'] = $this->isMinMaxReversed($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'])
                 ? min($first['SlatsLevel'], $second['SlatsLevel'])
                 : max($first['SlatsLevel'], $second['SlatsLevel']);
@@ -2943,8 +2953,13 @@ class BlindController extends IPSModuleStrict
         return (float)GetValue($brightnessID);
     }
 
-    private function getBrightnessThreshold(int $thresholdIDBrightness, float $levelAct, float $temperature = null): float
+    private function getBrightnessThreshold(int $thresholdIDBrightness, float $levelAct, ?float $temperature = null): float
     {
+        // Die Schwellwert-Variable ist optional: ohne sie gilt keine Helligkeitsgrenze
+        if (!IPS_VariableExists($thresholdIDBrightness)) {
+            return 0.0;
+        }
+
         $baseThreshold = (float)GetValue($thresholdIDBrightness);
         $threshold     = $baseThreshold;
 
@@ -3493,8 +3508,8 @@ class BlindController extends IPSModuleStrict
         $tsAutomatic = $this->ReadAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC);
         $moveBladeOk = $this->MoveToPosition(self::PROP_BLINDLEVELID, $percentBlindClose, $tsAutomatic, $deactivationTimeAuto, $hint);
 
-        // Optionale Lamellensteuerung ausführen
-        if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
+        // Optionale Lamellensteuerung ausführen (nur wenn ein Lamellenwert übergeben wurde)
+        if ($percentSlatsClose !== null && IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
             $this->profileSlatsLevel = $this->GetPresentationInformation(self::PROP_SLATSLEVELID);
             $moveSlatsOk             = $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClose, $tsAutomatic, $deactivationTimeAuto, $hint);
 
@@ -3652,7 +3667,7 @@ class BlindController extends IPSModuleStrict
         }
 
         // 4. Zu kleine Bewegung zur Endposition
-        if ($diffPercentage < $minMoveEnd) {
+        if ($isEndPosition && ($diffPercentage < $minMoveEnd)) {
             $this->Logger_Dbg(__FUNCTION__, sprintf("#$id($propName): Endposition fast erreicht (Differenz %.2f%%).", $diffPercentage * 100));
             $this->moveSkipReason = sprintf('Endposition nahezu erreicht (Differenz %.0f %%)', $diffPercentage * 100);
             return false;
