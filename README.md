@@ -1,4 +1,5 @@
 [![Version](https://img.shields.io/badge/Symcon%20Version-8.1%20%3E-green.svg)](https://www.symcon.de/forum/threads/30857-IP-Symcon-5-1-%28Stable%29-Changelog)
+[![Checks](https://github.com/bumaas/BlindControl/actions/workflows/check.yml/badge.svg)](https://github.com/bumaas/BlindControl/actions/workflows/check.yml)
 [![Donate](https://img.shields.io/badge/Donate-Paypal-009cde.svg)](https://www.paypal.me/bumaas)
 # Blind Control
 
