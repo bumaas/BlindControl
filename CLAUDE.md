@@ -16,7 +16,7 @@ IP-Symcon-Modul zur Rollladen-/Jalousiesteuerung (`IPSModuleStrict`).
 - Wer „offen" anfahren will, nimmt `MinValue`; wer „geschlossen" will, `MaxValue`.
 - **Nie** per `isMinMaxReversed()`-Ternary zwischen Min- und Maxwert als Zielposition wählen — so entstand der Notfallkontakt-Bug (fuhr zu statt auf, gefixt in 2.50 build 101).
 - `isMinMaxReversed()` nur für Vergleichs-/Richtungslogik verwenden (z. B. min/max-Auswahl bei Begrenzungen).
-- `calculateNormalizedLevel` bildet MinValue auf 0 % (geschlossen-Anteil) ab; `combineOpeningLimits`/`combineClosingLimits` und die Abwärts-Erkennung folgen derselben Konvention.
+- `calculateNormalizedLevel` bildet MinValue auf 0 % (geschlossen-Anteil) ab; `combineContactLimits`/`pickContactLimit` und die Abwärts-Erkennung folgen derselben Konvention.
 
 ## Rollenverteilung der Darstellungs-Funktionen
 

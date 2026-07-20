@@ -319,8 +319,8 @@ class BlindController extends IPSModuleStrict
 
         for ($i = 1; $i <= 2; $i++) {
             for ($j = 2; $j <= 3; $j++) {
-                $fields[] = $this->openSlatsProp($i, $j);
-                $fields[] = $this->closeSlatsProp($i, $j);
+                $fields[] = $this->contactSlatsProp(true, $i, $j);
+                $fields[] = $this->contactSlatsProp(false, $i, $j);
             }
         }
 
@@ -447,29 +447,22 @@ class BlindController extends IPSModuleStrict
             return;
         }
 
-        // Separate Entprellung je Öffnen-Kontakt: nur die zuletzt gemeldete Position auswerten
-        for ($i = 1; $i <= 2; $i++) {
-            if ($SenderID === $this->ReadPropertyInteger(constant("self::PROP_CONTACTOPEN{$i}ID"))) {
-                $delay = $this->ReadPropertyInteger($this->openDelayProp($i));
-                if ($delay > 0 && IPS_GetKernelRunlevel() === KR_READY) {
-                    $timer = $i === 1 ? self::TIMER_OPEN_CONTACT1 : self::TIMER_OPEN_CONTACT2;
-                    $this->SetTimerInterval($timer, 0);
-                    $this->SetTimerInterval($timer, $delay * 1000);
-                    $this->Logger_Dbg(__FUNCTION__, sprintf('Öffnen-Kontakt %d: Auswertung um %d Sekunde(n) verzögert', $i, $delay));
-                    return;
+        // Separate Entprellung je Öffnen-/Schließen-Kontakt: nur die zuletzt gemeldete Position auswerten
+        foreach ([true, false] as $isOpening) {
+            for ($i = 1; $i <= 2; $i++) {
+                if ($SenderID !== $this->ReadPropertyInteger($this->contactIdProp($isOpening, $i))) {
+                    continue;
                 }
-            }
-        }
-
-        // Separate Entprellung je Schließen-Kontakt: nur die zuletzt gemeldete Position auswerten
-        for ($i = 1; $i <= 2; $i++) {
-            if ($SenderID === $this->ReadPropertyInteger(constant("self::PROP_CONTACTCLOSE{$i}ID"))) {
-                $delay = $this->ReadPropertyInteger($this->closeDelayProp($i));
+                $delay = $this->ReadPropertyInteger($this->contactDelayProp($isOpening, $i));
                 if ($delay > 0 && IPS_GetKernelRunlevel() === KR_READY) {
-                    $timer = $i === 1 ? self::TIMER_CLOSE_CONTACT1 : self::TIMER_CLOSE_CONTACT2;
+                    $timer = $this->contactDebounceTimer($isOpening, $i);
+                    // Erst auf 0 setzen: erzwingt den Timer-Neustart auch bei unverändertem Intervall (Entprellung)
                     $this->SetTimerInterval($timer, 0);
                     $this->SetTimerInterval($timer, $delay * 1000);
-                    $this->Logger_Dbg(__FUNCTION__, sprintf('Schließen-Kontakt %d: Auswertung um %d Sekunde(n) verzögert', $i, $delay));
+                    $this->Logger_Dbg(
+                        __FUNCTION__,
+                        sprintf('%s %d: Auswertung um %d Sekunde(n) verzögert', $this->contactFunctionLabel($isOpening), $i, $delay)
+                    );
                     return;
                 }
             }
@@ -1038,8 +1031,8 @@ class BlindController extends IPSModuleStrict
         );
 
         $levelContactEmergency      = $this->getLevelEmergencyContact();
-        $positionsContactOpenBlind  = $this->getPositionsOfOpenBlindContact();
-        $positionsContactCloseBlind = $this->getPositionsOfCloseBlindContact();
+        $positionsContactOpenBlind  = $this->getPositionsOfContacts(true);
+        $positionsContactCloseBlind = $this->getPositionsOfContacts(false);
 
         // Konfigurationsstatus der Kontakte (für den immer ausgegebenen Trace)
         $emergencyConfigured = IPS_VariableExists($this->ReadPropertyInteger(self::PROP_EMERGENCYCONTACTID));
@@ -1369,19 +1362,6 @@ class BlindController extends IPSModuleStrict
         $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSESLATSLEVEL2, 0);
         $this->RegisterPropertyBoolean(self::PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY, false);
 
-        //contacts close - value groups (up to three positions per contact) + per-contact debounce
-        //Position 1 nutzt die oben registrierten ContactCloseLevel{i}/ContactCloseSlatsLevel{i}
-        for ($i = 1; $i <= 2; $i++) {
-            $this->RegisterPropertyInteger($this->closeDelayProp($i), 0);
-            for ($j = 1; $j <= 3; $j++) {
-                $this->RegisterPropertyString($this->closeValuesProp($i, $j), '');
-            }
-            for ($j = 2; $j <= 3; $j++) {
-                $this->RegisterPropertyFloat($this->closeLevelProp($i, $j), 0);
-                $this->RegisterPropertyFloat($this->closeSlatsProp($i, $j), 0);
-            }
-        }
-
         //contacts open
         $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN1ID, 0);
         $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN2ID, 0);
@@ -1390,16 +1370,18 @@ class BlindController extends IPSModuleStrict
         $this->RegisterPropertyFloat(self::PROP_CONTACTOPENSLATSLEVEL1, 0);
         $this->RegisterPropertyFloat(self::PROP_CONTACTOPENSLATSLEVEL2, 0);
 
-        //contacts open - value groups (up to three positions per contact) + per-contact debounce
-        //Position 1 nutzt die oben registrierten ContactOpenLevel{i}/ContactOpenSlatsLevel{i}
-        for ($i = 1; $i <= 2; $i++) {
-            $this->RegisterPropertyInteger($this->openDelayProp($i), 0);
-            for ($j = 1; $j <= 3; $j++) {
-                $this->RegisterPropertyString($this->openValuesProp($i, $j), '');
-            }
-            for ($j = 2; $j <= 3; $j++) {
-                $this->RegisterPropertyFloat($this->openLevelProp($i, $j), 0);
-                $this->RegisterPropertyFloat($this->openSlatsProp($i, $j), 0);
+        //contacts open/close - value groups (up to three positions per contact) + per-contact debounce
+        //Position 1 nutzt die oben registrierten Contact{Open|Close}Level{i}/Contact{Open|Close}SlatsLevel{i}
+        foreach ([true, false] as $isOpening) {
+            for ($i = 1; $i <= 2; $i++) {
+                $this->RegisterPropertyInteger($this->contactDelayProp($isOpening, $i), 0);
+                for ($j = 1; $j <= 3; $j++) {
+                    $this->RegisterPropertyString($this->contactValuesProp($isOpening, $i, $j), '');
+                }
+                for ($j = 2; $j <= 3; $j++) {
+                    $this->RegisterPropertyFloat($this->contactLevelProp($isOpening, $i, $j), 0);
+                    $this->RegisterPropertyFloat($this->contactSlatsProp($isOpening, $i, $j), 0);
+                }
             }
         }
 
@@ -1931,8 +1913,8 @@ class BlindController extends IPSModuleStrict
         // Öffnen-/Schließen-Kontakt-Wertegruppen (Höhen der Zusatzpositionen 2/3) mitprüfen
         for ($i = 1; $i <= 2; $i++) {
             for ($j = 2; $j <= 3; $j++) {
-                $propertyBlindLevels[] = $this->openLevelProp($i, $j);
-                $propertyBlindLevels[] = $this->closeLevelProp($i, $j);
+                $propertyBlindLevels[] = $this->contactLevelProp(true, $i, $j);
+                $propertyBlindLevels[] = $this->contactLevelProp(false, $i, $j);
             }
         }
 
@@ -1985,8 +1967,8 @@ class BlindController extends IPSModuleStrict
         // Öffnen-/Schließen-Kontakt-Wertegruppen (Lamellen der Zusatzpositionen 2/3) mitprüfen
         for ($i = 1; $i <= 2; $i++) {
             for ($j = 2; $j <= 3; $j++) {
-                $propertySlatsLevels[] = $this->openSlatsProp($i, $j);
-                $propertySlatsLevels[] = $this->closeSlatsProp($i, $j);
+                $propertySlatsLevels[] = $this->contactSlatsProp(true, $i, $j);
+                $propertySlatsLevels[] = $this->contactSlatsProp(false, $i, $j);
             }
         }
 
@@ -2294,70 +2276,81 @@ class BlindController extends IPSModuleStrict
     }
 
 
-    // Property-Namen der Öffnen-Kontakt-Wertegruppen (i = Kontakt 1/2, j = Zustand 1..3)
-    private function openValuesProp(int $i, int $j): string
+    // Property-Namen der Öffnen-/Schließen-Kontakte (i = Kontakt 1/2, j = Zustand 1..3).
+    // Die Öffnen- und Schließen-Seite unterscheiden sich nur im Präfix; alle Logik läuft
+    // über den Parameter $isOpening durch dieselben Funktionen.
+    private function contactDirPrefix(bool $isOpening): string
     {
-        return sprintf('ContactOpenValues%d_%d', $i, $j);
+        return $isOpening ? 'Open' : 'Close';
     }
 
-    private function openLevelProp(int $i, int $j): string
+    private function contactIdProp(bool $isOpening, int $i): string
+    {
+        return sprintf('Contact%s%dID', $this->contactDirPrefix($isOpening), $i);
+    }
+
+    private function contactValuesProp(bool $isOpening, int $i, int $j): string
+    {
+        return sprintf('Contact%sValues%d_%d', $this->contactDirPrefix($isOpening), $i, $j);
+    }
+
+    private function contactLevelProp(bool $isOpening, int $i, int $j): string
     {
         // Position 1 nutzt das bestehende Property (kein "_1"-Suffix) -> keine Migration nötig
-        return $j === 1 ? sprintf('ContactOpenLevel%d', $i) : sprintf('ContactOpenLevel%d_%d', $i, $j);
+        return $j === 1
+            ? sprintf('Contact%sLevel%d', $this->contactDirPrefix($isOpening), $i)
+            : sprintf('Contact%sLevel%d_%d', $this->contactDirPrefix($isOpening), $i, $j);
     }
 
-    private function openSlatsProp(int $i, int $j): string
+    private function contactSlatsProp(bool $isOpening, int $i, int $j): string
     {
-        return $j === 1 ? sprintf('ContactOpenSlatsLevel%d', $i) : sprintf('ContactOpenSlatsLevel%d_%d', $i, $j);
+        return $j === 1
+            ? sprintf('Contact%sSlatsLevel%d', $this->contactDirPrefix($isOpening), $i)
+            : sprintf('Contact%sSlatsLevel%d_%d', $this->contactDirPrefix($isOpening), $i, $j);
     }
 
-    private function openDelayProp(int $i): string
+    private function contactDelayProp(bool $isOpening, int $i): string
     {
-        return sprintf('ContactOpenDelay%d', $i);
+        return sprintf('Contact%sDelay%d', $this->contactDirPrefix($isOpening), $i);
     }
 
-    // Property-Namen der Schließen-Kontakt-Wertegruppen (i = Kontakt 1/2, j = Zustand 1..3)
-    private function closeValuesProp(int $i, int $j): string
+    // Beschriftung der Kontaktfunktion für Labels, Trace und Debug-Log
+    private function contactFunctionLabel(bool $isOpening): string
     {
-        return sprintf('ContactCloseValues%d_%d', $i, $j);
+        return $isOpening ? 'Öffnen-Kontakt' : 'Schließen-Kontakt';
     }
 
-    private function closeLevelProp(int $i, int $j): string
+    private function contactDebounceTimer(bool $isOpening, int $i): string
     {
-        // Position 1 nutzt das bestehende Property (kein "_1"-Suffix) -> keine Migration nötig
-        return $j === 1 ? sprintf('ContactCloseLevel%d', $i) : sprintf('ContactCloseLevel%d_%d', $i, $j);
-    }
+        if ($isOpening) {
+            return $i === 1 ? self::TIMER_OPEN_CONTACT1 : self::TIMER_OPEN_CONTACT2;
+        }
 
-    private function closeSlatsProp(int $i, int $j): string
-    {
-        return $j === 1 ? sprintf('ContactCloseSlatsLevel%d', $i) : sprintf('ContactCloseSlatsLevel%d_%d', $i, $j);
-    }
-
-    private function closeDelayProp(int $i): string
-    {
-        return sprintf('ContactCloseDelay%d', $i);
+        return $i === 1 ? self::TIMER_CLOSE_CONTACT1 : self::TIMER_CLOSE_CONTACT2;
     }
 
     /**
-     * Ermittelt die Öffnungsbegrenzung der Öffnen-Kontakte.
+     * Ermittelt die Begrenzung der Öffnen- bzw. Schließen-Kontakte.
      *
      * Je Kontakt können bis zu drei Wertegruppen mit eigener Position konfiguriert sein.
      * Ist für einen Kontakt keine Wertegruppe gesetzt, gilt das klassische Boolean/Reversed-
-     * Verhalten mit ContactOpenLevel{i}/ContactOpenSlatsLevel{i}. Die Positionen der Kontakte
-     * werden - wie bisher - zur jeweils "am weitesten geöffneten" Position kombiniert.
+     * Verhalten mit Contact{Open|Close}Level{i}/Contact{Open|Close}SlatsLevel{i}. Mehrere
+     * gleichzeitig offene Kontakte werden kombiniert: bei Öffnen-Kontakten gewinnt die am
+     * weitesten geöffnete, bei Schließen-Kontakten die am weitesten geschlossene Position
+     * (combineContactLimits()).
      */
-    private function getPositionsOfOpenBlindContact(): ?array
+    private function getPositionsOfContacts(bool $isOpening): ?array
     {
         $blindPositions = null;
         $labels         = [];
 
         for ($i = 1; $i <= 2; $i++) {
-            $contactId = $this->ReadPropertyInteger(constant("self::PROP_CONTACTOPEN{$i}ID"));
+            $contactId = $this->ReadPropertyInteger($this->contactIdProp($isOpening, $i));
             if (!IPS_VariableExists($contactId)) {
                 continue;
             }
 
-            $position = $this->getSingleOpenContactPosition($i, $contactId);
+            $position = $this->getSingleContactPosition($isOpening, $i, $contactId);
             if ($position === null) {
                 continue;
             }
@@ -2367,7 +2360,7 @@ class BlindController extends IPSModuleStrict
             if ($blindPositions === null) {
                 $blindPositions = $position;
             } else {
-                $blindPositions = $this->combineOpeningLimits($blindPositions, $position);
+                $blindPositions = $this->combineContactLimits($blindPositions, $position, $isOpening);
             }
         }
 
@@ -2379,35 +2372,37 @@ class BlindController extends IPSModuleStrict
     }
 
     /**
-     * Liefert die Position eines einzelnen Öffnen-Kontakts oder null, wenn er nicht "offen" ist.
+     * Liefert die Position eines einzelnen Öffnen-/Schließen-Kontakts oder null, wenn er nicht "offen" ist.
      *
      * @return array{BlindLevel: float, SlatsLevel: float, label: string}|null
      */
-    private function getSingleOpenContactPosition(int $i, int $contactId): ?array
+    private function getSingleContactPosition(bool $isOpening, int $i, int $contactId): ?array
     {
+        $functionLabel = $this->contactFunctionLabel($isOpening);
+
         // Wertegruppen einsammeln (leere ignorieren)
         $hasValueGroups = false;
         for ($j = 1; $j <= 3; $j++) {
-            if (trim($this->ReadPropertyString($this->openValuesProp($i, $j))) !== '') {
+            if (trim($this->ReadPropertyString($this->contactValuesProp($isOpening, $i, $j))) !== '') {
                 $hasValueGroups = true;
                 break;
             }
         }
 
         // Klassisches Boolean-Verhalten, wenn keine Wertegruppe konfiguriert ist:
-        // Es gilt dann die bestehende Ein/Aus-Position (ContactOpenLevel{i}/SlatsLevel{i}).
+        // Es gilt dann die bestehende Ein/Aus-Position (= Position 1, Level-Property ohne Suffix).
         if (!$hasValueGroups) {
-            if (!$this->isContactOpen(constant("self::PROP_CONTACTOPEN{$i}ID"))) {
+            if (!$this->isContactOpen($this->contactIdProp($isOpening, $i))) {
                 return null;
             }
             $position = [
-                'BlindLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTOPENLEVEL{$i}")),
-                'SlatsLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTOPENSLATSLEVEL{$i}")),
-                'label'      => sprintf('Öffnen-Kontakt %d (%s)', $i, GetValueFormattedEx($contactId, GetValue($contactId)))
+                'BlindLevel' => $this->ReadPropertyFloat($this->contactLevelProp($isOpening, $i, 1)),
+                'SlatsLevel' => $this->ReadPropertyFloat($this->contactSlatsProp($isOpening, $i, 1)),
+                'label'      => sprintf('%s %d (%s)', $functionLabel, $i, GetValueFormattedEx($contactId, GetValue($contactId)))
             ];
             $this->Logger_Dbg(
                 __FUNCTION__,
-                sprintf('Öffnen-Kontakt %d (#%s): offen -> blindlevel: %s, slatslevel: %s', $i, $contactId, $position['BlindLevel'], $position['SlatsLevel'])
+                sprintf('%s %d (#%s): offen -> blindlevel: %s, slatslevel: %s', $functionLabel, $i, $contactId, $position['BlindLevel'], $position['SlatsLevel'])
             );
             return $position;
         }
@@ -2417,19 +2412,19 @@ class BlindController extends IPSModuleStrict
         $variableType = IPS_GetVariable($contactId)['VariableType'];
 
         for ($j = 1; $j <= 3; $j++) {
-            $configured = $this->ReadPropertyString($this->openValuesProp($i, $j));
+            $configured = $this->ReadPropertyString($this->contactValuesProp($isOpening, $i, $j));
             if (trim($configured) === '') {
                 continue;
             }
             if ($this->matchesConfiguredValue($value, $configured, $variableType)) {
                 $position = [
-                    'BlindLevel' => $this->ReadPropertyFloat($this->openLevelProp($i, $j)),
-                    'SlatsLevel' => $this->ReadPropertyFloat($this->openSlatsProp($i, $j)),
-                    'label'      => sprintf('Öffnen-Kontakt %d (%s)', $i, GetValueFormattedEx($contactId, $value))
+                    'BlindLevel' => $this->ReadPropertyFloat($this->contactLevelProp($isOpening, $i, $j)),
+                    'SlatsLevel' => $this->ReadPropertyFloat($this->contactSlatsProp($isOpening, $i, $j)),
+                    'label'      => sprintf('%s %d (%s)', $functionLabel, $i, GetValueFormattedEx($contactId, $value))
                 ];
                 $this->Logger_Dbg(
                     __FUNCTION__,
-                    sprintf('Öffnen-Kontakt %d (#%s): Wert "%s" trifft Zustand %d -> blindlevel: %s, slatslevel: %s', $i, $contactId, $this->formatConfiguredValue($value), $j, $position['BlindLevel'], $position['SlatsLevel'])
+                    sprintf('%s %d (#%s): Wert "%s" trifft Zustand %d -> blindlevel: %s, slatslevel: %s', $functionLabel, $i, $contactId, $this->formatConfiguredValue($value), $j, $position['BlindLevel'], $position['SlatsLevel'])
                 );
                 return $position;
             }
@@ -2437,112 +2432,7 @@ class BlindController extends IPSModuleStrict
 
         $this->Logger_Dbg(
             __FUNCTION__,
-            sprintf('Öffnen-Kontakt %d (#%s): Wert "%s" trifft keinen Zustand -> keine Wirkung', $i, $contactId, $this->formatConfiguredValue(GetValue($contactId)))
-        );
-
-        return null;
-    }
-
-    /**
-     * Ermittelt die Schließbegrenzung der Schließen-Kontakte.
-     *
-     * Je Kontakt können bis zu drei Wertegruppen mit eigener Position konfiguriert sein.
-     * Ist für einen Kontakt keine Wertegruppe gesetzt, gilt das klassische Boolean/Reversed-
-     * Verhalten mit ContactCloseLevel{i}/ContactCloseSlatsLevel{i}. Mehrere gleichzeitig offene
-     * Kontakte werden zur am weitesten geschlossenen Position kombiniert (combineClosingLimits()).
-     */
-    private function getPositionsOfCloseBlindContact(): ?array
-    {
-        $blindPositions = null;
-        $labels         = [];
-
-        for ($i = 1; $i <= 2; $i++) {
-            $contactId = $this->ReadPropertyInteger(constant("self::PROP_CONTACTCLOSE{$i}ID"));
-            if (!IPS_VariableExists($contactId)) {
-                continue;
-            }
-
-            $position = $this->getSingleCloseContactPosition($i, $contactId);
-            if ($position === null) {
-                continue;
-            }
-            $labels[] = $position['label'];
-            unset($position['label']);
-
-            if ($blindPositions === null) {
-                $blindPositions = $position;
-            } else {
-                $blindPositions = $this->combineClosingLimits($blindPositions, $position);
-            }
-        }
-
-        if ($blindPositions !== null) {
-            $blindPositions['labels'] = $labels;
-        }
-
-        return $blindPositions;
-    }
-
-    /**
-     * Liefert die Position eines einzelnen Schließen-Kontakts oder null, wenn er nicht "offen" ist.
-     *
-     * @return array{BlindLevel: float, SlatsLevel: float, label: string}|null
-     */
-    private function getSingleCloseContactPosition(int $i, int $contactId): ?array
-    {
-        // Wertegruppen einsammeln (leere ignorieren)
-        $hasValueGroups = false;
-        for ($j = 1; $j <= 3; $j++) {
-            if (trim($this->ReadPropertyString($this->closeValuesProp($i, $j))) !== '') {
-                $hasValueGroups = true;
-                break;
-            }
-        }
-
-        // Klassisches Boolean-Verhalten, wenn keine Wertegruppe konfiguriert ist:
-        // Es gilt dann die bestehende Ein/Aus-Position (ContactCloseLevel{i}/SlatsLevel{i}).
-        if (!$hasValueGroups) {
-            if (!$this->isContactOpen(constant("self::PROP_CONTACTCLOSE{$i}ID"))) {
-                return null;
-            }
-            $position = [
-                'BlindLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTCLOSELEVEL{$i}")),
-                'SlatsLevel' => $this->ReadPropertyFloat(constant("self::PROP_CONTACTCLOSESLATSLEVEL{$i}")),
-                'label'      => sprintf('Schließen-Kontakt %d (%s)', $i, GetValueFormattedEx($contactId, GetValue($contactId)))
-            ];
-            $this->Logger_Dbg(
-                __FUNCTION__,
-                sprintf('Schließen-Kontakt %d (#%s): offen -> blindlevel: %s, slatslevel: %s', $i, $contactId, $position['BlindLevel'], $position['SlatsLevel'])
-            );
-            return $position;
-        }
-
-        // Wertegruppen-Modus: erste passende Gruppe bestimmt die Position
-        $value        = GetValue($contactId);
-        $variableType = IPS_GetVariable($contactId)['VariableType'];
-
-        for ($j = 1; $j <= 3; $j++) {
-            $configured = $this->ReadPropertyString($this->closeValuesProp($i, $j));
-            if (trim($configured) === '') {
-                continue;
-            }
-            if ($this->matchesConfiguredValue($value, $configured, $variableType)) {
-                $position = [
-                    'BlindLevel' => $this->ReadPropertyFloat($this->closeLevelProp($i, $j)),
-                    'SlatsLevel' => $this->ReadPropertyFloat($this->closeSlatsProp($i, $j)),
-                    'label'      => sprintf('Schließen-Kontakt %d (%s)', $i, GetValueFormattedEx($contactId, $value))
-                ];
-                $this->Logger_Dbg(
-                    __FUNCTION__,
-                    sprintf('Schließen-Kontakt %d (#%s): Wert "%s" trifft Zustand %d -> blindlevel: %s, slatslevel: %s', $i, $contactId, $this->formatConfiguredValue($value), $j, $position['BlindLevel'], $position['SlatsLevel'])
-                );
-                return $position;
-            }
-        }
-
-        $this->Logger_Dbg(
-            __FUNCTION__,
-            sprintf('Schließen-Kontakt %d (#%s): Wert "%s" trifft keinen Zustand -> keine Wirkung', $i, $contactId, $this->formatConfiguredValue(GetValue($contactId)))
+            sprintf('%s %d (#%s): Wert "%s" trifft keinen Zustand -> keine Wirkung', $functionLabel, $i, $contactId, $this->formatConfiguredValue(GetValue($contactId)))
         );
 
         return null;
@@ -2597,41 +2487,31 @@ class BlindController extends IPSModuleStrict
     }
 
     /**
-     * Verknüpft zwei Öffnungsbegrenzungen. Es gewinnt jeweils die weiter geöffnete Position.
+     * Verknüpft zwei Kontakt-Begrenzungen: Bei Öffnen-Kontakten gewinnt jeweils die weiter
+     * geöffnete, bei Schließen-Kontakten die weiter geschlossene Position, damit die
+     * Anforderung aller gleichzeitig offenen Kontakte erfüllt wird.
      */
-    private function combineOpeningLimits(array $first, array $second): array
+    private function combineContactLimits(array $first, array $second, bool $isOpening): array
     {
-        $first['BlindLevel'] = $this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])
-            ? max($first['BlindLevel'], $second['BlindLevel'])
-            : min($first['BlindLevel'], $second['BlindLevel']);
+        $first['BlindLevel'] = $this->pickContactLimit($first['BlindLevel'], $second['BlindLevel'], $this->profileBlindLevel, $isOpening);
 
         if ($this->profileSlatsLevel !== null) {
-            $first['SlatsLevel'] = $this->isMinMaxReversed($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'])
-                ? max($first['SlatsLevel'], $second['SlatsLevel'])
-                : min($first['SlatsLevel'], $second['SlatsLevel']);
+            $first['SlatsLevel'] = $this->pickContactLimit($first['SlatsLevel'], $second['SlatsLevel'], $this->profileSlatsLevel, $isOpening);
         }
 
         return $first;
     }
 
     /**
-     * Verknüpft zwei Schließbegrenzungen. Es gewinnt jeweils die weiter geschlossene Position,
-     * damit die Anforderung aller gleichzeitig offenen Schließen-Kontakte erfüllt wird
-     * (exakt invertiert zu combineOpeningLimits).
+     * Wählt aus zwei Levelwerten den in Öffnungs- bzw. Schließrichtung weitergehenden aus.
+     * Konvention: MinValue ist immer die Offen-Position; isMinMaxReversed() bestimmt hier nur,
+     * ob "Richtung offen" numerisch min() oder max() bedeutet.
      */
-    private function combineClosingLimits(array $first, array $second): array
+    private function pickContactLimit(float $first, float $second, array $profile, bool $towardsOpen): float
     {
-        $first['BlindLevel'] = $this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])
-            ? min($first['BlindLevel'], $second['BlindLevel'])
-            : max($first['BlindLevel'], $second['BlindLevel']);
+        $reversed = $this->isMinMaxReversed($profile['MinValue'], $profile['MaxValue']);
 
-        if ($this->profileSlatsLevel !== null) {
-            $first['SlatsLevel'] = $this->isMinMaxReversed($this->profileSlatsLevel['MinValue'], $this->profileSlatsLevel['MaxValue'])
-                ? min($first['SlatsLevel'], $second['SlatsLevel'])
-                : max($first['SlatsLevel'], $second['SlatsLevel']);
-        }
-
-        return $first;
+        return ($towardsOpen !== $reversed) ? min($first, $second) : max($first, $second);
     }
 
 
