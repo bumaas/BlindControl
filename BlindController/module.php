@@ -1408,6 +1408,7 @@ class BlindController extends IPSModuleStrict
     {
         $objectIDs = [
             $this->ReadPropertyInteger(self::PROP_BLINDLEVELID),
+            $this->ReadPropertyInteger(self::PROP_SLATSLEVELID),
             $this->ReadPropertyInteger(self::PROP_WEEKLYTIMETABLEEVENTID),
             $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID),
             $this->ReadPropertyInteger(self::PROP_WAKEUPTIMEID),
