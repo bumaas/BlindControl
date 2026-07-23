@@ -1282,16 +1282,18 @@ class BlindController extends IPSModuleStrict
 
     private function RegisterProperties(): void
     {
-        $this->RegisterPropertyInteger(self::PROP_BLINDLEVELID, 0);
-        $this->RegisterPropertyInteger(self::PROP_SLATSLEVELID, 0);
+        // Objekt-Auswahl-Properties (SelectVariable/SelectEvent) werden mit 1 vorbelegt:
+        // Seit Symcon 6.2 steht 1 für "Kein(e)" (0 ist die Hauptkategorie und damit ein gültiges Objekt).
+        $this->RegisterPropertyInteger(self::PROP_BLINDLEVELID, 1);
+        $this->RegisterPropertyInteger(self::PROP_SLATSLEVELID, 1);
 
         //week plan
-        $this->RegisterPropertyInteger(self::PROP_WEEKLYTIMETABLEEVENTID, 0);
-        $this->RegisterPropertyInteger(self::PROP_HOLIDAYINDICATORID, 0);
+        $this->RegisterPropertyInteger(self::PROP_WEEKLYTIMETABLEEVENTID, 1);
+        $this->RegisterPropertyInteger(self::PROP_HOLIDAYINDICATORID, 1);
         $this->RegisterPropertyInteger(self::PROP_DAYUSEDWHENHOLIDAY, 0);
-        $this->RegisterPropertyInteger(self::PROP_WAKEUPTIMEID, 0);
+        $this->RegisterPropertyInteger(self::PROP_WAKEUPTIMEID, 1);
         $this->RegisterPropertyInteger(self::PROP_WAKEUPTIMEOFFSET, 0);
-        $this->RegisterPropertyInteger(self::PROP_BEDTIMEID, 0);
+        $this->RegisterPropertyInteger(self::PROP_BEDTIMEID, 1);
         $this->RegisterPropertyInteger(self::PROP_BEDTIMEOFFSET, 0);
         $this->RegisterPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALDAYLEVELS, false);
         $this->RegisterPropertyFloat(self::PROP_DAYBLINDLEVEL, 0);
@@ -1301,30 +1303,30 @@ class BlindController extends IPSModuleStrict
         $this->RegisterPropertyFloat(self::PROP_NIGHTSLATSLEVEL, 0);
 
         //day detection
-        $this->RegisterPropertyInteger(self::PROP_ISDAYINDICATORID, 0);
-        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSID, 0);
+        $this->RegisterPropertyInteger(self::PROP_ISDAYINDICATORID, 1);
+        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSID, 1);
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSAVGMINUTES, 0);
-        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID, 0);
+        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDID, 1);
 
         //overruling day times
-        $this->RegisterPropertyInteger(self::PROP_DAYSTARTID, 0);
-        $this->RegisterPropertyInteger(self::PROP_DAYENDID, 0);
+        $this->RegisterPropertyInteger(self::PROP_DAYSTARTID, 1);
+        $this->RegisterPropertyInteger(self::PROP_DAYENDID, 1);
 
         $this->RegisterPropertyInteger(self::PROP_DELAYTIMEDAYNIGHTCHANGE, 0);
         $this->RegisterPropertyBoolean(self::PROP_DELAYTIMEDAYNIGHTCHANGEISRANDOMLY, false);
 
         //shadowing according to sun position
-        $this->RegisterPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION, 0);
-        $this->RegisterPropertyInteger(self::PROP_AZIMUTHID, 0);
-        $this->RegisterPropertyInteger(self::PROP_ALTITUDEID, 0);
+        $this->RegisterPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBYSUNPOSITION, 1);
+        $this->RegisterPropertyInteger(self::PROP_AZIMUTHID, 1);
+        $this->RegisterPropertyInteger(self::PROP_ALTITUDEID, 1);
         $this->RegisterPropertyFloat(self::PROP_AZIMUTHFROM, 0);
         $this->RegisterPropertyFloat(self::PROP_AZIMUTHTO, 360);
         $this->RegisterPropertyFloat(self::PROP_ALTITUDEFROM, 0);
         $this->RegisterPropertyFloat(self::PROP_ALTITUDETO, 90);
-        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION, 0);
+        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION, 1);
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION, 0);
-        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION, 0);
-        $this->RegisterPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION, 0);
+        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION, 1);
+        $this->RegisterPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION, 1);
         $this->RegisterPropertyFloat('LowSunPositionAltitude', 0);
         $this->RegisterPropertyFloat('HighSunPositionAltitude', 0);
         $this->RegisterPropertyFloat(self::PROP_LOWSUNPOSITIONBLINDLEVEL, 0);
@@ -1343,19 +1345,19 @@ class BlindController extends IPSModuleStrict
         $this->RegisterPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTSLATSLEVEL, 0);
 
         //shadowing according to brightness
-        $this->RegisterPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS, 0);
-        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS, 0);
+        $this->RegisterPropertyInteger(self::PROP_ACTIVATORIDSHADOWINGBRIGHTNESS, 1);
+        $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS, 1);
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS, 0);
-        $this->RegisterPropertyInteger(self::PROP_THRESHOLDIDLESSBRIGHTNESS, 0);
+        $this->RegisterPropertyInteger(self::PROP_THRESHOLDIDLESSBRIGHTNESS, 1);
         $this->RegisterPropertyFloat(self::PROP_BLINDLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS, 0);
         $this->RegisterPropertyFloat(self::PROP_SLATSLEVELLESSBRIGHTNESSSHADOWINGBRIGHTNESS, 0);
-        $this->RegisterPropertyInteger(self::PROP_THRESHOLDIDHIGHBRIGHTNESS, 0);
+        $this->RegisterPropertyInteger(self::PROP_THRESHOLDIDHIGHBRIGHTNESS, 1);
         $this->RegisterPropertyFloat(self::PROP_BLINDLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS, 0);
         $this->RegisterPropertyFloat(self::PROP_SLATSLEVELHIGHBRIGHTNESSSHADOWINGBRIGHTNESS, 0);
 
         //contacts close
-        $this->RegisterPropertyInteger(self::PROP_CONTACTCLOSE1ID, 0);
-        $this->RegisterPropertyInteger(self::PROP_CONTACTCLOSE2ID, 0);
+        $this->RegisterPropertyInteger(self::PROP_CONTACTCLOSE1ID, 1);
+        $this->RegisterPropertyInteger(self::PROP_CONTACTCLOSE2ID, 1);
         $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSELEVEL1, 0);
         $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSELEVEL2, 0);
         $this->RegisterPropertyFloat(self::PROP_CONTACTCLOSESLATSLEVEL1, 0);
@@ -1363,8 +1365,8 @@ class BlindController extends IPSModuleStrict
         $this->RegisterPropertyBoolean(self::PROP_CONTACTSTOCLOSEHAVEHIGHERPRIORITY, false);
 
         //contacts open
-        $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN1ID, 0);
-        $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN2ID, 0);
+        $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN1ID, 1);
+        $this->RegisterPropertyInteger(self::PROP_CONTACTOPEN2ID, 1);
         $this->RegisterPropertyFloat(self::PROP_CONTACTOPENLEVEL1, 0);
         $this->RegisterPropertyFloat(self::PROP_CONTACTOPENLEVEL2, 0);
         $this->RegisterPropertyFloat(self::PROP_CONTACTOPENSLATSLEVEL1, 0);
@@ -1386,7 +1388,7 @@ class BlindController extends IPSModuleStrict
         }
 
         //emergency contact
-        $this->RegisterPropertyInteger(self::PROP_EMERGENCYCONTACTID, 0);
+        $this->RegisterPropertyInteger(self::PROP_EMERGENCYCONTACTID, 1);
 
 
         $this->RegisterPropertyInteger(self::PROP_UPDATEINTERVAL, 1);
