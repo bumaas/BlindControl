@@ -45,6 +45,7 @@ class BlindController extends IPSModuleStrict
     private const int STATUS_INST_BLINDLEVEL_ID_PROFILE_MIN_MAX_INVALID                  = 238;
     private const int STATUS_INST_SLATSLEVEL_ID_PROFILE_MIN_MAX_INVALID                  = 239;
     private const int STATUS_INST_SLATSLEVEL_ID_PROFILE_NOT_SET                          = 240;
+    private const int STATUS_INST_CONTACT_VALUES_ARE_INVALID                             = 242;
 
     // -- property names --
     private const string PROP_BLINDLEVELID                      = 'BlindLevelID';
@@ -1577,6 +1578,11 @@ class BlindController extends IPSModuleStrict
             return;
         }
 
+        if ($ret = $this->checkContactValuesGroup()) {
+            $this->SetStatus($ret);
+            return;
+        }
+
         if ($ret = $this->checkShadowingBySunPositionGroup()) {
             $this->SetStatus($ret);
             return;
@@ -1776,6 +1782,38 @@ class BlindController extends IPSModuleStrict
             self::STATUS_INST_EMERGENCY_CONTACT_ID_IS_INVALID
         )) {
             return $ret;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Prüft die Rohwert-Felder aller Kontakte: Bei numerischen Kontaktvariablen muss jedes
+     * Token ein exakter Wert, ein Vergleich (>x, >=x, <x, <=x) oder ein Bereich (a-b) sein.
+     */
+    private function checkContactValuesGroup(): int
+    {
+        foreach ([true, false] as $isOpening) {
+            for ($i = 1; $i <= 2; $i++) {
+                $contactId = $this->ReadPropertyInteger($this->contactIdProp($isOpening, $i));
+                if (!IPS_VariableExists($contactId)) {
+                    continue;
+                }
+                if (!in_array(IPS_GetVariable($contactId)['VariableType'], [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT], true)) {
+                    continue;
+                }
+                for ($j = 1; $j <= 3; $j++) {
+                    $propName = $this->contactValuesProp($isOpening, $i, $j);
+                    foreach ($this->splitConfiguredValues($this->ReadPropertyString($propName)) as $token) {
+                        if ($this->parseNumericToken($token) === null) {
+                            $this->Logger_Err(
+                                sprintf('%s: Rohwert "%s" ist ungültig (erlaubt: Zahl, >x, >=x, <x, <=x, a-b; Dezimaltrennzeichen ist der Punkt)', $propName, $token)
+                            );
+                            return self::STATUS_INST_CONTACT_VALUES_ARE_INVALID;
+                        }
+                    }
+                }
+            }
         }
 
         return 0;
@@ -2441,14 +2479,16 @@ class BlindController extends IPSModuleStrict
         return null;
     }
 
+    private const float RAW_VALUE_EPSILON = 0.000001;
+
     /**
      * Vergleicht einen Variablenwert mit einer kommaseparierten Liste konfigurierter Werte.
+     * Numerische Variablen unterstützen neben exakten Werten auch Vergleiche (>x, >=x, <x, <=x)
+     * und Bereiche (a-b); das Komma bleibt Listentrenner, Dezimaltrennzeichen ist der Punkt.
      */
     private function matchesConfiguredValue(mixed $actualValue, string $configuredValues, int $variableType): bool
     {
-        $values = array_filter(array_map('trim', explode(',', $configuredValues)), static fn(string $value): bool => $value !== '');
-
-        foreach ($values as $value) {
+        foreach ($this->splitConfiguredValues($configuredValues) as $value) {
             switch ($variableType) {
                 case VARIABLETYPE_BOOLEAN:
                     $configuredValue = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
@@ -2458,13 +2498,8 @@ class BlindController extends IPSModuleStrict
                     break;
 
                 case VARIABLETYPE_INTEGER:
-                    if (filter_var($value, FILTER_VALIDATE_INT) !== false && $actualValue === (int)$value) {
-                        return true;
-                    }
-                    break;
-
                 case VARIABLETYPE_FLOAT:
-                    if (is_numeric($value) && abs((float)$actualValue - (float)$value) <= 0.000001) {
+                    if ($this->matchesNumericToken((float)$actualValue, $value)) {
                         return true;
                     }
                     break;
@@ -2478,6 +2513,58 @@ class BlindController extends IPSModuleStrict
         }
 
         return false;
+    }
+
+    /** @return string[] */
+    private function splitConfiguredValues(string $configuredValues): array
+    {
+        return array_filter(array_map('trim', explode(',', $configuredValues)), static fn(string $value): bool => $value !== '');
+    }
+
+    /**
+     * Zerlegt ein Rohwert-Token für numerische Variablen.
+     * Liefert ['op' => '>'|'>='|'<'|'<='|'='|'range', 'a' => float, 'b' => float (nur range)]
+     * oder null, wenn das Token nicht interpretierbar ist.
+     */
+    private function parseNumericToken(string $token): ?array
+    {
+        $num = '[+-]?(?:\d+(?:\.\d+)?|\.\d+)';
+
+        if (preg_match('/^(>=|<=|>|<)\s*(' . $num . ')$/', $token, $matches)) {
+            return ['op' => $matches[1], 'a' => (float)$matches[2]];
+        }
+
+        if (preg_match('/^(' . $num . ')\s*-\s*(' . $num . ')$/', $token, $matches)) {
+            $first  = (float)$matches[1];
+            $second = (float)$matches[2];
+            return ['op' => 'range', 'a' => min($first, $second), 'b' => max($first, $second)];
+        }
+
+        if (is_numeric($token)) {
+            return ['op' => '=', 'a' => (float)$token];
+        }
+
+        return null;
+    }
+
+    private function matchesNumericToken(float $actualValue, string $token): bool
+    {
+        $parsed = $this->parseNumericToken($token);
+        if ($parsed === null) {
+            $this->Logger_Dbg(__FUNCTION__, sprintf('Rohwert-Token "%s" ist nicht interpretierbar -> kein Treffer', $token));
+            return false;
+        }
+
+        $eps = self::RAW_VALUE_EPSILON;
+
+        return match ($parsed['op']) {
+            '='     => abs($actualValue - $parsed['a']) <= $eps,
+            '>'     => $actualValue > $parsed['a'] + $eps,
+            '>='    => $actualValue >= $parsed['a'] - $eps,
+            '<'     => $actualValue < $parsed['a'] - $eps,
+            '<='    => $actualValue <= $parsed['a'] + $eps,
+            'range' => $actualValue >= $parsed['a'] - $eps && $actualValue <= $parsed['b'] + $eps,
+        };
     }
 
     private function formatConfiguredValue(mixed $value): string
