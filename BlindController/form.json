@@ -8,7 +8,12 @@
         {
           "type":  "ExpansionPanel", "caption": "Time Schedule",
           "items": [
-            {"type": "SelectEvent", "name": "WeeklyTimeTableEventID", "caption": "Weekly Timetable Event ID"},
+            {
+              "type": "RowLayout", "items": [
+              {"type": "SelectEvent", "name": "WeeklyTimeTableEventID", "caption": "Weekly Timetable Event ID", "onChange": "IPS_RequestAction($id, 'WeeklyTimeTableEventID', $WeeklyTimeTableEventID);"},
+              {"type": "Button", "name": "CreateWeeklySchedule", "caption": "Create weekly schedule", "confirm": "Create a weekly schedule below this BlindControl instance with opening at 07:00 and closing at 22:00?", "onClick": "echo BLC_CreateWeeklySchedule($id, $WeeklyTimeTableEventID);"}
+            ]
+            },
             {
               "type":  "ExpansionPanel", "caption": "Consider Holiday (optional)",
               "items": [

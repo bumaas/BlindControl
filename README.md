@@ -140,6 +140,9 @@ Das gleiche Vorgehen empfiehlt sich auch für die Überprüfung der Lamellenposi
 
 
 ### 5.2 Einrichtung des Wochenplans
+
+**Tipp:** Wer noch keinen Wochenplan hat, kann ihn direkt aus dem Konfigurationsformular anlegen: Die Schaltfläche „Wochenplan anlegen" neben der Wochenplan-Auswahl erstellt unterhalb der Instanz einen Standard-Wochenplan (Öffnen 07:00, Schließen 22:00, alle Wochentage) und wählt ihn automatisch aus. Die Zeiten lassen sich anschließend im Wochenplan anpassen; ein bereits ausgewählter Wochenplan wird nie überschrieben.
+
 Für die Fahrzeiten ist ein Wochenplan Ereignis anzulegen mit folgenden Einstellungen:
  
 ![image](docs/Wochenplan.jpg)

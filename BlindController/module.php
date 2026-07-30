@@ -154,6 +154,9 @@ class BlindController extends IPSModuleStrict
     private const string TIMER_CLOSE_CONTACT2   = 'CloseContact2';
 
 
+    //event idents
+    private const string EVENT_IDENT_WEEKLY_SCHEDULE = 'BlindControlWeeklySchedule';
+
     //variable names
     private const string VAR_IDENT_LAST_MESSAGE   = 'LAST_MESSAGE';
     private const string VAR_IDENT_LAST_DECISION  = 'LAST_DECISION';
@@ -268,6 +271,10 @@ class BlindController extends IPSModuleStrict
                 $this->ControlBlind(false);
                 break;
 
+            case self::PROP_WEEKLYTIMETABLEEVENTID:
+                $this->UpdateFormField('CreateWeeklySchedule', 'enabled', !IPS_EventExists((int)$Value));
+                break;
+
             case self::PROP_SLATSLEVELID:
             case self::PROP_HOLIDAYINDICATORID:
             case self::PROP_WAKEUPTIMEID:
@@ -283,6 +290,76 @@ class BlindController extends IPSModuleStrict
             default:
                 trigger_error(sprintf('Instance %s: Unknown Ident %s', $this->InstanceID, $Ident));
         }
+    }
+
+    /**
+     * Legt nach ausdrücklicher Benutzeraktion (Formular-Button) einen einfachen Wochenplan
+     * unterhalb der Instanz an (Öffnen 07:00 / Schließen 22:00, alle Wochentage) und wählt ihn
+     * im Formular aus. Ein bereits ausgewählter oder früher durch das Modul angelegter
+     * Wochenplan wird nie überschrieben.
+     */
+    public function CreateWeeklySchedule(int $selectedEventID): string
+    {
+        if (IPS_EventExists($selectedEventID)) {
+            $this->UpdateFormField('CreateWeeklySchedule', 'enabled', false);
+            if (IPS_GetEvent($selectedEventID)['EventType'] === EVENTTYPE_SCHEDULE) {
+                return sprintf(
+                    $this->Translate('Weekly schedule "%s" (#%d) is already selected. No new schedule was created.'),
+                    IPS_GetName($selectedEventID),
+                    $selectedEventID
+                );
+            }
+
+            return $this->Translate('The selected event is not a weekly schedule. Clear the selection before creating one.');
+        }
+
+        $existingEventID = @IPS_GetObjectIDByIdent(self::EVENT_IDENT_WEEKLY_SCHEDULE, $this->InstanceID);
+        if ($existingEventID !== false) {
+            if (!IPS_EventExists($existingEventID) || IPS_GetEvent($existingEventID)['EventType'] !== EVENTTYPE_SCHEDULE) {
+                return $this->Translate('An object with the reserved weekly schedule identifier already exists. No schedule was created.');
+            }
+
+            $this->UpdateFormField(self::PROP_WEEKLYTIMETABLEEVENTID, 'value', $existingEventID);
+            $this->UpdateFormField('CreateWeeklySchedule', 'enabled', false);
+            return sprintf(
+                $this->Translate('The existing module weekly schedule "%s" (#%d) has been selected. Apply the configuration to use it.'),
+                IPS_GetName($existingEventID),
+                $existingEventID
+            );
+        }
+
+        $eventID = IPS_CreateEvent(EVENTTYPE_SCHEDULE);
+        try {
+            // Aktionen bleiben ohne Skript: das Modul wertet nur die Aktionszeiten und -typen aus
+            // (ActionID 2 = Öffnen, ActionID 1 = Schließen, siehe checkTimeTable/getUpAndDownPoints)
+            $configured = IPS_SetParent($eventID, $this->InstanceID)
+                          && IPS_SetIdent($eventID, self::EVENT_IDENT_WEEKLY_SCHEDULE)
+                          && IPS_SetName($eventID, $this->Translate('BlindControl weekly schedule'))
+                          && IPS_SetEventScheduleAction($eventID, 1, $this->Translate('Close blind'), 0xE74C3C, '')
+                          && IPS_SetEventScheduleAction($eventID, 2, $this->Translate('Open blind'), 0x2ECC71, '')
+                          && IPS_SetEventScheduleGroup($eventID, 0, 127)
+                          && IPS_SetEventScheduleGroupPoint($eventID, 0, 0, 7, 0, 0, 2)
+                          && IPS_SetEventScheduleGroupPoint($eventID, 0, 1, 22, 0, 0, 1)
+                          && IPS_SetEventActive($eventID, false);
+
+            if (!$configured) {
+                throw new RuntimeException('The weekly schedule could not be configured.');
+            }
+        } catch (Throwable $exception) {
+            if (IPS_EventExists($eventID)) {
+                IPS_DeleteEvent($eventID);
+            }
+            $this->Logger_Err(sprintf('CreateWeeklySchedule: %s', $exception->getMessage()));
+            return $this->Translate('The weekly schedule could not be created. See the log for details.');
+        }
+
+        $this->UpdateFormField(self::PROP_WEEKLYTIMETABLEEVENTID, 'value', $eventID);
+        $this->UpdateFormField('CreateWeeklySchedule', 'enabled', false);
+        return sprintf(
+            $this->Translate('Weekly schedule "%s" (#%d) was created and selected. Adjust its times if necessary, then apply the configuration.'),
+            IPS_GetName($eventID),
+            $eventID
+        );
     }
 
     private function handleActivation(mixed $Value): void
@@ -578,6 +655,14 @@ class BlindController extends IPSModuleStrict
                                          ($this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL) > 0) ||
                                          ($this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL) > 0) ||
                                          $bShow
+        );
+
+        // 5. Das Anlegen eines Wochenplans nur anbieten, solange noch keiner ausgewählt ist
+        $form = $this->MyUpdateFormField(
+            $form,
+            'CreateWeeklySchedule',
+            'enabled',
+            !IPS_EventExists($this->ReadPropertyInteger(self::PROP_WEEKLYTIMETABLEEVENTID))
         );
     }
     public function ReceiveData(string $JSONString): string
@@ -4371,11 +4456,9 @@ class BlindController extends IPSModuleStrict
                 $item = $this->MyUpdateFormField($item, $name, $parameter, $value);
             } elseif (isset($item['items'])) {
                 $item['items'] = $this->MyUpdateFormField($item['items'], $name, $parameter, $value);
-            } elseif (isset($item['type']) && in_array($item['type'], ['Select', 'NumberSpinner', 'SelectVariable'])) {
-                if ($item['name'] === $name) {
-                    $item[$parameter] = $value;
-                    return $form;
-                }
+            } elseif (isset($item['name']) && $item['name'] === $name) {
+                $item[$parameter] = $value;
+                return $form;
             }
         }
         return $form;
