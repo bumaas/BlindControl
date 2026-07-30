@@ -1775,6 +1775,26 @@ class BlindController extends IPSModuleStrict
         }
 
         if ($ret = $this->checkVariableId(
+            self::PROP_CONTACTCLOSE1ID,
+            true,
+            [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT, VARIABLETYPE_STRING],
+            false,
+            self::STATUS_INST_CONTACT1_ID_IS_INVALID
+        )) {
+            return $ret;
+        }
+
+        if ($ret = $this->checkVariableId(
+            self::PROP_CONTACTCLOSE2ID,
+            true,
+            [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT, VARIABLETYPE_STRING],
+            false,
+            self::STATUS_INST_CONTACT2_ID_IS_INVALID
+        )) {
+            return $ret;
+        }
+
+        if ($ret = $this->checkVariableId(
             self::PROP_EMERGENCYCONTACTID,
             true,
             [VARIABLETYPE_BOOLEAN, VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
