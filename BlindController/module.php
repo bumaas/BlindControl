@@ -264,6 +264,7 @@ class BlindController extends IPSModuleStrict
             case self::TIMER_CLOSE_CONTACT2:
                 // Ablauf der Beruhigungszeit: zuletzt gemeldeten Kontaktzustand auswerten
                 $this->SetTimerInterval($Ident, 0);
+                $this->SetInstanceStatusAndTimerEvent();
                 $this->ControlBlind(false);
                 break;
 
@@ -442,8 +443,6 @@ class BlindController extends IPSModuleStrict
             return;
         }
 
-        $this->SetInstanceStatusAndTimerEvent();
-
         if (!$this->GetValue(self::VAR_IDENT_ACTIVATED)) {
             return;
         }
@@ -468,6 +467,10 @@ class BlindController extends IPSModuleStrict
                 }
             }
         }
+
+        // Validierung erst hier: entprellte Kontakte validieren beim Ablauf ihres Timers,
+        // damit nicht jeder transiente Rohwert eine Komplettvalidierung auslöst
+        $this->SetInstanceStatusAndTimerEvent();
 
         // Prüfen, ob die Verzögerungszeit (DeactivationTimeAuto) berücksichtigt werden soll
         $isTriggerSource = in_array(
