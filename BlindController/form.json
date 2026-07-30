@@ -161,12 +161,13 @@
                 {"type": "Label", "caption": "Window position and height"},
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "NumberSpinner", "name": "WindowOrientation", "caption": "Orientation of the window (South = 180°)", "digits": "0", "minimum": 0, "suffix": "°"},
+                  {"type": "NumberSpinner", "name": "WindowOrientation", "caption": "Orientation of the window (South = 180°)", "digits": "0", "minimum": 0, "maximum": 360, "suffix": "°", "onChange": "IPS_RequestAction($id, 'WindowOrientation', $WindowOrientation);"},
                   {"type": "NumberSpinner", "name": "WindowsSlope", "caption": "Slope of the window (vertical = 90°)", "digits": "0", "maximum": 180, "minimum": 0,"suffix": "°"},
                   {"type": "NumberSpinner", "name": "WindowHeight", "caption": "Height of the window (glass inside the frame)", "digits": "0", "minimum": 0, "suffix": " cm"},
                   {"type": "NumberSpinner", "name": "ParapetHeight", "caption": "Height of the Parapet (distance from glas to shadow level)", "digits": "0", "minimum": 0, "suffix": " cm"}
                 ]
                 },
+                {"type": "Label", "name": "WindowOrientationHint", "caption": "Compass direction of the window: %s"},
                 {"type": "Label", "caption": "Shading positions"},
                 {
                   "type": "RowLayout", "items": [

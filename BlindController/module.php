@@ -275,6 +275,10 @@ class BlindController extends IPSModuleStrict
                 $this->UpdateFormField('CreateWeeklySchedule', 'enabled', !IPS_EventExists((int)$Value));
                 break;
 
+            case self::PROP_WINDOWORIENTATION:
+                $this->UpdateFormField('WindowOrientationHint', 'caption', $this->buildWindowOrientationHint((float)$Value));
+                break;
+
             case self::PROP_SLATSLEVELID:
             case self::PROP_HOLIDAYINDICATORID:
             case self::PROP_WAKEUPTIMEID:
@@ -664,6 +668,26 @@ class BlindController extends IPSModuleStrict
             'enabled',
             !IPS_EventExists($this->ReadPropertyInteger(self::PROP_WEEKLYTIMETABLEEVENTID))
         );
+
+        // 6. Himmelsrichtung zur eingetragenen Fensterausrichtung anzeigen
+        $form = $this->MyUpdateFormField(
+            $form,
+            'WindowOrientationHint',
+            'caption',
+            $this->buildWindowOrientationHint((float)$this->ReadPropertyInteger(self::PROP_WINDOWORIENTATION))
+        );
+    }
+
+    private function buildWindowOrientationHint(float $orientation): string
+    {
+        return sprintf($this->Translate('Compass direction of the window: %s'), $this->Translate($this->getCompassDirection($orientation)));
+    }
+
+    private function getCompassDirection(float $orientation): string
+    {
+        $directions = ['North', 'Northeast', 'East', 'Southeast', 'South', 'Southwest', 'West', 'Northwest'];
+        $azimuth    = fmod(fmod($orientation, 360.0) + 360.0, 360.0);
+        return $directions[((int)round($azimuth / 45)) % 8];
     }
     public function ReceiveData(string $JSONString): string
     {
