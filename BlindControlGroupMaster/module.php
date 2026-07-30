@@ -188,16 +188,12 @@ class BlindControlGroupMaster extends IPSModuleStrict
         }
 
         foreach ($blinds as $blind) {
-            if ($blind['Selected']) {
-                if (IPS_InstanceExists($blind['InstanceID'])) {
-                    $arr[] = [
-                        'instanceID' => $blind['InstanceID'],
-                        'Location'   => IPS_GetName($blind['InstanceID'])];
-                } else {
-                    $arr[] = [
-                        'instanceID' => $blind['InstanceID'],
-                        'Location'   => 'Not found!'];
-                }
+            // nicht (mehr) existierende Instanzen bleiben in der Konfigurationsliste sichtbar (GetListValues),
+            // werden aber von Gruppenaktionen ausgenommen
+            if ($blind['Selected'] && IPS_InstanceExists($blind['InstanceID'])) {
+                $arr[] = [
+                    'instanceID' => $blind['InstanceID'],
+                    'Location'   => IPS_GetName($blind['InstanceID'])];
             }
         }
         return $arr;
