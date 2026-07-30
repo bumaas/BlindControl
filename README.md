@@ -162,6 +162,8 @@ Dies kann beispielsweise ein Wochenplan mit den Aktionen 1 und 2 sein, bei dem l
 
 **Hinweis:** Sollen die Rollläden ausschließlich zur Beschattung fahren (kein klassischer Tag/Nacht-Wechsel), genügt der oben beschriebene 24-h-Wochenplan. Ein Deaktivieren des Wochenplans in Symcon hat keine Wirkung, da nur dessen Aktionszeiten und Aktionstypen ausgewertet werden.
 
+**Rezept – wechselnde Fahrzeiten (z. B. Schichtplan):** Wer statt fester Wochenplanzeiten täglich wechselnde Zeiten benötigt (etwa gemäß Dienstplan), nutzt dafür die übersteuernden Zeitvariablen `WakeUpTimeID` (Aufstehzeit) und `BedTimeID` (Schlafenszeit): Zwei String-Variablen im Format `HH:MM` anlegen, in der Instanz unter „Übersteuernde Auf- und Abzeiten (optional)" auswählen und per Skript oder Ereignis befüllen – z. B. abends aus einem Kalender (etwa dem Modul [iCal-Calendar](https://github.com/bumaas/iCal-Calendar)) den morgigen Schichteintrag auslesen und die passenden Zeiten in die beiden Variablen schreiben. Gültige Zeiten in diesen Variablen haben Vorrang vor dem Wochenplan; eine ungültige oder leere Zeitangabe wird ignoriert, dann gilt wieder der Wochenplan.
+
 ### 5.3 Tagerkennung (optional)
 Ergänzend zum Wochenplan kann eine Tagerkennung eingerichtet werden. Diese kommt zum Einsatz, wenn neben den festen Fahrzeiten auch die Helligkeit berücksichtigt werden soll.
 
