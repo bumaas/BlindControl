@@ -2894,7 +2894,13 @@ class BlindController extends IPSModuleStrict
             $levelPositionHeat = round($this->calculateProfilePositionByPercent(90.0, $this->profileBlindLevel), 2);
 
             if (($temperature > 30.0) || ((round($levelAct, 1) === round($levelPositionHeat, 1)) && ($temperature > (30.0 - 0.5)))) {
-                $positions['BlindLevel'] = $levelPositionHeat;
+                // Hitzeschutz wirkt nur als Mindest-Schließung: eine bereits weiter geschlossene
+                // Beschattungsposition (Richtung MaxValue) darf nicht wieder geöffnet werden
+                if ($this->isMinMaxReversed($this->profileBlindLevel['MinValue'], $this->profileBlindLevel['MaxValue'])) {
+                    $positions['BlindLevel'] = min($positions['BlindLevel'], $levelPositionHeat);
+                } else {
+                    $positions['BlindLevel'] = max($positions['BlindLevel'], $levelPositionHeat);
+                }
                 $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 30°, levelAct: %.2f, level: %.2f', $levelAct, $positions['BlindLevel']));
                 $this->shadowingHeatInfo = sprintf('Hitzeschutz: %s > 30 °C', GetValueFormattedEx($temperatureID, $temperature));
                 return $positions;

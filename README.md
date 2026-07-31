@@ -204,7 +204,7 @@ dann ist die Anzahl der Minuten anzugeben, über die der Durchschnitt gebildet w
 Zusätzlich kann eine Temperaturvariable (Außentemperatur) angegeben werden. Sie wirkt **zweifach**:
 
 1. **Beschattungsbeginn (Helligkeitsschwellwert):** Über 24 °C wird der Schwellwert gesenkt (10 % je Grad über 24 °C) → frühere Beschattung; unter 10 °C wird er angehoben (10 % je Grad unter 10 °C) → die Sonne wird erst später 'ausgesperrt'.
-2. **Behanghöhe (Hitzeschutz):** Wenn die Temperatur 27 °C übersteigt, wird der Rollladen um weitere 15 % heruntergefahren, wenn die Temperatur 30 °C übersteigt, dann wird der Rollladen auf einen Schließungsgrad (Behanghöhe) von 90 %.
+2. **Behanghöhe (Hitzeschutz):** Wenn die Temperatur 27 °C übersteigt, wird der Rollladen um weitere 15 % heruntergefahren, wenn die Temperatur 30 °C übersteigt, dann wird der Rollladen auf einen Schließungsgrad (Behanghöhe) von mindestens 90 %. Ergibt die Beschattungsberechnung bereits eine stärkere Schließung als 90 %, bleibt diese erhalten – die Temperatur begrenzt nur das Öffnen, verhindert aber kein weiteres Schließen.
 
 Hinweis: Der Hitzeschutz (Punkt 2) greift, solange die Beschattung nach Sonnenstand aktiv ist (Helligkeit über Schwellwert sowie Azimut und Sonnenhöhe im eingestellten Bereich) – auch dann, wenn die Sonne das Fenster geometrisch bereits nicht mehr trifft.
 
