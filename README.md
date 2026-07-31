@@ -5,7 +5,7 @@
 
 Modul für Symcon ab Version 8.1.
 
-Steuert einen Rollladen bzw. eine Jalousie nach vorgegebenen Einstellungen.
+Automatisiert Rollläden, Jalousien und Markisen: feste Fahrzeiten per Wochenplan, tageslichtabhängiges Öffnen und Schließen sowie Beschattung nach Sonnenstand und Temperatur — mit Rücksicht auf geöffnete Fenster und Türen und mit Notfallöffnung.
 
 ## Dokumentation
 
