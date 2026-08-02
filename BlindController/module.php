@@ -3463,7 +3463,7 @@ class BlindController extends IPSModuleStrict
 
         // 3. Sperr-Logik
         if (!$isDay) {
-            $reason = sprintf('manuelle Bedienung in der Nacht (%s)', date('H:i', $tsManual));
+            $reason = sprintf('manuelle Bedienung erkannt (%s), Sperre bis zum nächsten Tag/Nacht-Wechsel', $this->formatTraceTime($tsManual));
             $this->Logger_Dbg(__FUNCTION__, 'Sperre: ' . $reason);
             return ['block' => true, 'reason' => $reason];
         }
@@ -3475,14 +3475,14 @@ class BlindController extends IPSModuleStrict
                     $this->levelsEqual($slatsLevelAct, $this->profileSlatsLevel['MaxValue'] ?? null);
 
         if ($isClosed) {
-            $reason = sprintf('manuell vollständig geschlossen (%s)', date('H:i', $tsManual));
+            $reason = sprintf('manuell vollständig geschlossen (%s), Sperre bis zum nächsten Tag/Nacht-Wechsel', $this->formatTraceTime($tsManual));
         } elseif ($deactivationTimeManuSecs === 0) {
-            $reason = sprintf('manuelle Bedienung am Tag (%s), Sperre bis zum nächsten Tag/Nacht-Wechsel', date('H:i', $tsManual));
+            $reason = sprintf('manuelle Bedienung erkannt (%s), Sperre bis zum nächsten Tag/Nacht-Wechsel', $this->formatTraceTime($tsManual));
         } elseif (strtotime("+ $deactivationTimeManuSecs seconds", $tsManual) > time()) {
             $reason = sprintf(
-                'manuelle Bedienung am Tag (%s), Sperre bis %s',
-                date('H:i', $tsManual),
-                date('H:i', strtotime("+ $deactivationTimeManuSecs seconds", $tsManual))
+                'manuelle Bedienung erkannt (%s), Sperre bis %s',
+                $this->formatTraceTime($tsManual),
+                $this->formatTraceTime(strtotime("+ $deactivationTimeManuSecs seconds", $tsManual))
             );
         } else {
             // Zeit abgelaufen -> Automatik wieder freigeben
@@ -4520,6 +4520,22 @@ class BlindController extends IPSModuleStrict
     private function FormatTimeStamp(int $ts): string
     {
         return date('Y-m-d H:i:s', $ts);
+    }
+
+    /**
+     * Formatiert einen Zeitpunkt für den Entscheidungs-Trace: von heute nur als Uhrzeit, von gestern
+     * mit dem Zusatz "gestern", sonst mit Datum. Der Zeitpunkt einer erkannten manuellen Bedienung
+     * kann Tage zurückliegen - eine reine Uhrzeit wäre dann missverständlich.
+     */
+    private function formatTraceTime(int $ts): string
+    {
+        if (date('Y-m-d', $ts) === date('Y-m-d')) {
+            return date('H:i', $ts);
+        }
+        if (date('Y-m-d', $ts) === date('Y-m-d', strtotime('yesterday'))) {
+            return 'gestern ' . date('H:i', $ts);
+        }
+        return date('d.m. H:i', $ts);
     }
 
     private function GetFormattedValue($variableID): string

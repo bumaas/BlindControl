@@ -366,7 +366,7 @@ Sie dokumentiert die Entscheidung des jeweils letzten Steuerungslaufs und beantw
 Beispiele:
 - `Fahrt: geschlossen. (Nacht)`
 - `Fahrt: Höhe 30 % geschlossen, Lamellen 50 % geschlossen. (Beschattung nach Sonnenstand)`
-- `Keine Fahrt: manuelle Bedienung am Tag (14:05), Sperre bis 16:05.`
+- `Keine Fahrt: manuelle Bedienung erkannt (14:05), Sperre bis 16:05.`
 - `Keine Fahrt: Zielposition bereits erreicht (Ziel: geöffnet, Tag).`
 
 Um den Verlauf der Entscheidungen im Webfront als Logfile darzustellen, empfiehlt es sich, die Archivierung für diese Variable einzuschalten.
@@ -397,6 +397,8 @@ Ergebnis: Fahrt: Höhe 60 % geschlossen (Beschattung nach Sonnenstand).
 ```
 
 Die Zeile „Bewegungssperre" bezieht sich auf die Sperre nach einer **erkannten manuellen Bedienung**: Ändert sich die Behanghöhe, ohne dass das Modul die Fahrt veranlasst hat (Taster, Visualisierung, fremdes Skript), pausiert die Automatik — tagsüber für die „Zeit der Deaktivierung nach manueller Fahrt" (0 = bis zum nächsten Tag/Nacht-Wechsel), bei manuell vollständig geschlossenem Behang oder nächtlicher Bedienung bis zum nächsten Tag/Nacht-Wechsel. Beim Tag/Nacht-Wechsel sowie beim Wieder-Einschalten der Automatik (Statusvariable ACTIVATED) wird die gemerkte Bedienung verworfen. „Bewegungssperre: keine" bedeutet: Aktuell liegt keine solche Sperre vor.
+
+Der in Klammern genannte Zeitpunkt ist der Zeitpunkt der **erkannten manuellen Bedienung**. Liegt er nicht am heutigen Tag, wird er mit „gestern" bzw. mit Datum ausgewiesen (z. B. `gestern 21:57` oder `31.07. 21:57`) — das kann etwa vorkommen, wenn die Automatik längere Zeit ausgeschaltet war und die gemerkte Bedienung deshalb noch nicht verworfen wurde.
 
 In der Beschattungs-Zeile wird der für die Beschattungsentscheidung **tatsächlich verwendete** Helligkeitswert zusammen mit dem Schwellwert angezeigt. Dieser Wert kann von der in der Zeile „Tageszeit" genannten Helligkeit abweichen: Zum einen kann für die Beschattung ein anderer Helligkeitssensor konfiguriert sein als für die Tag/Nacht-Erkennung, zum anderen wird für die Beschattung – sofern eine Mittelung über mehrere Minuten eingestellt ist – ein effektiver Wert aus aktuellem und gemitteltem Messwert herangezogen.
 
