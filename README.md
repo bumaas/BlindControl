@@ -403,11 +403,11 @@ Der in Klammern genannte Zeitpunkt ist der Zeitpunkt der **erkannten manuellen B
 In der Beschattungs-Zeile wird der für die Beschattungsentscheidung **tatsächlich verwendete** Helligkeitswert zusammen mit dem Schwellwert angezeigt. Dieser Wert kann von der in der Zeile „Tageszeit" genannten Helligkeit abweichen: Zum einen kann für die Beschattung ein anderer Helligkeitssensor konfiguriert sein als für die Tag/Nacht-Erkennung, zum anderen wird für die Beschattung – sofern eine Mittelung über mehrere Minuten eingestellt ist – ein effektiver Wert aus aktuellem und gemitteltem Messwert herangezogen.
 
 Ist ein **Temperatursensor** konfiguriert, fließt dessen Wert in die Beschattung nach Sonnenstand ein und wird im Trace sichtbar gemacht:
-- Der Helligkeits-Schwellwert wird temperaturabhängig angepasst (10 % je Grad über 24 °C bzw. unter 10 °C). Greift diese Anpassung, wird der Schwellwert mit dem Zusatz `(temperaturkorrigiert, 28 °C)` ausgewiesen.
-- Über 27 °C bzw. 30 °C wird der Behang zusätzlich abgesenkt; dies erscheint in der Beschattungszeile als Klartext, z. B. `Wärmeschutz: 28 °C > 27 °C` bzw. `Hitzeschutz: 31 °C > 30 °C`.
+- Der Helligkeits-Schwellwert wird temperaturabhängig angepasst (10 % je Grad über 24 °C bzw. unter 10 °C). Greift diese Anpassung, wird der Schwellwert zusammen mit dem konfigurierten Ausgangswert ausgewiesen, z. B. `Schwellwert 21000 lx (temperaturkorrigiert von 70000 lx, 31 °C)` — so ist der eigene, eingestellte Schwellwert direkt wiederzuerkennen.
+- Über 27 °C bzw. 30 °C wird der Behang zusätzlich abgesenkt; dies erscheint in der Beschattungszeile samt Wirkung als Klartext: `Wärmeschutz: 28 °C > 27 °C -> 15 % weiter geschlossen` bzw. `Hitzeschutz: 31 °C > 30 °C -> mindestens 90 % geschlossen`.
 
 ```
-Beschattung: aktiv -> Höhe 90 % geschlossen (Beschattung nach Sonnenstand, Helligkeit 45000 lx ≥ Schwellwert 21000 lx (temperaturkorrigiert, 31 °C), Hitzeschutz: 31 °C > 30 °C)
+Beschattung: aktiv -> Höhe 90 % geschlossen (Beschattung nach Sonnenstand, Helligkeit 45000 lx ≥ Schwellwert 21000 lx (temperaturkorrigiert von 70000 lx, 31 °C), Hitzeschutz: 31 °C > 30 °C -> mindestens 90 % geschlossen)
 ```
 
 Beispielausgabe, wenn **nicht** beschattet wird – der Grund wird genau benannt (Aktivierung, Helligkeit, Azimut bzw. Sonnenhöhe):

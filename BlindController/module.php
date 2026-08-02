@@ -2914,7 +2914,7 @@ class BlindController extends IPSModuleStrict
                     $positions['BlindLevel'] = max($positions['BlindLevel'], $levelPositionHeat);
                 }
                 $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 30°, levelAct: %.2f, level: %.2f', $levelAct, $positions['BlindLevel']));
-                $this->shadowingHeatInfo = sprintf('Hitzeschutz: %s > 30 °C', GetValueFormattedEx($temperatureID, $temperature));
+                $this->shadowingHeatInfo = sprintf('Hitzeschutz: %s > 30 °C -> mindestens 90 %% geschlossen', GetValueFormattedEx($temperatureID, $temperature));
                 return $positions;
             }
 
@@ -2934,7 +2934,7 @@ class BlindController extends IPSModuleStrict
                         $levelCorrectionHeat
                     )
                 );
-                $this->shadowingHeatInfo = sprintf('Wärmeschutz: %s > 27 °C', GetValueFormattedEx($temperatureID, $temperature));
+                $this->shadowingHeatInfo = sprintf('Wärmeschutz: %s > 27 °C -> 15 %% weiter geschlossen', GetValueFormattedEx($temperatureID, $temperature));
                 return $positions;
             }
         }
@@ -2994,11 +2994,16 @@ class BlindController extends IPSModuleStrict
             );
         }
 
-        // Hinweis, dass der Schwellwert temperaturbedingt angepasst wurde (10 % je Grad über 24 °C bzw. unter 10 °C)
+        // Hinweis, dass der Schwellwert temperaturbedingt angepasst wurde (10 % je Grad über 24 °C bzw. unter 10 °C);
+        // der konfigurierte Ausgangswert wird mitgenannt, damit der Anwender seinen eigenen Schwellwert wiedererkennt
         $tempNote = '';
         if ($temperature !== null && ($temperature > 24 || $temperature < 10)) {
+            $baseNote = IPS_VariableExists($thresholdID)
+                ? sprintf(' von %s', $this->formatBrightnessForTrace($thresholdID, (float)GetValue($thresholdID)))
+                : '';
             $tempNote = sprintf(
-                ' (temperaturkorrigiert, %s)',
+                ' (temperaturkorrigiert%s, %s)',
+                $baseNote,
                 GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION), $temperature)
             );
         }
