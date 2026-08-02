@@ -98,6 +98,8 @@ Führt einen **Probelauf** der Steuerung durch und liefert den vollständigen, l
 
 Der Probelauf ist **nebenwirkungsfrei**: Der Rollladen wird **nicht** bewegt, und es werden keine Zustände verändert (weder Statusvariablen noch interne Merker, Timer oder die Sperren für manuelle/automatische Bewegungen). Die Funktion kann daher jederzeit gefahrlos aufgerufen werden.
 
+Der Probelauf funktioniert auch bei **ausgeschalteter Automatik** (Statusvariable „Aktiviert" = aus); die Ausgabe enthält dann einen entsprechenden Hinweis. Nur bei fehlerhafter Konfiguration (Fehlerstatus der Instanz) ist kein Probelauf möglich.
+
 ```php
 BLCGM_GetBlinds(int $InstanceID): array
 ```
@@ -379,6 +381,8 @@ Im Unterschied zu `LAST_DECISION` (einzeilige Endentscheidung, nur bei einer *Ä
 ### Entscheidung erklären (Probelauf)
 
 Im Konfigurationsformular steht unter den Aktionen der Schalter **„Entscheidung erklären (Probelauf, keine Fahrt)"** zur Verfügung. Er führt einen nebenwirkungsfreien Probelauf durch (der Rollladen wird **nicht** bewegt und es werden keine Zustände verändert) und zeigt den kompletten Ablauf der Entscheidung Schritt für Schritt an – von der aktuellen Position über Tag/Nacht-Erkennung, Bewegungssperren, Basis-Zielposition, Beschattung und Kontakte bis zum Ergebnis. So lässt sich auf einen Blick erkennen, **warum** sich der Rollladen aktuell bewegen würde oder nicht.
+
+Der Probelauf funktioniert auch bei **ausgeschalteter Automatik** (Statusvariable „Aktiviert" = aus) – die Ausgabe beginnt dann mit dem Hinweis, dass die ermittelte Fahrt nur bei eingeschalteter Automatik ausgeführt würde. Nur bei fehlerhafter Konfiguration (Fehlerstatus der Instanz) ist kein Probelauf möglich.
 
 Beispielausgabe, wenn beschattet wird:
 ```

@@ -708,7 +708,10 @@ class BlindController extends IPSModuleStrict
      */
     public function ControlBlind(bool $considerDeactivationTimeAuto): bool
     {
-        if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
+        // ein Probelauf ("Erklären") ist auch bei ausgeschalteter Automatik (IS_INACTIVE) erlaubt,
+        // ein echter Lauf erfordert weiterhin eine aktive Instanz
+        $instanceStatus = IPS_GetInstance($this->InstanceID)['InstanceStatus'];
+        if ($instanceStatus !== IS_ACTIVE && !($this->dryRun && $instanceStatus === IS_INACTIVE)) {
             return false;
         }
 
@@ -773,6 +776,9 @@ class BlindController extends IPSModuleStrict
         $this->decisionTrace = [];
         if ($this->dryRun) {
             $this->addTrace($this->Translate('Explanation of the control run (test run - the blind is not moved)'));
+            if (!$this->GetValue(self::VAR_IDENT_ACTIVATED)) {
+                $this->addTrace($this->Translate('Note: The automatic control is switched off - the determined movement would only be executed with the automatic switched on.'));
+            }
             $this->addTrace('');
         }
         $this->addTrace(sprintf('Aktuelle Position: %s', $this->describeTargetPositions($positionsAct)));
@@ -921,7 +927,13 @@ class BlindController extends IPSModuleStrict
     /** @noinspection PhpUnused */
     public function ExplainControlBlind(): string
     {
-        if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
+        // auch bei ausgeschalteter Automatik (IS_INACTIVE) möglich - nur bei fehlerhafter
+        // Konfiguration (Fehlerstatus >= IS_EBASE) kann kein Probelauf gerechnet werden
+        $instanceStatus = IPS_GetInstance($this->InstanceID)['InstanceStatus'];
+        if (!in_array($instanceStatus, [IS_ACTIVE, IS_INACTIVE], true)) {
+            if ($instanceStatus >= IS_EBASE) {
+                return $this->Translate('The configuration is invalid (see instance status).');
+            }
             return $this->Translate('The instance is not active.');
         }
 

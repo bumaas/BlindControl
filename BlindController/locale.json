@@ -166,6 +166,8 @@
       "Perform control run": "Steuerungslauf durchführen",
       "Explain decision (test run, no movement)": "Entscheidung erklären (Probelauf, keine Fahrt)",
       "The instance is not active.": "Die Instanz ist nicht aktiv.",
+      "The configuration is invalid (see instance status).": "Die Konfiguration ist fehlerhaft (siehe Instanzstatus).",
+      "Note: The automatic control is switched off - the determined movement would only be executed with the automatic switched on.": "Hinweis: Die Automatik ist ausgeschaltet - die ermittelte Fahrt würde nur bei eingeschalteter Automatik ausgeführt.",
       "No decision could be determined (control run could not be performed).": "Es konnte keine Entscheidung ermittelt werden (Steuerungslauf nicht möglich).",
       "Explanation of the control run (test run - the blind is not moved)": "Erklärung des Steuerungslaufs (Probelauf - der Rollladen wird nicht bewegt)",
       "Weekly Timetable Event ID is not valid":                                       "'Wochenplan ID' ist ungültig",
