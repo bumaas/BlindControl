@@ -185,6 +185,10 @@ class BlindController extends IPSModuleStrict
     // Hinweis auf einen temperaturbedingten Hitze-/Wärmeschutz der Sonnenstand-Beschattung, für die Erklärung (gesetzt in getPositionsOfShadowingBySunPosition)
     private string $shadowingHeatInfo = '';
 
+    // Hinweis (z.B. " (Mittelwert über 10 min)"), wenn der zuletzt von GetBrightness() gelieferte Wert ein Archiv-Mittelwert
+    // und nicht der aktuelle Sensorwert ist - direkt nach dem GetBrightness()-Aufruf auszuwerten
+    private string $brightnessAvgInfo = '';
+
     // Steuerungslauf nur simulieren (Erklärung): Aktor wird nicht bewegt und keine Zustände (Attribute/Variablen/Timer) verändert
     private bool $dryRun = false;
 
@@ -970,6 +974,7 @@ class BlindController extends IPSModuleStrict
             'isDayByTimeSchedule' => $isDayByTimeSchedule,
             'isDayByDayDetection' => $isDayByDayDetection,
             'brightness'          => $brightness,
+            'brightnessAvgNote'   => $brightness !== null ? $this->brightnessAvgInfo : '',
             'scheduleAuf'         => $scheduleAuf,
             'scheduleAb'          => $scheduleAb
         ];
@@ -2944,9 +2949,11 @@ class BlindController extends IPSModuleStrict
             $reasons = [];
             if ($brightness !== null && $brightness < $thresholdBrightness) {
                 $reasons[] = sprintf(
-                    'Helligkeit %s unter Schwellwert %s',
+                    'Helligkeit %s%s unter Schwellwert %s%s',
                     $this->formatBrightnessForTrace($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION), $brightness),
-                    $this->formatBrightnessForTrace($this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION), $thresholdBrightness)
+                    $this->brightnessAvgInfo,
+                    $this->formatBrightnessForTrace($this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION), $thresholdBrightness),
+                    $this->buildThresholdTempNote($this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION), $temperature)
                 );
             }
             if (!$azimuthMatches) {
@@ -2979,6 +2986,7 @@ class BlindController extends IPSModuleStrict
     /**
      * Erzeugt die entscheidungsrelevante Helligkeitsangabe einer greifenden Beschattung
      * (effektiver, ggf. gemittelter Helligkeitswert und der Schwellwert), z.B. "Helligkeit 91317 lx ≥ Schwellwert 50000 lx".
+     * Muss direkt nach dem zugehörigen GetBrightness()-Aufruf verwendet werden (wertet $this->brightnessAvgInfo aus).
      *
      * Bei hohen Außentemperaturen senkt die Temperaturkorrektur den Schwellwert (10 % je Grad über 24 °C). Übersteigt
      * die Reduktion 100 %, wird der Schwellwert rechnerisch <= 0; die Beschattung erfolgt dann unabhängig von der
@@ -2988,31 +2996,40 @@ class BlindController extends IPSModuleStrict
     {
         if ($temperature !== null && $temperature > 24 && $threshold <= 0) {
             return sprintf(
-                'Helligkeit %s, Beschattung temperaturbedingt unabhängig von der Helligkeit (%s)',
+                'Helligkeit %s%s, Beschattung temperaturbedingt unabhängig von der Helligkeit (%s)',
                 $this->formatBrightnessForTrace($brightnessID, $brightness),
-                GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION), $temperature)
-            );
-        }
-
-        // Hinweis, dass der Schwellwert temperaturbedingt angepasst wurde (10 % je Grad über 24 °C bzw. unter 10 °C);
-        // der konfigurierte Ausgangswert wird mitgenannt, damit der Anwender seinen eigenen Schwellwert wiedererkennt
-        $tempNote = '';
-        if ($temperature !== null && ($temperature > 24 || $temperature < 10)) {
-            $baseNote = IPS_VariableExists($thresholdID)
-                ? sprintf(' von %s', $this->formatBrightnessForTrace($thresholdID, (float)GetValue($thresholdID)))
-                : '';
-            $tempNote = sprintf(
-                ' (temperaturkorrigiert%s, %s)',
-                $baseNote,
+                $this->brightnessAvgInfo,
                 GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION), $temperature)
             );
         }
 
         return sprintf(
-            'Helligkeit %s ≥ Schwellwert %s%s',
+            'Helligkeit %s%s ≥ Schwellwert %s%s',
             $this->formatBrightnessForTrace($brightnessID, $brightness),
+            $this->brightnessAvgInfo,
             $this->formatBrightnessForTrace($thresholdID, $threshold),
-            $tempNote
+            $this->buildThresholdTempNote($thresholdID, $temperature)
+        );
+    }
+
+    /**
+     * Vermerk, dass der Schwellwert temperaturbedingt angepasst wurde (10 % je Grad über 24 °C bzw. unter 10 °C);
+     * der konfigurierte Ausgangswert wird mitgenannt, damit der Anwender seinen eigenen Schwellwert wiedererkennt.
+     * Liefert einen leeren String, wenn keine Temperaturkorrektur wirkt.
+     */
+    private function buildThresholdTempNote(int $thresholdID, ?float $temperature): string
+    {
+        if ($temperature === null || ($temperature <= 24 && $temperature >= 10)) {
+            return '';
+        }
+
+        $baseNote = IPS_VariableExists($thresholdID)
+            ? sprintf(' von %s', $this->formatBrightnessForTrace($thresholdID, (float)GetValue($thresholdID)))
+            : '';
+        return sprintf(
+            ' (temperaturkorrigiert%s, %s)',
+            $baseNote,
+            GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION), $temperature)
         );
     }
 
@@ -3036,6 +3053,8 @@ class BlindController extends IPSModuleStrict
 
     private function GetBrightness(string $propBrightnessID, string $propBrightnessAvgMinutes, float $levelAct, bool $shadowing): ?float
     {
+        $this->brightnessAvgInfo = '';
+
         $brightnessID = $this->ReadPropertyInteger($propBrightnessID);
         if (!IPS_VariableExists($brightnessID)) {
             return null;
@@ -3070,6 +3089,11 @@ class BlindController extends IPSModuleStrict
                 $isDown = $isReversed ? ($levelAct < $this->profileBlindLevel['MinValue']) : ($levelAct > $this->profileBlindLevel['MinValue']);
 
                 $brightnessAvg = $isDown ? max($brightnessAvg, $currentBrightness) : min($brightnessAvg, $currentBrightness);
+            }
+
+            // nur kennzeichnen, wenn tatsächlich der Mittelwert (und nicht der aktuelle Sensorwert) verwendet wird
+            if ($brightnessAvg !== $currentBrightness) {
+                $this->brightnessAvgInfo = sprintf(' (Mittelwert über %d min)', $brightnessAvgMinutes);
             }
 
             return $brightnessAvg;
@@ -3416,8 +3440,9 @@ class BlindController extends IPSModuleStrict
             $thresholdIDForFormat = IPS_VariableExists($thresholdIDLessBrightness) ? $thresholdIDLessBrightness : $thresholdIDHighBrightness;
             $this->addShadowingReason(
                 sprintf(
-                    'nach Helligkeit: Helligkeit %s unter Schwellwert %s',
+                    'nach Helligkeit: Helligkeit %s%s unter Schwellwert %s',
                     $this->formatBrightnessForTrace($brightnessID, $brightness),
+                    $this->brightnessAvgInfo,
                     $this->formatBrightnessForTrace($thresholdIDForFormat, (float)$threshold)
                 )
             );
@@ -3965,7 +3990,11 @@ class BlindController extends IPSModuleStrict
             $parts[] = sprintf('Tagerkennung: %s', $dayState['isDayByDayDetection'] ? 'Tag' : 'Nacht');
         }
         if ($dayState['brightness'] !== null) {
-            $parts[] = sprintf('Helligkeit: %s', GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID), $dayState['brightness']));
+            $parts[] = sprintf(
+                'Helligkeit: %s%s',
+                GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID), $dayState['brightness']),
+                $dayState['brightnessAvgNote'] ?? ''
+            );
         }
 
         return sprintf('%s (%s)', $dayState['isDay'] ? 'Tag' : 'Nacht', implode(', ', $parts));
