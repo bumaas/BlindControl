@@ -827,7 +827,7 @@ class BlindController extends IPSModuleStrict
             );
             $bNoMove     = $blockResult['block'];
             $blockReason = $blockResult['reason'];
-            $this->addTrace('Bewegungssperre: ' . ($bNoMove ? $blockReason : 'keine'));
+            $this->addTrace('Bewegungssperre: ' . ($bNoMove ? $blockReason : ($blockReason !== '' ? sprintf('keine (%s)', $blockReason) : 'keine')));
         }
         $isDay = $dayState['isDay'];
 
@@ -3483,7 +3483,21 @@ class BlindController extends IPSModuleStrict
             return ['block' => false, 'reason' => ''];
         }
 
-        // 2. Manuellen Status synchronisieren (Logik für ATTR_MANUALMOVEMENT extrahiert)
+        // 2. Verspätete Aktor-Rückmeldung erkennen: Entspricht die gemeldete Position der zuletzt
+        // automatisch kommandierten, stammt die Änderung von der eigenen Fahrt und nicht von Hand (Issue #5).
+        if ($this->isFeedbackOfOwnMovement($blindLevelAct, $slatsLevelAct)) {
+            if (!$this->dryRun) {
+                $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, $tsBlindLastMovement);
+            }
+            $reason = sprintf(
+                'Positionsänderung um %s entspricht der zuletzt kommandierten Position (Aktor-Rückmeldung, keine manuelle Bedienung)',
+                $this->formatTraceTime($tsBlindLastMovement)
+            );
+            $this->Logger_Dbg(__FUNCTION__, $reason);
+            return ['block' => false, 'reason' => $reason];
+        }
+
+        // 3. Manuellen Status synchronisieren (Logik für ATTR_MANUALMOVEMENT extrahiert)
         $manualState = $this->syncManualMovementAttribute($blindLevelAct, $slatsLevelAct, $tsBlindLastMovement);
         $tsManual    = $manualState['timeStamp'];
 
@@ -3491,7 +3505,7 @@ class BlindController extends IPSModuleStrict
             return ['block' => false, 'reason' => ''];
         }
 
-        // 3. Sperr-Logik
+        // 4. Sperr-Logik
         if (!$isDay) {
             $reason = sprintf('manuelle Bedienung erkannt (%s), Sperre bis zum nächsten Tag/Nacht-Wechsel', $this->formatTraceTime($tsManual));
             $this->Logger_Dbg(__FUNCTION__, 'Sperre: ' . $reason);
@@ -3568,6 +3582,49 @@ class BlindController extends IPSModuleStrict
         }
 
         return $newManual;
+    }
+
+    /**
+     * Prüft, ob die aktuell gemeldeten Positionen der zuletzt automatisch kommandierten Fahrt entsprechen.
+     *
+     * Aktoren mit langer Fahrzeit (z. B. KNX) melden die erreichte Position erst nach Fahrtende - eine solche
+     * verspätete Rückmeldung der eigenen Fahrt darf nicht als manuelle Bedienung gewertet werden (Issue #5).
+     */
+    private function isFeedbackOfOwnMovement(float $blindLevelAct, ?float $slatsLevelAct): bool
+    {
+        if (!$this->matchesLastCommandedPosition(self::PROP_BLINDLEVELID, $blindLevelAct, $this->profileBlindLevel)) {
+            return false;
+        }
+
+        if ($slatsLevelAct !== null) {
+            return $this->matchesLastCommandedPosition(self::PROP_SLATSLEVELID, $slatsLevelAct, $this->profileSlatsLevel);
+        }
+
+        return true;
+    }
+
+    /**
+     * Prüft, ob eine gemeldete Ist-Position der zuletzt automatisch kommandierten Zielposition entspricht.
+     *
+     * Als Toleranz gilt die minimale Bewegung (PROP_MINMOVEMENT): kleinere Abweichungen würde das Modul
+     * selbst nie anfahren, sie sind daher von der eigenen Fahrt nicht unterscheidbar (Rundung, Anhaltegenauigkeit).
+     *
+     * @throws \JsonException
+     */
+    private function matchesLastCommandedPosition(string $propName, float $levelAct, ?array $profile): bool
+    {
+        if ($profile === null) {
+            return false;
+        }
+
+        $lastMove = json_decode($this->ReadAttributeString(self::ATTR_LASTMOVE . $propName), true, 512, JSON_THROW_ON_ERROR);
+        if ($lastMove['percentClose'] === null) {
+            return false; //noch nie automatisch gefahren
+        }
+
+        $tolerance = max(self::ALLOWED_TOLERANCE_MOVEMENT, $this->ReadPropertyFloat(self::PROP_MINMOVEMENT));
+
+        return abs($this->calculateNormalizedLevel($levelAct, $profile) - (int)$lastMove['percentClose']) <= $tolerance;
     }
 
     private function logManualMovementInfo(float $blindLevelAct, ?float $slatsLevelAct): void
