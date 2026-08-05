@@ -28,8 +28,9 @@ foreach ($moduleDirs as $moduleDir) {
         echo "keine locale.json vorhanden - uebersprungen\n\n";
         continue;
     }
-    $locale = json_decode(file_get_contents($localeFile), true, 512, JSON_THROW_ON_ERROR);
-    $deKeys = array_keys($locale['translations']['de'] ?? []);
+    $locale         = json_decode(file_get_contents($localeFile), true, 512, JSON_THROW_ON_ERROR);
+    $deTranslations = $locale['translations']['de'] ?? [];
+    $deKeys         = array_keys($deTranslations);
 
     $modulePhp = file_get_contents($dir . '/module.php');
 
@@ -49,7 +50,7 @@ foreach ($moduleDirs as $moduleDir) {
     // Fehlend: form.json-Text ohne de-Schluessel
     $missingForm = [];
     foreach ($formTexts as $text => $paths) {
-        if (!in_array($text, $deKeys, true)) {
+        if (!isset($deTranslations[$text])) {
             $missingForm[$text] = $paths[0];
         }
     }
@@ -57,7 +58,7 @@ foreach ($moduleDirs as $moduleDir) {
     // Fehlend: Translate-Text ohne de-Schluessel
     $missingPhp = [];
     foreach (array_keys($translateTexts) as $text) {
-        if (!in_array($text, $deKeys, true)) {
+        if (!isset($deTranslations[$text])) {
             $missingPhp[] = $text;
         }
     }
@@ -66,7 +67,7 @@ foreach ($moduleDirs as $moduleDir) {
     $orphans = [];
     foreach ($deKeys as $key) {
         if (!isset($formTexts[$key]) && !isset($translateTexts[$key])) {
-            $inLiteral = str_contains($modulePhp, $key) || ($formRaw !== '' && str_contains($formRaw, $key));
+            $inLiteral = str_contains($modulePhp, $key) || str_contains($formRaw, $key);
             $orphans[] = [$key, $inLiteral ? 'kommt woertlich in module.php/form.json vor' : 'nirgends gefunden'];
         }
     }
