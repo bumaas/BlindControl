@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Set-Clipboard *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Get-Date)",
+      "PowerShell(Get-Date *)",
+      "PowerShell(Select-String *)",
+      "PowerShell(Test-Path *)",
+      "Bash(php -l *)",
+      "Bash(C:/php/php -l *)",
+      "Bash(/c/php/php -l *)",
+      "Bash(php tests/check_locale.php)",
+      "Bash(php tests/check_locale.php *)",
+      "Bash(C:/php/php tests/check_locale.php)",
+      "Bash(C:/php/php tests/check_locale.php *)",
+      "Bash(/c/php/php tests/check_locale.php)",
+      "Bash(/c/php/php tests/check_locale.php *)",
+      "mcp__claude-in-chrome__get_page_text",
+      "mcp__claude-in-chrome__tabs_context_mcp"
+    ]
+  }
+}
