@@ -591,7 +591,8 @@ class BlindController extends IPSModuleStrict
                 $TimeStamp,
                 IPS_GetObject($SenderID)['ObjectName'],
                 $SenderID,
-                array_search($Message, get_defined_constants(true)['IP-Symcon'], true) ?: 'UNKNOWN',
+                // Konstantengruppe heißt ab Symcon 9.1 'Symcon' (vorher 'IP-Symcon')
+                array_search($Message, get_defined_constants(true)['Symcon'] ?? get_defined_constants(true)['IP-Symcon'] ?? [], true) ?: 'UNKNOWN',
                 $Message,
                 json_encode($Data, JSON_THROW_ON_ERROR)
             )
