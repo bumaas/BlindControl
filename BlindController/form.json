@@ -231,20 +231,20 @@
             ]
             },
             {
-              "type": "ExpansionPanel", "caption": "Contact 1: advanced - multiple positions via raw values (optional)",
+              "type": "ExpansionPanel", "caption": "Contact 1: advanced - multiple positions via raw values or conditions (optional)",
               "items": [
-                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
-                {"type": "ValidationTextBox", "name": "ContactCloseValues1_1", "caption": "Raw values for position 1 (uses the height above)"},
+                {"type": "Label", "caption": "Enter comma-separated raw values or conditions. Position 1 uses the height entered above; positions 2 and 3 have their own height fields. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
+                {"type": "ValidationTextBox", "name": "ContactCloseValues1_1", "caption": "Raw values or conditions for position 1 (the height above applies)"},
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "ValidationTextBox", "name": "ContactCloseValues1_2", "caption": "Raw values for position 2"},
+                  {"type": "ValidationTextBox", "name": "ContactCloseValues1_2", "caption": "Raw values or conditions for position 2"},
                   {"type": "NumberSpinner", "name": "ContactCloseLevel1_2", "caption": "Maximum height", "digits": "2"},
                   {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel1_2", "caption": "Maximum slats position", "digits": "2"}
                 ]
                 },
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "ValidationTextBox", "name": "ContactCloseValues1_3", "caption": "Raw values for position 3"},
+                  {"type": "ValidationTextBox", "name": "ContactCloseValues1_3", "caption": "Raw values or conditions for position 3"},
                   {"type": "NumberSpinner", "name": "ContactCloseLevel1_3", "caption": "Maximum height", "digits": "2"},
                   {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel1_3", "caption": "Maximum slats position", "digits": "2"}
                 ]
@@ -260,20 +260,20 @@
             ]
             },
             {
-              "type": "ExpansionPanel", "caption": "Contact 2: advanced - multiple positions via raw values (optional)",
+              "type": "ExpansionPanel", "caption": "Contact 2: advanced - multiple positions via raw values or conditions (optional)",
               "items": [
-                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
-                {"type": "ValidationTextBox", "name": "ContactCloseValues2_1", "caption": "Raw values for position 1 (uses the height above)"},
+                {"type": "Label", "caption": "Enter comma-separated raw values or conditions. Position 1 uses the height entered above; positions 2 and 3 have their own height fields. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
+                {"type": "ValidationTextBox", "name": "ContactCloseValues2_1", "caption": "Raw values or conditions for position 1 (the height above applies)"},
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "ValidationTextBox", "name": "ContactCloseValues2_2", "caption": "Raw values for position 2"},
+                  {"type": "ValidationTextBox", "name": "ContactCloseValues2_2", "caption": "Raw values or conditions for position 2"},
                   {"type": "NumberSpinner", "name": "ContactCloseLevel2_2", "caption": "Maximum height", "digits": "2"},
                   {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel2_2", "caption": "Maximum slats position", "digits": "2"}
                 ]
                 },
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "ValidationTextBox", "name": "ContactCloseValues2_3", "caption": "Raw values for position 3"},
+                  {"type": "ValidationTextBox", "name": "ContactCloseValues2_3", "caption": "Raw values or conditions for position 3"},
                   {"type": "NumberSpinner", "name": "ContactCloseLevel2_3", "caption": "Maximum height", "digits": "2"},
                   {"type": "NumberSpinner", "name": "ContactCloseSlatsLevel2_3", "caption": "Maximum slats position", "digits": "2"}
                 ]
@@ -295,20 +295,20 @@
             ]
             },
             {
-              "type": "ExpansionPanel", "caption": "Contact 1: advanced - multiple positions via raw values (optional)",
+              "type": "ExpansionPanel", "caption": "Contact 1: advanced - multiple positions via raw values or conditions (optional)",
               "items": [
-                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
-                {"type": "ValidationTextBox", "name": "ContactOpenValues1_1", "caption": "Raw values for position 1 (uses the height above)"},
+                {"type": "Label", "caption": "Enter comma-separated raw values or conditions. Position 1 uses the height entered above; positions 2 and 3 have their own height fields. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
+                {"type": "ValidationTextBox", "name": "ContactOpenValues1_1", "caption": "Raw values or conditions for position 1 (the height above applies)"},
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "ValidationTextBox", "name": "ContactOpenValues1_2", "caption": "Raw values for position 2"},
+                  {"type": "ValidationTextBox", "name": "ContactOpenValues1_2", "caption": "Raw values or conditions for position 2"},
                   {"type": "NumberSpinner", "name": "ContactOpenLevel1_2", "caption": "Minimum height", "digits": "2"},
                   {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel1_2", "caption": "Minimum slats position", "digits": "2"}
                 ]
                 },
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "ValidationTextBox", "name": "ContactOpenValues1_3", "caption": "Raw values for position 3"},
+                  {"type": "ValidationTextBox", "name": "ContactOpenValues1_3", "caption": "Raw values or conditions for position 3"},
                   {"type": "NumberSpinner", "name": "ContactOpenLevel1_3", "caption": "Minimum height", "digits": "2"},
                   {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel1_3", "caption": "Minimum slats position", "digits": "2"}
                 ]
@@ -324,20 +324,20 @@
             ]
             },
             {
-              "type": "ExpansionPanel", "caption": "Contact 2: advanced - multiple positions via raw values (optional)",
+              "type": "ExpansionPanel", "caption": "Contact 2: advanced - multiple positions via raw values or conditions (optional)",
               "items": [
-                {"type": "Label", "caption": "Enter comma-separated raw values. Values for position 1 use the height above; positions 2 and 3 use their own heights. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
-                {"type": "ValidationTextBox", "name": "ContactOpenValues2_1", "caption": "Raw values for position 1 (uses the height above)"},
+                {"type": "Label", "caption": "Enter comma-separated raw values or conditions. Position 1 uses the height entered above; positions 2 and 3 have their own height fields. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
+                {"type": "ValidationTextBox", "name": "ContactOpenValues2_1", "caption": "Raw values or conditions for position 1 (the height above applies)"},
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "ValidationTextBox", "name": "ContactOpenValues2_2", "caption": "Raw values for position 2"},
+                  {"type": "ValidationTextBox", "name": "ContactOpenValues2_2", "caption": "Raw values or conditions for position 2"},
                   {"type": "NumberSpinner", "name": "ContactOpenLevel2_2", "caption": "Minimum height", "digits": "2"},
                   {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel2_2", "caption": "Minimum slats position", "digits": "2"}
                 ]
                 },
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "ValidationTextBox", "name": "ContactOpenValues2_3", "caption": "Raw values for position 3"},
+                  {"type": "ValidationTextBox", "name": "ContactOpenValues2_3", "caption": "Raw values or conditions for position 3"},
                   {"type": "NumberSpinner", "name": "ContactOpenLevel2_3", "caption": "Minimum height", "digits": "2"},
                   {"type": "NumberSpinner", "name": "ContactOpenSlatsLevel2_3", "caption": "Minimum slats position", "digits": "2"}
                 ]
