@@ -3820,6 +3820,10 @@ class BlindController extends IPSModuleStrict
         // 4. Ausführung
         if (!RequestAction($positionID, $positionNew)) {
             $this->logMovementError($positionID, $propName, $percentClose);
+            // Kommando trotzdem festhalten: gerade HM-Aktoren führen die Fahrt oft trotz Fehlermeldung
+            // aus - die verspätete Positionsmeldung wird dann über die Rückmeldungs-Erkennung
+            // (FEEDBACK_MOVEMENT_TIME) der eigenen Fahrt zugeordnet statt als manuelle Bedienung.
+            $this->rememberLastMove($propName, $percentClose, $hint);
             return false;
         }
 
@@ -3919,6 +3923,18 @@ class BlindController extends IPSModuleStrict
     }
 
     /**
+     * Persistiert die zuletzt kommandierte Fahrt (für isSameMovementRecently und die
+     * Rückmeldungs-Erkennung in matchesLastCommandedPosition).
+     */
+    private function rememberLastMove(string $propName, int $percentClose, string $hint): void
+    {
+        $this->WriteAttributeString(
+            self::ATTR_LASTMOVE . $propName,
+            json_encode(['timeStamp' => time(), 'percentClose' => $percentClose, 'hint' => $hint], JSON_THROW_ON_ERROR)
+        );
+    }
+
+    /**
      * Schließt eine erfolgreiche Bewegung ab (Attribute setzen, Logging).
      */
     private function finalizeMovement(string $propName, int $percent, float $act, float $new, string $hint, bool $reached): void
@@ -3928,11 +3944,8 @@ class BlindController extends IPSModuleStrict
         // 1. Automatik-Zeitstempel für die manuelle Sperrlogik merken
         $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, time());
 
-        // 2. Letzte Bewegung persistieren (für isSameMovementRecently)
-        $this->WriteAttributeString(
-            self::ATTR_LASTMOVE . $propName,
-            json_encode(['timeStamp' => time(), 'percentClose' => $percent, 'hint' => $hint], JSON_THROW_ON_ERROR)
-        );
+        // 2. Letzte Bewegung persistieren
+        $this->rememberLastMove($propName, $percent, $hint);
 
         // 3. Debug-Ausgaben
         $this->Logger_Dbg(__FUNCTION__, sprintf('#%s(%s): %s to %s', $id, $propName, $act, $new));

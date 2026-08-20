@@ -1,7 +1,7 @@
 {
   "elements": [
-    {"type": "SelectVariable", "name": "BlindLevelID", "caption": "Blind Level ID", "requiredAction": 1, "validVariableTypes": [1, 2]},
-    {"type": "SelectVariable", "name": "SlatsLevelID", "caption": "Slats Level ID (optional)", "requiredAction": 1,"validVariableTypes": [1, 2], "onChange": "IPS_RequestAction($id, 'SlatsLevelID', $SlatsLevelID);"},
+    {"type": "SelectVariable", "name": "BlindLevelID", "caption": "Blind Level ID", "requiredAction": 1, "validVariableTypes": [1, 2], "width": "600px"},
+    {"type": "SelectVariable", "name": "SlatsLevelID", "caption": "Slats Level ID (optional)", "requiredAction": 1,"validVariableTypes": [1, 2], "onChange": "IPS_RequestAction($id, 'SlatsLevelID', $SlatsLevelID);", "width": "600px"},
     {
       "type":  "ExpansionPanel", "caption": "Change of Night and Day",
       "items": [
@@ -10,7 +10,7 @@
           "items": [
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectEvent", "name": "WeeklyTimeTableEventID", "caption": "Weekly Timetable Event ID", "onChange": "IPS_RequestAction($id, 'WeeklyTimeTableEventID', $WeeklyTimeTableEventID);"},
+              {"type": "SelectEvent", "name": "WeeklyTimeTableEventID", "caption": "Weekly Timetable Event ID", "onChange": "IPS_RequestAction($id, 'WeeklyTimeTableEventID', $WeeklyTimeTableEventID);", "width": "600px"},
               {"type": "Button", "name": "CreateWeeklySchedule", "caption": "Create weekly schedule", "confirm": "Create a weekly schedule below this BlindControl instance with opening at 07:00 and closing at 22:00?", "onClick": "echo BLC_CreateWeeklySchedule($id, $WeeklyTimeTableEventID);"}
             ]
             },
@@ -19,7 +19,7 @@
               "items": [
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "SelectVariable", "name": "HolidayIndicatorID", "caption": "Holiday Indicator ID", "validVariableTypes": [0],"onChange": "IPS_RequestAction($id, 'HolidayIndicatorID', $HolidayIndicatorID);"},
+                  {"type": "SelectVariable", "name": "HolidayIndicatorID", "caption": "Holiday Indicator ID", "validVariableTypes": [0],"onChange": "IPS_RequestAction($id, 'HolidayIndicatorID', $HolidayIndicatorID);", "width": "600px"},
                   {
                     "type": "Select", "name": "DayUsedWhenHoliday", "caption": "Used Weekday when Holiday", "options": [
                     {"caption": "- not used -", "value": 0},
@@ -41,13 +41,13 @@
               "items": [
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "Wake-Up Time ID", "validVariableTypes": [3],"onChange": "IPS_RequestAction($id,'WakeUpTimeID',$WakeUpTimeID);"},
+                  {"type": "SelectVariable", "name": "WakeUpTimeID", "caption": "Wake-Up Time ID", "validVariableTypes": [3],"onChange": "IPS_RequestAction($id,'WakeUpTimeID',$WakeUpTimeID);", "width": "600px"},
                   {"type": "NumberSpinner", "name": "WakeUpTimeOffset", "caption": "Wake-Up Time Offset", "suffix": "Minutes"}
                 ]
                 },
                 {
                   "type": "RowLayout", "items": [
-                  {"type": "SelectVariable", "name": "BedTimeID", "caption": "Bedtime ID","validVariableTypes": [3], "onChange": "IPS_RequestAction($id,'BedTimeID',$BedTimeID);"},
+                  {"type": "SelectVariable", "name": "BedTimeID", "caption": "Bedtime ID","validVariableTypes": [3], "onChange": "IPS_RequestAction($id,'BedTimeID',$BedTimeID);", "width": "600px"},
                   {"type": "NumberSpinner", "name": "BedTimeOffset", "caption": "Bedtime Offset", "suffix": "Minutes"}
                 ]
                 }
@@ -72,21 +72,21 @@
         {
           "type":  "ExpansionPanel", "caption": "Is Day Detection (optional)",
           "items": [
-            {"type": "SelectVariable", "name": "IsDayIndicatorID", "validVariableTypes": [0], "caption": "Is Day Indicator ID"},
+            {"type": "SelectVariable", "name": "IsDayIndicatorID", "validVariableTypes": [0], "caption": "Is Day Indicator ID", "width": "600px"},
             {"type": "Label", "caption": "If no 'Is Day' indicator is set, the day is determined by the brightness:"},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID", "validVariableTypes": [1, 2], "onChange": "IPS_RequestAction($id,'BrightnessID',$BrightnessID);"},
+              {"type": "SelectVariable", "name": "BrightnessID", "caption": "Brightness ID", "validVariableTypes": [1, 2], "onChange": "IPS_RequestAction($id,'BrightnessID',$BrightnessID);", "width": "600px"},
               {"type": "NumberSpinner", "name": "BrightnessAvgMinutes", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0, "validVariableTypes": [1, 2]},
-              {"type": "SelectVariable", "name": "BrightnessThresholdID", "validVariableTypes": [1, 2], "caption": "Brightness Threshold ID"}
+              {"type": "SelectVariable", "name": "BrightnessThresholdID", "validVariableTypes": [1, 2], "caption": "Brightness Threshold ID", "width": "600px"}
             ]
             },
             {"type": "Label", "caption": "The determined Day Start and/or End Time can also be overridden"},
             {
               "type":  "RowLayout", "caption": "Overruling Day Start and/or End Time (optional)",
               "items": [
-                {"type": "SelectVariable", "name": "DayStartID", "validVariableTypes": [3], "caption": "Start of the day ID"},
-                {"type": "SelectVariable", "name": "DayEndID", "validVariableTypes": [3], "caption": "End of the day ID"}
+                {"type": "SelectVariable", "name": "DayStartID", "validVariableTypes": [3], "caption": "Start of the day ID", "width": "600px"},
+                {"type": "SelectVariable", "name": "DayEndID", "validVariableTypes": [3], "caption": "End of the day ID", "width": "600px"}
               ]
             }
           ]
@@ -105,10 +105,10 @@
         {
           "type":  "ExpansionPanel", "caption": "Shadowing According to Sun Position (optional)",
           "items": [
-            {"type": "SelectVariable", "name": "ActivatorIDShadowingBySunPosition", "validVariableTypes": [0, 1, 2], "caption": "Activator ID"},
+            {"type": "SelectVariable", "name": "ActivatorIDShadowingBySunPosition", "validVariableTypes": [0, 1, 2], "caption": "Activator ID", "width": "600px"},
             {"type": "Label", "caption": "Define the sun position indicators"},
-            {"type": "SelectVariable", "name": "AzimuthID", "validVariableTypes": [2], "caption": "Azimuth ID"},
-            {"type": "SelectVariable", "name": "AltitudeID", "validVariableTypes": [2], "caption": "Altitude ID"},
+            {"type": "SelectVariable", "name": "AzimuthID", "validVariableTypes": [2], "caption": "Azimuth ID", "width": "600px"},
+            {"type": "SelectVariable", "name": "AltitudeID", "validVariableTypes": [2], "caption": "Altitude ID", "width": "600px"},
             {"type": "Label", "caption": "Define the range of azimuth and altitude for shadowing:"},
             {
               "type": "RowLayout", "items": [
@@ -125,13 +125,13 @@
             {"type": "Label", "caption": "Define a brightness sensor if the brightness should be considered"},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "BrightnessIDShadowingBySunPosition", "validVariableTypes": [1, 2], "caption": "Brightness ID", "onChange": "IPS_RequestAction($id,'BrightnessIDShadowingBySunPosition',$BrightnessIDShadowingBySunPosition);"},
+              {"type": "SelectVariable", "name": "BrightnessIDShadowingBySunPosition", "validVariableTypes": [1, 2], "caption": "Brightness ID", "onChange": "IPS_RequestAction($id,'BrightnessIDShadowingBySunPosition',$BrightnessIDShadowingBySunPosition);", "width": "600px"},
               {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBySunPosition", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0},
-              {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "validVariableTypes": [1, 2], "caption": "Brightness Threshold ID"}
+              {"type": "SelectVariable", "name": "BrightnessThresholdIDShadowingBySunPosition", "validVariableTypes": [1, 2], "caption": "Brightness Threshold ID", "width": "600px"}
             ]
             },
             {"type": "Label", "caption": "Define an additional temperature sensor when the outdoor temperature should be considered"},
-            {"type": "SelectVariable", "name": "TemperatureIDShadowingBySunPosition", "validVariableTypes": [1, 2], "caption": "Temperature ID"},
+            {"type": "SelectVariable", "name": "TemperatureIDShadowingBySunPosition", "validVariableTypes": [1, 2], "caption": "Temperature ID", "width": "600px"},
             {"type": "Label", "caption": "Two alternative methods are available for determining the degree of shadowing.\\nThe simple variant calculates the height using the specified minimum and maximum position. It is only suitable for vertical window surfaces.\\nThe more precise variant calculates the height based on the orientation of the window, the inclination of the window and the specified depth that the sun is allowed to shine through the window. It is also suitable for inclined windows."},
             {
               "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing - simple variant, only suitable for facade windows (alternative)",
@@ -189,25 +189,25 @@
         {
           "type":  "ExpansionPanel", "caption": "Shadowing According to Brightness (optional)",
           "items": [
-            {"type": "SelectVariable", "name": "ActivatorIDShadowingBrightness", "validVariableTypes": [0, 1, 2, 3], "caption": "Activator ID"},
+            {"type": "SelectVariable", "name": "ActivatorIDShadowingBrightness", "validVariableTypes": [0, 1, 2, 3], "caption": "Activator ID", "width": "600px"},
             {"type": "Label", "caption": "Define the brightness indicator"},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "validVariableTypes": [1, 2], "caption": "Brightness ID", "onChange": "IPS_RequestAction($id,'BrightnessIDShadowingBrightness',$BrightnessIDShadowingBrightness);"},
+              {"type": "SelectVariable", "name": "BrightnessIDShadowingBrightness", "validVariableTypes": [1, 2], "caption": "Brightness ID", "onChange": "IPS_RequestAction($id,'BrightnessIDShadowingBrightness',$BrightnessIDShadowingBrightness);", "width": "600px"},
               {"type": "NumberSpinner", "name": "BrightnessAvgMinutesShadowingBrightness", "caption": "Average of the last minutes", "suffix": "Minutes", "minimum": 0}
             ]
             },
             {"type": "Label", "caption": "Define up to two different levels"},
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "validVariableTypes": [1, 2], "caption": "Threshold less brightness ID"},
+              {"type": "SelectVariable", "name": "ThresholdIDLessBrightness", "validVariableTypes": [1, 2], "caption": "Threshold less brightness ID", "width": "600px"},
               {"type": "NumberSpinner", "name": "BlindLevelLessBrightnessShadowingBrightness", "caption": "Blind Level at less brightness", "digits": "2"},
               {"type": "NumberSpinner", "name": "SlatsLevelLessBrightnessShadowingBrightness", "caption": "Slats Level at less brightness", "digits": "2"}
             ]
             },
             {
               "type": "RowLayout", "items": [
-              {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "validVariableTypes": [1, 2], "caption": "Threshold high brightness ID"},
+              {"type": "SelectVariable", "name": "ThresholdIDHighBrightness", "validVariableTypes": [1, 2], "caption": "Threshold high brightness ID", "width": "600px"},
               {"type": "NumberSpinner", "name": "BlindLevelHighBrightnessShadowingBrightness", "caption": "Blind Level at high brightness", "digits": "2"},
               {"type": "NumberSpinner", "name": "SlatsLevelHighBrightnessShadowingBrightness", "caption": "Slats Level at high brightness", "digits": "2"}
             ]
@@ -233,8 +233,8 @@
             {
               "type": "ExpansionPanel", "caption": "Contact 1: advanced - multiple positions via raw values or conditions (optional)",
               "items": [
-                {"type": "Label", "caption": "Enter comma-separated raw values or conditions. Position 1 uses the height entered above; positions 2 and 3 have their own height fields. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
-                {"type": "ValidationTextBox", "name": "ContactCloseValues1_1", "caption": "Raw values or conditions for position 1 (the height above applies)", "width": "600px"},
+                {"type": "Label", "caption": "Enter comma-separated raw values or conditions. Position 1 uses the maximum height entered above; positions 2 and 3 have their own height fields. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
+                {"type": "ValidationTextBox", "name": "ContactCloseValues1_1", "caption": "Raw values or conditions for position 1 (the maximum height above applies)", "width": "600px"},
                 {
                   "type": "RowLayout", "items": [
                   {"type": "ValidationTextBox", "name": "ContactCloseValues1_2", "caption": "Raw values or conditions for position 2", "width": "600px"},
@@ -262,8 +262,8 @@
             {
               "type": "ExpansionPanel", "caption": "Contact 2: advanced - multiple positions via raw values or conditions (optional)",
               "items": [
-                {"type": "Label", "caption": "Enter comma-separated raw values or conditions. Position 1 uses the height entered above; positions 2 and 3 have their own height fields. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
-                {"type": "ValidationTextBox", "name": "ContactCloseValues2_1", "caption": "Raw values or conditions for position 1 (the height above applies)", "width": "600px"},
+                {"type": "Label", "caption": "Enter comma-separated raw values or conditions. Position 1 uses the maximum height entered above; positions 2 and 3 have their own height fields. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
+                {"type": "ValidationTextBox", "name": "ContactCloseValues2_1", "caption": "Raw values or conditions for position 1 (the maximum height above applies)", "width": "600px"},
                 {
                   "type": "RowLayout", "items": [
                   {"type": "ValidationTextBox", "name": "ContactCloseValues2_2", "caption": "Raw values or conditions for position 2", "width": "600px"},
@@ -297,8 +297,8 @@
             {
               "type": "ExpansionPanel", "caption": "Contact 1: advanced - multiple positions via raw values or conditions (optional)",
               "items": [
-                {"type": "Label", "caption": "Enter comma-separated raw values or conditions. Position 1 uses the height entered above; positions 2 and 3 have their own height fields. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
-                {"type": "ValidationTextBox", "name": "ContactOpenValues1_1", "caption": "Raw values or conditions for position 1 (the height above applies)", "width": "600px"},
+                {"type": "Label", "caption": "Enter comma-separated raw values or conditions. Position 1 uses the minimum height entered above; positions 2 and 3 have their own height fields. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
+                {"type": "ValidationTextBox", "name": "ContactOpenValues1_1", "caption": "Raw values or conditions for position 1 (the minimum height above applies)", "width": "600px"},
                 {
                   "type": "RowLayout", "items": [
                   {"type": "ValidationTextBox", "name": "ContactOpenValues1_2", "caption": "Raw values or conditions for position 2", "width": "600px"},
@@ -326,8 +326,8 @@
             {
               "type": "ExpansionPanel", "caption": "Contact 2: advanced - multiple positions via raw values or conditions (optional)",
               "items": [
-                {"type": "Label", "caption": "Enter comma-separated raw values or conditions. Position 1 uses the height entered above; positions 2 and 3 have their own height fields. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
-                {"type": "ValidationTextBox", "name": "ContactOpenValues2_1", "caption": "Raw values or conditions for position 1 (the height above applies)", "width": "600px"},
+                {"type": "Label", "caption": "Enter comma-separated raw values or conditions. Position 1 uses the minimum height entered above; positions 2 and 3 have their own height fields. A raw value that matches no position has no effect - the normal automatic applies again. Therefore do not assign the normal state (e.g. window closed) to any value group. Enter the raw value as delivered by the variable. For boolean variables use true or false (also 0/1). For numeric variables, comparisons and ranges are also supported: >x, >=x, <x, <=x and a-b (e.g. >0.2 or 0.2-0.8). Always use a decimal point; the comma separates values."},
+                {"type": "ValidationTextBox", "name": "ContactOpenValues2_1", "caption": "Raw values or conditions for position 1 (the minimum height above applies)", "width": "600px"},
                 {
                   "type": "RowLayout", "items": [
                   {"type": "ValidationTextBox", "name": "ContactOpenValues2_2", "caption": "Raw values or conditions for position 2", "width": "600px"},
@@ -354,7 +354,7 @@
       "type":  "ExpansionPanel", "caption": "Emergency Contact (optional)",
       "items": [
         {"type": "Label", "caption": "Define an emergency contact. The blind is opened immediately if the contact is open. Additionally the automatic is deactivated."},
-        {"type": "SelectVariable", "name": "EmergencyContactID", "validVariableTypes": [0, 1, 2], "caption": "Emergency contact ID"}
+        {"type": "SelectVariable", "name": "EmergencyContactID", "validVariableTypes": [0, 1, 2], "caption": "Emergency contact ID", "width": "600px"}
       ]
     },
     {
