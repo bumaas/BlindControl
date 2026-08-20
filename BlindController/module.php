@@ -165,6 +165,7 @@ class BlindController extends IPSModuleStrict
 
     private const int MOVEMENT_WAIT_TIME         = 90; //Wartezeit bis zur Erreichung der Zielposition in Sekunden
     private const int IGNORE_MOVEMENT_TIME       = 40; //Nach einer Bewegung wird eine erneute gleiche Bewegung innerhalb dieser Zeit ignoriert
+    private const int FEEDBACK_MOVEMENT_TIME     = 300; //verspätete Aktor-Rückmeldung der eigenen Fahrt wird nur innerhalb dieses Fensters akzeptiert (großzügig für langsame KNX-Antriebe)
     private const int ALLOWED_TOLERANCE_MOVEMENT = 1; //erlaubte Abweichung bei Bewegungen in Prozent
 
     private string $objectName;
@@ -3492,7 +3493,7 @@ class BlindController extends IPSModuleStrict
 
         // 2. Verspätete Aktor-Rückmeldung erkennen: Entspricht die gemeldete Position der zuletzt
         // automatisch kommandierten, stammt die Änderung von der eigenen Fahrt und nicht von Hand (Issue #5).
-        if ($this->isFeedbackOfOwnMovement($blindLevelAct, $slatsLevelAct)) {
+        if ($this->isFeedbackOfOwnMovement($blindLevelAct, $slatsLevelAct, $tsBlindLastMovement)) {
             if (!$this->dryRun) {
                 $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, $tsBlindLastMovement);
             }
@@ -3597,14 +3598,14 @@ class BlindController extends IPSModuleStrict
      * Aktoren mit langer Fahrzeit (z. B. KNX) melden die erreichte Position erst nach Fahrtende - eine solche
      * verspätete Rückmeldung der eigenen Fahrt darf nicht als manuelle Bedienung gewertet werden (Issue #5).
      */
-    private function isFeedbackOfOwnMovement(float $blindLevelAct, ?float $slatsLevelAct): bool
+    private function isFeedbackOfOwnMovement(float $blindLevelAct, ?float $slatsLevelAct, int $tsBlindLastMovement): bool
     {
-        if (!$this->matchesLastCommandedPosition(self::PROP_BLINDLEVELID, $blindLevelAct, $this->profileBlindLevel)) {
+        if (!$this->matchesLastCommandedPosition(self::PROP_BLINDLEVELID, $blindLevelAct, $this->profileBlindLevel, $tsBlindLastMovement)) {
             return false;
         }
 
         if ($slatsLevelAct !== null) {
-            return $this->matchesLastCommandedPosition(self::PROP_SLATSLEVELID, $slatsLevelAct, $this->profileSlatsLevel);
+            return $this->matchesLastCommandedPosition(self::PROP_SLATSLEVELID, $slatsLevelAct, $this->profileSlatsLevel, $tsBlindLastMovement);
         }
 
         return true;
@@ -3616,9 +3617,13 @@ class BlindController extends IPSModuleStrict
      * Als Toleranz gilt die minimale Bewegung (PROP_MINMOVEMENT): kleinere Abweichungen würde das Modul
      * selbst nie anfahren, sie sind daher von der eigenen Fahrt nicht unterscheidbar (Rundung, Anhaltegenauigkeit).
      *
+     * Die Übereinstimmung zählt nur innerhalb von FEEDBACK_MOVEMENT_TIME nach dem eigenen Fahrbefehl -
+     * sonst würde eine manuelle Fahrt auf die zuletzt kommandierte Position noch Stunden später als
+     * Aktor-Rückmeldung fehlgedeutet und die manuelle Sperre unterlaufen.
+     *
      * @throws \JsonException
      */
-    private function matchesLastCommandedPosition(string $propName, float $levelAct, ?array $profile): bool
+    private function matchesLastCommandedPosition(string $propName, float $levelAct, ?array $profile, int $tsBlindLastMovement): bool
     {
         if ($profile === null) {
             return false;
@@ -3627,6 +3632,10 @@ class BlindController extends IPSModuleStrict
         $lastMove = json_decode($this->ReadAttributeString(self::ATTR_LASTMOVE . $propName), true, 512, JSON_THROW_ON_ERROR);
         if ($lastMove['percentClose'] === null) {
             return false; //noch nie automatisch gefahren
+        }
+
+        if ($tsBlindLastMovement - (int)$lastMove['timeStamp'] > self::FEEDBACK_MOVEMENT_TIME) {
+            return false; //Änderung kam zu lange nach der eigenen Fahrt - keine verspätete Rückmeldung
         }
 
         $tolerance = max(self::ALLOWED_TOLERANCE_MOVEMENT, $this->ReadPropertyFloat(self::PROP_MINMOVEMENT));
