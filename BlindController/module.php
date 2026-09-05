@@ -140,6 +140,7 @@ class BlindController extends IPSModuleStrict
     //attribute names
     private const string ATTR_MANUALMOVEMENT           = 'manualMovement';
     private const string ATTR_LASTMOVE                 = 'lastMovement';
+    private const string ATTR_UNCONFIRMEDMOVE          = 'unconfirmedMovement';
     private const string ATTR_TIMESTAMP_AUTOMATIC      = 'TimeStampAutomatic';
     private const string ATTR_CONTACT_OPEN             = 'AttrContactOpen';
     private const string ATTR_DAYTIME_CHANGE_TIME      = 'DaytimeChangeTime';
@@ -152,6 +153,7 @@ class BlindController extends IPSModuleStrict
     private const string TIMER_OPEN_CONTACT2    = 'OpenContact2';
     private const string TIMER_CLOSE_CONTACT1   = 'CloseContact1';
     private const string TIMER_CLOSE_CONTACT2   = 'CloseContact2';
+    private const string TIMER_RECHECK_POSITION = 'RecheckPosition';
 
 
     //event idents
@@ -167,6 +169,10 @@ class BlindController extends IPSModuleStrict
     private const int IGNORE_MOVEMENT_TIME       = 40; //Nach einer Bewegung wird eine erneute gleiche Bewegung innerhalb dieser Zeit ignoriert
     private const int FEEDBACK_MOVEMENT_TIME     = 300; //verspätete Aktor-Rückmeldung der eigenen Fahrt wird nur innerhalb dieses Fensters akzeptiert (großzügig für langsame KNX-Antriebe)
     private const int ALLOWED_TOLERANCE_MOVEMENT = 1; //erlaubte Abweichung bei Bewegungen in Prozent
+    private const int RECHECK_POSITION_DELAY     = 60; //Wartezeit bis zum Nachfassen, wenn der Aktor die Zielposition nicht bestätigt hat
+    private const int MAX_UNCONFIRMED_MOVES      = 3; //so viele Fahrbefehle werden abgesetzt, bevor der Aktor als nicht rückmeldend gilt
+    //nach dieser Zeit verfällt ein unbestätigter Zustand - er ist dann verwaist (z. B. Nachfass-Lauf kam nie bis zur Fahrt)
+    private const int UNCONFIRMED_MOVE_MAX_AGE   = self::RECHECK_POSITION_DELAY * (self::MAX_UNCONFIRMED_MOVES + 2);
 
     private string $objectName;
 
@@ -224,8 +230,16 @@ class BlindController extends IPSModuleStrict
             0,
             'BLC_ControlBlind(' . $this->InstanceID . ', true);'
         );
-        // Entprellungs-Timer feuern über RequestAction (Timer-Name = Ident)
-        foreach ([self::TIMER_OPEN_CONTACT1, self::TIMER_OPEN_CONTACT2, self::TIMER_CLOSE_CONTACT1, self::TIMER_CLOSE_CONTACT2] as $timer) {
+        // Entprellungs-Timer und Nachfass-Timer feuern über RequestAction (Timer-Name = Ident)
+        foreach (
+            [
+                self::TIMER_OPEN_CONTACT1,
+                self::TIMER_OPEN_CONTACT2,
+                self::TIMER_CLOSE_CONTACT1,
+                self::TIMER_CLOSE_CONTACT2,
+                self::TIMER_RECHECK_POSITION,
+            ] as $timer
+        ) {
             $this->RegisterTimer($timer, 0, sprintf('IPS_RequestAction(%d, "%s", 0);', $this->InstanceID, $timer));
         }
     }
@@ -273,6 +287,14 @@ class BlindController extends IPSModuleStrict
                 // Ablauf der Beruhigungszeit: zuletzt gemeldeten Kontaktzustand auswerten
                 $this->SetTimerInterval($Ident, 0);
                 $this->SetInstanceStatusAndTimerEvent();
+                $this->ControlBlind(false);
+                break;
+
+            case self::TIMER_RECHECK_POSITION:
+                // Der Aktor hat die Zielposition nicht bestätigt: Steuerungslauf erneut anstoßen, damit die
+                // dann gültige Zielposition noch einmal gesendet wird. ControlBlind zieht den Timer am
+                // Laufende selbst wieder auf, solange eine Bestätigung aussteht (rearmRecheckTimerIfPending).
+                $this->SetTimerInterval($Ident, 0);
                 $this->ControlBlind(false);
                 break;
 
@@ -747,6 +769,11 @@ class BlindController extends IPSModuleStrict
             return $this->executeControlBlindRun($considerDeactivationTimeAuto);
         } finally {
             IPS_SemaphoreLeave($this->InstanceID . '- Blind');
+            if (!$this->dryRun) {
+                // Nachfassen bei unbestätigter Fahrt: erst nach Freigabe der Semaphore aufziehen
+                // (siehe rearmRecheckTimerIfPending)
+                $this->rearmRecheckTimerIfPending();
+            }
         }
     }
 
@@ -794,6 +821,17 @@ class BlindController extends IPSModuleStrict
             $this->addTrace('');
         }
         $this->addTrace(sprintf('Aktuelle Position: %s', $this->describeTargetPositions($positionsAct)));
+
+        // Verwaiste unbestätigte Zustände zuerst abräumen (Verfall), damit sie den Lauf nicht mehr beeinflussen
+        if (!$this->dryRun) {
+            $this->expireUnconfirmedMoves();
+        }
+
+        // Unbestätigte Fahrt ausweisen: die gemeldete Position kann veraltet sein
+        $unconfirmedTrace = $this->buildUnconfirmedMoveTrace();
+        if ($unconfirmedTrace !== '') {
+            $this->addTrace('Aktor-Rückmeldung: ' . $unconfirmedTrace);
+        }
 
         // --- 1. Tageszeit bestimmen ---
         $dayState = $this->determineDayState($positionsAct['BlindLevel']);
@@ -1661,6 +1699,14 @@ class BlindController extends IPSModuleStrict
             self::ATTR_LASTMOVE . self::PROP_SLATSLEVELID,
             json_encode(['timeStamp' => null, 'percentClose' => null, 'hint' => null], JSON_THROW_ON_ERROR)
         );
+
+        // Zustand einer vom Aktor nicht bestätigten Fahrt (siehe markUnconfirmedMove)
+        foreach ([self::PROP_BLINDLEVELID, self::PROP_SLATSLEVELID] as $propName) {
+            $this->RegisterAttributeString(
+                self::ATTR_UNCONFIRMEDMOVE . $propName,
+                json_encode(['timeStamp' => null, 'percentClose' => null, 'attempts' => 0, 'abandoned' => false], JSON_THROW_ON_ERROR)
+            );
+        }
         $this->RegisterAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME, 0);
         $this->RegisterAttributeBoolean(self::ATTR_LAST_ISDAYBYTIMESCHEDULE, false);
     }
@@ -2226,6 +2272,7 @@ class BlindController extends IPSModuleStrict
             $this->SetTimerInterval(self::TIMER_OPEN_CONTACT2, 0);
             $this->SetTimerInterval(self::TIMER_CLOSE_CONTACT1, 0);
             $this->SetTimerInterval(self::TIMER_CLOSE_CONTACT2, 0);
+            $this->SetTimerInterval(self::TIMER_RECHECK_POSITION, 0);
             $this->SetStatus(IS_INACTIVE);
             return;
         }
@@ -3496,6 +3543,9 @@ class BlindController extends IPSModuleStrict
         if ($this->isFeedbackOfOwnMovement($blindLevelAct, $slatsLevelAct, $tsBlindLastMovement)) {
             if (!$this->dryRun) {
                 $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, $tsBlindLastMovement);
+                // Die Position ist damit doch noch bestätigt - kein Nachfassen mehr nötig
+                $this->confirmMove(self::PROP_BLINDLEVELID);
+                $this->confirmMove(self::PROP_SLATSLEVELID);
             }
             $reason = sprintf(
                 'Positionsänderung um %s entspricht der zuletzt kommandierten Position (Aktor-Rückmeldung, keine manuelle Bedienung)',
@@ -3732,14 +3782,18 @@ class BlindController extends IPSModuleStrict
         $moveBladeOk = $this->MoveToPosition(self::PROP_BLINDLEVELID, $percentBlindClose, $tsAutomatic, $deactivationTimeAuto, $hint);
 
         // Optionale Lamellensteuerung ausführen (nur wenn ein Lamellenwert übergeben wurde)
+        $moveSlatsOk = null;
         if ($percentSlatsClose !== null && IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
             $this->profileSlatsLevel = $this->GetPresentationInformation(self::PROP_SLATSLEVELID);
             $moveSlatsOk             = $this->MoveToPosition(self::PROP_SLATSLEVELID, $percentSlatsClose, $tsAutomatic, $deactivationTimeAuto, $hint);
-
-            return $moveBladeOk || $moveSlatsOk;
         }
 
-        return $moveBladeOk;
+        // Alle Fahrten (samt Wartezeiten) sind durch - jetzt darf der Nachfass-Timer aufgezogen werden
+        if (!$this->dryRun) {
+            $this->rearmRecheckTimerIfPending();
+        }
+
+        return $moveSlatsOk === null ? $moveBladeOk : ($moveBladeOk || $moveSlatsOk);
     }
 
     /**
@@ -3772,15 +3826,17 @@ class BlindController extends IPSModuleStrict
         $success    = $this->MoveToPosition(self::PROP_BLINDLEVELID, $blindLevel, 0, 0, $hint);
 
         // Optionale Lamellen bewegen
+        $moveSlatsOk = null;
         if (IPS_VariableExists($this->ReadPropertyInteger(self::PROP_SLATSLEVELID))) {
             $this->profileSlatsLevel = $this->GetPresentationInformation(self::PROP_SLATSLEVELID);
             $slatsLevel              = $this->calculateNormalizedLevel($positions['SlatsLevel'], $this->profileSlatsLevel);
             $moveSlatsOk             = $this->MoveToPosition(self::PROP_SLATSLEVELID, $slatsLevel, 0, 0, $hint);
-
-            return $success || $moveSlatsOk;
         }
 
-        return $success;
+        // Alle Fahrten (samt Wartezeiten) sind durch - jetzt darf der Nachfass-Timer aufgezogen werden
+        $this->rearmRecheckTimerIfPending();
+
+        return $moveSlatsOk === null ? $success : ($success || $moveSlatsOk);
     }
 
     private function MoveToPosition(string $propName, int $percentClose, int $tsAutomatic, int $deactivationTimeAuto, string $hint): bool
@@ -3824,12 +3880,22 @@ class BlindController extends IPSModuleStrict
             // aus - die verspätete Positionsmeldung wird dann über die Rückmeldungs-Erkennung
             // (FEEDBACK_MOVEMENT_TIME) der eigenen Fahrt zugeordnet statt als manuelle Bedienung.
             $this->rememberLastMove($propName, $percentClose, $hint);
+            // Und genau wie bei einer ausbleibenden Rückmeldung gilt die gemeldete Position ab jetzt
+            // als unzuverlässig - sonst bliebe der wahrscheinlichste Fall des Features (Aktor fährt,
+            // meldet aber nie) ohne Nachfassen.
+            $this->markUnconfirmedMove($propName, $percentClose);
             return false;
         }
 
         // 5. Nachbereitung
         $ret = $this->waitUntilBlindLevelIsReached($propName, $positionNew);
         $this->finalizeMovement($propName, $percentClose, $positionAct, $positionNew, $hint, $ret);
+
+        if ($ret) {
+            $this->confirmMove($propName);
+        } else {
+            $this->markUnconfirmedMove($propName, $percentClose);
+        }
 
         return $ret;
     }
@@ -3871,21 +3937,33 @@ class BlindController extends IPSModuleStrict
         $minMove    = $this->ReadPropertyFloat(self::PROP_MINMOVEMENT) / 100;
         $minMoveEnd = $this->ReadPropertyFloat(self::PROP_MINMOVEMENTATENDPOSITION) / 100;
 
-        // 1. Sperrzeit noch aktiv?
+        // 1. Sperrzeit noch aktiv? (Sie hängt nicht am gemeldeten Ist-Wert und gilt deshalb auch bei
+        // unbestätigter Fahrt - sonst würde das Nachfassen die Karenzzeit aushebeln.)
         if ($timeSinceAuto < $deactivation) {
             $this->Logger_Dbg(__FUNCTION__, "#$id($propName): Sperrzeit ($deactivation s) noch nicht erreicht ($timeSinceAuto s).");
             $this->moveSkipReason = sprintf('Karenzzeit nach Automatikfahrt aktiv (noch %d s)', $deactivation - $timeSinceAuto);
             return false;
         }
 
-        // 2. Toleranzbereich (bereits erreicht)?
+        // 2. Steht eine unbestätigte Fahrt aus, ist der gemeldete Ist-Wert nicht belastbar - er kann noch
+        // die Position vor der letzten Fahrt zeigen. Die folgenden Prüfungen, die auf ihm beruhen
+        // (Toleranzbereich, Mindestbewegung), würden den Fahrbefehl dann zu Unrecht unterdrücken.
+        if ($this->hasUnconfirmedMove($propName)) {
+            $this->Logger_Dbg(
+                __FUNCTION__,
+                sprintf('#%s(%s): Fahrt noch unbestätigt - Position %s gilt als unzuverlässig, Fahrbefehl wird wiederholt.', $id, $propName, $act)
+            );
+            return true;
+        }
+
+        // 3. Toleranzbereich (bereits erreicht)?
         if ($diffPercentage <= (self::ALLOWED_TOLERANCE_MOVEMENT / 100)) {
             $this->Logger_Dbg(__FUNCTION__, "#$id($propName): Position $act bereits im Toleranzbereich.");
             $this->moveSkipReason = 'Zielposition bereits erreicht';
             return false;
         }
 
-        // 3. Zu kleine Bewegung (außer es ist eine Endposition)
+        // 4. Zu kleine Bewegung (außer es ist eine Endposition)
         $isEndPosition = in_array($new, [$profile['MinValue'], $profile['MaxValue']], false);
         if (!$isEndPosition && ($diffPercentage < $minMove)) {
             $this->Logger_Dbg(__FUNCTION__, sprintf("#$id($propName): Bewegung zu klein (%.2f%% < %.2f%%).", $diffPercentage * 100, $minMove * 100));
@@ -3893,7 +3971,7 @@ class BlindController extends IPSModuleStrict
             return false;
         }
 
-        // 4. Zu kleine Bewegung zur Endposition
+        // 5. Zu kleine Bewegung zur Endposition
         if ($isEndPosition && ($diffPercentage < $minMoveEnd)) {
             $this->Logger_Dbg(__FUNCTION__, sprintf("#$id($propName): Endposition fast erreicht (Differenz %.2f%%).", $diffPercentage * 100));
             $this->moveSkipReason = sprintf('Endposition nahezu erreicht (Differenz %.0f %%)', $diffPercentage * 100);
@@ -3958,6 +4036,216 @@ class BlindController extends IPSModuleStrict
         if ($reached) {
             $this->WriteInfo($propName, $new, $hint);
         }
+    }
+
+    /**
+     * Liest den Zustand der zuletzt nicht bestätigten Fahrt einer Property.
+     *
+     * @return array{timeStamp: int|null, percentClose: int|null, attempts: int, abandoned: bool}
+     * @throws \JsonException
+     */
+    private function readUnconfirmedMove(string $propName): array
+    {
+        $state = json_decode($this->ReadAttributeString(self::ATTR_UNCONFIRMEDMOVE . $propName), true, 512, JSON_THROW_ON_ERROR);
+
+        //Attributinhalt aus einer Modulversion ohne dieses Feld
+        $state['abandoned'] ??= false;
+
+        return $state;
+    }
+
+    /**
+     * Schreibt den Zustand der zuletzt nicht bestätigten Fahrt einer Property.
+     *
+     * @throws \JsonException
+     */
+    private function writeUnconfirmedMove(string $propName, ?int $timeStamp, ?int $percentClose, int $attempts, bool $abandoned): void
+    {
+        $this->WriteAttributeString(
+            self::ATTR_UNCONFIRMEDMOVE . $propName,
+            json_encode(
+                ['timeStamp' => $timeStamp, 'percentClose' => $percentClose, 'attempts' => $attempts, 'abandoned' => $abandoned],
+                JSON_THROW_ON_ERROR
+            )
+        );
+    }
+
+    /**
+     * Wartet noch eine Bestätigung des Aktors aus? Dann gilt die gemeldete Ist-Position als unzuverlässig.
+     *
+     * Ein verwaister Zustand - älter als UNCONFIRMED_MOVE_MAX_AGE, weil ein Nachfass-Lauf nie bis zur Fahrt
+     * kam (Bewegungssperre, offener Kontakt, Automatik zwischenzeitlich aus) - zählt nicht mehr, sonst
+     * würden die Positionsprüfungen dauerhaft übersprungen und jeder Lauf würde erneut fahren.
+     *
+     * @throws \JsonException
+     */
+    private function hasUnconfirmedMove(string $propName): bool
+    {
+        $timeStamp = $this->readUnconfirmedMove($propName)['timeStamp'];
+
+        return ($timeStamp !== null) && ((time() - $timeStamp) <= self::UNCONFIRMED_MOVE_MAX_AGE);
+    }
+
+    /**
+     * Hält fest, dass der Aktor die kommandierte Position nicht bestätigt hat.
+     *
+     * Der Fall tritt auf, wenn ein Aktor zwar losfährt, die erreichte Position aber nie meldet (beobachtet
+     * an einem Homematic-Jalousieaktor). Die Statusvariable zeigt dann weiter die Position vor der Fahrt -
+     * und jeder folgende Steuerungslauf hält sein Ziel für bereits erreicht, obwohl der Rollladen woanders
+     * steht. Solange eine Fahrt unbestätigt ist, wird die jeweils gültige Zielposition daher erneut gesendet
+     * (siehe shouldPerformMovement); der Nachfass-Timer stößt den nächsten Lauf dafür zeitnah an.
+     *
+     * Nach MAX_UNCONFIRMED_MOVES Fahrbefehlen wird aufgegeben und der Zustand über LAST_MESSAGE gemeldet -
+     * ein Aktor, der grundsätzlich nicht zurückmeldet, soll nicht dauerhaft angefunkt werden. Der
+     * Aufgegeben-Merker ('abandoned') überlebt das Zurücksetzen: weitere unbestätigte Fahrten lösen dann
+     * weder Nachfassen noch neue Fehlermeldungen aus. Erst eine tatsächlich gemeldete Position
+     * (confirmMove) hebt ihn wieder auf.
+     *
+     * @throws \JsonException
+     */
+    private function markUnconfirmedMove(string $propName, int $percentClose): void
+    {
+        $state = $this->readUnconfirmedMove($propName);
+
+        if ($state['abandoned']) {
+            //der Aktor hat sich bereits als nicht rückmeldend erwiesen - nicht erneut nachfassen und melden
+            return;
+        }
+
+        $attempts = $state['attempts'] + 1;
+
+        if ($attempts >= self::MAX_UNCONFIRMED_MOVES) {
+            $this->writeUnconfirmedMove($propName, null, null, 0, true);
+            $this->stopRecheckTimerIfIdle();
+            $this->Logger_Err(
+                sprintf(
+                    '\'%s\': Der Aktor hat die Zielposition (%d%% geschlossen) auch nach %d Fahrbefehlen nicht bestätigt. Die von #%s(%s) gemeldete Position ist möglicherweise nicht aktuell.',
+                    $this->objectName,
+                    $percentClose,
+                    $attempts,
+                    $this->ReadPropertyInteger($propName),
+                    $propName
+                )
+            );
+            return;
+        }
+
+        // Der Nachfass-Timer wird bewusst NICHT hier aufgezogen, sondern erst am Ende des Laufs
+        // (rearmRecheckTimerIfPending): dieser Lauf kann nach der Fahrt noch bis zu MOVEMENT_WAIT_TIME
+        // auf eine weitere Property warten - ein hier gestarteter Timer feuerte dann in die noch
+        // gehaltene Semaphore hinein und blockierte einen Worker.
+        $this->writeUnconfirmedMove($propName, time(), $percentClose, $attempts, false);
+    }
+
+    /**
+     * Der Aktor hat eine Position gemeldet: unbestätigten Zustand und Aufgegeben-Merker der Property
+     * zurücksetzen.
+     *
+     * @throws \JsonException
+     */
+    private function confirmMove(string $propName): void
+    {
+        $state = $this->readUnconfirmedMove($propName);
+        if (($state['timeStamp'] !== null) || ($state['attempts'] !== 0) || $state['abandoned']) {
+            $this->writeUnconfirmedMove($propName, null, null, 0, false);
+        }
+
+        $this->stopRecheckTimerIfIdle();
+    }
+
+    /**
+     * Räumt verwaiste unbestätigte Zustände ab (siehe hasUnconfirmedMove); der Aufgegeben-Merker bleibt
+     * dabei bestehen. Wird zu Beginn jedes echten Steuerungslaufs aufgerufen.
+     *
+     * @throws \JsonException
+     */
+    private function expireUnconfirmedMoves(): void
+    {
+        foreach ([self::PROP_BLINDLEVELID, self::PROP_SLATSLEVELID] as $propName) {
+            $state = $this->readUnconfirmedMove($propName);
+            if (($state['timeStamp'] === null) || $this->hasUnconfirmedMove($propName)) {
+                continue;
+            }
+
+            $this->Logger_Dbg(
+                __FUNCTION__,
+                sprintf('%s: unbestätigter Zustand von %s ist verfallen und wird verworfen.', $propName, $this->formatTraceTime($state['timeStamp']))
+            );
+            $this->writeUnconfirmedMove($propName, null, null, 0, $state['abandoned']);
+        }
+
+        $this->stopRecheckTimerIfIdle();
+    }
+
+    /**
+     * Stoppt den Nachfass-Timer, sobald keine Property mehr auf eine Bestätigung wartet (der Timer gehört
+     * der Instanz, nicht der einzelnen Property).
+     *
+     * @throws \JsonException
+     */
+    private function stopRecheckTimerIfIdle(): void
+    {
+        if (!$this->hasUnconfirmedMove(self::PROP_BLINDLEVELID) && !$this->hasUnconfirmedMove(self::PROP_SLATSLEVELID)) {
+            $this->SetTimerInterval(self::TIMER_RECHECK_POSITION, 0);
+        }
+    }
+
+    /**
+     * Zieht den Nachfass-Timer auf, solange eine Bestätigung aussteht. Zentrale Aufzieh-Stelle: wird am
+     * Ende jedes echten Steuerungslaufs (ControlBlind, nach Freigabe der Semaphore) sowie am Ende der
+     * öffentlichen Fahr-Einstiege (MoveBlind, MoveBlindToShadowingPosition) aufgerufen - so feuert der
+     * Timer nie in einen noch laufenden Lauf hinein, und auch ein Lauf, der gar nicht bis zur Fahrt kam
+     * (Bewegungssperre, offener Kontakt), fasst weiter nach. Endet spätestens mit dem Verfall des Zustands.
+     *
+     * @throws \JsonException
+     */
+    private function rearmRecheckTimerIfPending(): void
+    {
+        if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] !== IS_ACTIVE) {
+            return;
+        }
+
+        if ($this->hasUnconfirmedMove(self::PROP_BLINDLEVELID) || $this->hasUnconfirmedMove(self::PROP_SLATSLEVELID)) {
+            $this->SetTimerInterval(self::TIMER_RECHECK_POSITION, self::RECHECK_POSITION_DELAY * 1000);
+        }
+    }
+
+    /**
+     * Beschreibt fürs Ablaufprotokoll, welche Fahrt der Aktor nicht bestätigt hat.
+     *
+     * @throws \JsonException
+     */
+    private function buildUnconfirmedMoveTrace(): string
+    {
+        $parts = [];
+
+        foreach ([self::PROP_BLINDLEVELID => 'Behang', self::PROP_SLATSLEVELID => 'Lamellen'] as $propName => $label) {
+            $unconfirmed = $this->readUnconfirmedMove($propName);
+
+            if ($unconfirmed['abandoned']) {
+                $parts[] = sprintf(
+                    '%s: Aktor meldet keine Positionen zurück (Nachfassen nach %d Fahrbefehlen eingestellt)',
+                    $label,
+                    self::MAX_UNCONFIRMED_MOVES
+                );
+                continue;
+            }
+
+            if (!$this->hasUnconfirmedMove($propName)) {
+                continue;
+            }
+
+            $parts[] = sprintf(
+                '%s: Fahrt von %s auf %d%% geschlossen nicht bestätigt (Versuch %d von %d), gemeldete Position gilt als unzuverlässig',
+                $label,
+                $this->formatTraceTime($unconfirmed['timeStamp']),
+                $unconfirmed['percentClose'],
+                $unconfirmed['attempts'],
+                self::MAX_UNCONFIRMED_MOVES
+            );
+        }
+
+        return implode('; ', $parts);
     }
 
     private function waitUntilBlindLevelIsReached(string $propName, $positionNew): bool
