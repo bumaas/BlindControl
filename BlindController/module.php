@@ -99,7 +99,6 @@ class BlindController extends IPSModuleStrict
     private const string PROP_MINIMUMSHADERELEVANTSLATSLEVEL              = 'MinimumShadeRelevantSlatsLevel';
     private const string PROP_MAXIMUMSHADERELEVANTSLATSLEVEL              = 'MaximumShadeRelevantSlatsLevel';
 
-
     //shadowing, according to brightness
     private const string PROP_ACTIVATORIDSHADOWINGBRIGHTNESS          = 'ActivatorIDShadowingBrightness';
     private const string PROP_BRIGHTNESSIDSHADOWINGBRIGHTNESS         = 'BrightnessIDShadowingBrightness';
@@ -155,7 +154,6 @@ class BlindController extends IPSModuleStrict
     private const string TIMER_CLOSE_CONTACT2   = 'CloseContact2';
     private const string TIMER_RECHECK_POSITION = 'RecheckPosition';
 
-
     //event idents
     private const string EVENT_IDENT_WEEKLY_SCHEDULE = 'BlindControlWeeklySchedule';
 
@@ -201,7 +199,6 @@ class BlindController extends IPSModuleStrict
 
     // Strukturierter Ablauf des letzten Steuerungslaufs (für Debug-Log und den "Erklären"-Button)
     private array $decisionTrace = [];
-
 
     // Die folgenden Funktionen überschreiben die interne IPS_() Funktionen
     public function __construct($InstanceID)
@@ -668,7 +665,7 @@ class BlindController extends IPSModuleStrict
 
         foreach ($simpleDependencies as $field => $dependencyProp) {
             $form = $this->MyUpdateFormField($form, $field, 'visible',
-                                             IPS_VariableExists($this->ReadPropertyInteger($dependencyProp)) || $bShow
+                IPS_VariableExists($this->ReadPropertyInteger($dependencyProp)) || $bShow
             );
         }
 
@@ -690,9 +687,9 @@ class BlindController extends IPSModuleStrict
 
         // 4. Manuelle Sonderfälle
         $form = $this->MyUpdateFormField($form, 'ShadowingPosition', 'visible',
-                                         ($this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL) > 0) ||
-                                         ($this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL) > 0) ||
-                                         $bShow
+            ($this->ReadPropertyFloat(self::PROP_MINIMUMSHADERELEVANTBLINDLEVEL) > 0) ||
+            ($this->ReadPropertyFloat(self::PROP_MAXIMUMSHADERELEVANTBLINDLEVEL) > 0) ||
+            $bShow
         );
 
         // 5. Das Anlegen eines Wochenplans nur anbieten, solange noch keiner ausgewählt ist
@@ -729,7 +726,6 @@ class BlindController extends IPSModuleStrict
 
         return parent::ReceiveData($JSONString);
     }
-
 
     /**
      * Die folgenden Funktionen stehen automatisch zur Verfügung, wenn das Modul über die "Module Control" eingefügt wurden.
@@ -1566,7 +1562,6 @@ class BlindController extends IPSModuleStrict
         //emergency contact
         $this->RegisterPropertyInteger(self::PROP_EMERGENCYCONTACTID, 1);
 
-
         $this->RegisterPropertyInteger(self::PROP_UPDATEINTERVAL, 1);
         $this->RegisterPropertyInteger(self::PROP_DEACTIVATIONAUTOMATICMOVEMENT, 20);
         $this->RegisterPropertyInteger(self::PROP_DEACTIVATIONMANUALMOVEMENT, 120);
@@ -2338,7 +2333,6 @@ class BlindController extends IPSModuleStrict
                    ));
     }
 
-
     private function checkEmulateStatusOfVariableAction(string $proName): bool
     {
         $var = IPS_GetVariable($this->ReadPropertyInteger($proName));
@@ -2519,7 +2513,6 @@ class BlindController extends IPSModuleStrict
         }
         return $contacts;
     }
-
 
     // Property-Namen der Öffnen-/Schließen-Kontakte (i = Kontakt 1/2, j = Zustand 1..3).
     // Die Öffnen- und Schließen-Seite unterscheiden sich nur im Präfix; alle Logik läuft
@@ -2808,7 +2801,6 @@ class BlindController extends IPSModuleStrict
         return ($towardsOpen !== $reversed) ? min($first, $second) : max($first, $second);
     }
 
-
     private function isContactOpen(string $propName): bool
     {
         $contactId = $this->ReadPropertyInteger($propName);
@@ -2893,7 +2885,6 @@ class BlindController extends IPSModuleStrict
         } else {
             $thresholdBrightness = 0;
         }
-
 
         $rSunAzimuth = GetValueFloat($this->ReadPropertyInteger(self::PROP_AZIMUTHID));
         $azimuthFrom = $this->ReadPropertyFloat(self::PROP_AZIMUTHFROM);
@@ -3236,7 +3227,6 @@ class BlindController extends IPSModuleStrict
         return $this->clampToProfile($value, $profile);
     }
 
-
     /**
      * Berechnet eine Position (Höhe oder Lamelle) durch lineare Interpolation der Tangens-Werte
      * zwischen einer niedrigen und einer hohen Sonnenstandsposition.
@@ -3506,7 +3496,6 @@ class BlindController extends IPSModuleStrict
         return null;
     }
 
-
     /**
      * Prüft, ob die automatische Bewegung aufgrund eines manuellen Eingriffs gesperrt ist.
      *
@@ -3595,7 +3584,6 @@ class BlindController extends IPSModuleStrict
         $this->Logger_Dbg(__FUNCTION__, 'Sperre: ' . $reason);
         return ['block' => true, 'reason' => $reason];
     }
-
 
     /**
      * Synchronisiert das Attribut für manuelle Bewegungen basierend auf aktuellen Aktorwerten.
@@ -3733,7 +3721,6 @@ class BlindController extends IPSModuleStrict
         }
     }
 
-
     //-----------------------------------------------
     /**
      * Bewegt den Rollladen und optional die Lamellen auf eine prozentuale Position.
@@ -3760,7 +3747,6 @@ class BlindController extends IPSModuleStrict
                 $hint
             )
         );
-
 
         if ($percentBlindClose < 0 || $percentBlindClose > 100) {
             $this->Logger_Err(sprintf('%s: percentBlindClose (%s) out of range 0-100', __FUNCTION__, $percentBlindClose));
@@ -3919,7 +3905,7 @@ class BlindController extends IPSModuleStrict
         $isRecent = $lastMove['timeStamp'] > strtotime('-' . self::IGNORE_MOVEMENT_TIME . ' secs');
 
         if ($isSame && $isRecent) {
-            $this->Logger_Dbg(__FUNCTION__, "Move ignored! Same position recently.");
+            $this->Logger_Dbg(__FUNCTION__, 'Move ignored! Same position recently.');
             $this->moveSkipReason = 'gleiche Zielposition wurde gerade erst angefahren';
             return true;
         }
@@ -4820,10 +4806,10 @@ class BlindController extends IPSModuleStrict
                 return $this->GetProfileInformationFromPresentation($presentation);
 
             case VARIABLE_PRESENTATION_SWITCH;
-                return [
-                    'MinValue' => 0,
-                    'MaxValue' => 1
-                ];
+            return [
+                'MinValue' => 0,
+                'MaxValue' => 1
+            ];
 
             case VARIABLE_PRESENTATION_SHUTTER:
                 return [
@@ -4870,7 +4856,6 @@ class BlindController extends IPSModuleStrict
                 return null;
         }
     }
-
 
     private function isMinMaxReversed(int|float $min, int|float $max): bool
     {
