@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true # tests/stubs (symcon/SymconStubs, gepinnt)
+          submodules: true # .style (Regelwerk) und tests/stubs (Kernel-Stub), beide gepinnt
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -19,10 +19,10 @@ jobs:
           php -l tests/check_locale.php
           php -l tests/harness.php
           php -l tests/check-level-conversion.php
-      - name: Code-Stil (schlankes eigenes Regelwerk, siehe .php-cs-fixer.php)
+      - name: Code-Stil (gemeinsames Regelwerk, Submodul .style)
         run: |
           wget -q https://cs.symfony.com/download/php-cs-fixer-v3.phar
-          PHP_CS_FIXER_IGNORE_ENV=1 php php-cs-fixer-v3.phar fix --dry-run --diff --using-cache=no --allow-risky=yes
+          PHP_CS_FIXER_IGNORE_ENV=1 php php-cs-fixer-v3.phar fix --config=.style/.php-cs-fixer.php --dry-run --diff --using-cache=no --allow-risky=yes
 
       - name: JSON-Validität
         run: |
