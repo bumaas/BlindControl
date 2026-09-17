@@ -4,7 +4,7 @@ Symcon-Modulbibliothek zur Rollladen-/Jalousiesteuerung (`IPSModuleStrict`, `dec
 
 ## Struktur
 
-- `BlindController/` — Hauptmodul (Präfix `BLC`), die gesamte Steuerungslogik in `module.php` (~4.700 Zeilen)
+- `BlindController/` — Hauptmodul (Präfix `BLC`), die gesamte Steuerungslogik in `module.php`
   - `form.json` — statisches Konfigurationsformular; **englische Labels sind zugleich die Übersetzungsschlüssel**
   - `locale.json` — deutsche Übersetzungen (Schlüssel müssen exakt den form.json-/`Translate()`-Texten entsprechen)
 - `BlindControlGroupMaster/` — Gruppen-Master (Präfix `BLCGM`), liest/setzt Properties mehrerer Blind-Controller-Instanzen; Formular **dynamisch** in `GetConfigurationForm()` erzeugt, kein `form.json`
@@ -18,22 +18,23 @@ BlindController ist bewusst ein `trigger_error` — es gibt keinen Datenfluss.
 ## Prüfen und Ausrollen
 
 ```bash
-C:/php/php -l BlindController/module.php          # Syntaxprüfung (auch GroupMaster, check_locale.php)
+git submodule update --init                       # einmalig: .style (Regelwerk) und tests/stubs (Kernel-Stub)
+C:/php/php -l BlindController/module.php          # Syntaxprüfung (auch GroupMaster und die Dateien unter tests/)
+C:/php/php php-cs-fixer.phar fix --config=.style/.php-cs-fixer.php --dry-run --diff --allow-risky=yes
 C:/php/php tests/check_locale.php                 # Übersetzungs-Vollständigkeit, Exit-Code 1 bei Lücken
+C:/php/php tests/check-level-conversion.php       # Umrechnung Profilwerte/Prozent, Exit-Code 1 bei Fehlern
 ```
 
-`tests/` enthält **keine** PHPUnit-Tests, nur diesen Locale-Prüfer. Die CI
-(`.github/workflows/check.yml`, PHP 8.4) fährt genau drei Schritte: `php -l`, JSON-Validität
-aller `*.json` und `check_locale.php` — lokal also dasselbe vor dem Commit laufen lassen.
+Die CI (`.github/workflows/check.yml`, PHP 8.4, Checkout mit Submodulen) fährt diese Schritte:
+`php -l` auf beide `module.php` und `tests/check_locale.php`, `tests/harness.php`,
+`tests/check-level-conversion.php`; Code-Stil mit php-cs-fixer gegen das Regelwerk im Submodul
+`.style` (`--dry-run`); JSON-Validität aller `*.json` außer `tests/stubs`; `check_locale.php`;
+`check-level-conversion.php`. Letzterer ist ein Regressionstest gegen den offiziellen
+Kernel-Stub (`tests/stubs`, über `tests/harness.php`) — lokal also dasselbe vor dem Commit
+laufen lassen.
 
-Geänderte Bibliothek auf der Produktivanlage ohne Kernel-Neustart einlesen:
-
-```bash
-C:/php/php C:/Users/Burkhard/.claude/tools/symcon_rpc.php MC_ReloadModule 51062 '"BlindControl"'
-```
-
-Das eingebettete PHP von Symcon ist nicht das CLI-PHP — `php -l` findet nur Syntaxfehler
-(siehe globale CLAUDE.md).
+Geänderte Bibliothek per `MC_ReloadModule` mit Ordnername `BlindControl` neu einlesen;
+eingebettetes PHP ≠ CLI-PHP — beides siehe globale CLAUDE.md.
 
 ## Der Steuerungslauf (Kern der Architektur)
 
