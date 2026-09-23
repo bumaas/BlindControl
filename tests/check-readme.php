@@ -96,12 +96,28 @@ foreach (glob("$wurzel/*/module.json") ?: [] as $moduljson) {
         ? (json_decode(file_get_contents("$ordner/locale.json"), true, 512, JSON_THROW_ON_ERROR)['translations']['de'] ?? [])
         : [];
     $form = is_file("$ordner/form.json") ? json_decode(file_get_contents("$ordner/form.json"), true, 512, JSON_THROW_ON_ERROR) : [];
-    foreach (formularfelder($form['elements'] ?? []) as $feld) {
+    // Ein Klammerzusatz am Ende („(0 = aus, Vorgabe 60)“) wird in der Doku oft anders formuliert und
+    // darf beim Vergleich wegfallen - aber nur, wenn der Rest im Modul eindeutig bleibt. Bei
+    // „Sonnenrichtung (von)“/„(bis)“ trägt die Klammer die Bedeutung.
+    $ohneKlammer = static fn(string $t): string => rtrim(preg_replace('/\s*\([^)]*\)\s*:?\s*$/u', '', $t), ': ');
+    $felder      = formularfelder($form['elements'] ?? []);
+    // je Sprache zählen: „From Azimuth“/„To Azimuth“ sind englisch eindeutig, deutsch erst mit Klammer
+    $kerne = array_count_values(array_merge(
+        array_map(static fn(array $f): string => 'en:' . $ohneKlammer($f['caption']), $felder),
+        array_map(static fn(array $f): string => 'de:' . $ohneKlammer($locale[$f['caption']] ?? $f['caption']), $felder)
+    ));
+    foreach ($felder as $feld) {
         $kandidaten = ['`' . $feld['name'] . '`'];
         if ($feld['caption'] !== '') {
-            $kandidaten[] = rtrim($feld['caption'], ': ');
+            $beschriftungen = ['en' => $feld['caption']];
             if (isset($locale[$feld['caption']])) {
-                $kandidaten[] = rtrim($locale[$feld['caption']], ': ');
+                $beschriftungen['de'] = $locale[$feld['caption']];
+            }
+            foreach ($beschriftungen as $sprache => $b) {
+                $kandidaten[] = rtrim($b, ': ');
+                if (($kerne[$sprache . ':' . $ohneKlammer($b)] ?? 0) === 1) {
+                    $kandidaten[] = $ohneKlammer($b);
+                }
             }
         }
         $beschrieben = false;
