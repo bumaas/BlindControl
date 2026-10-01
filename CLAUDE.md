@@ -27,6 +27,7 @@ C:/php/php tests/check-archiv-belegt.php         # Helligkeit bei gesperrtem Arc
 C:/php/php tests/check-form-hints.php            # Skalenhinweise und Temperaturschwellen im Formular
 C:/php/php tests/check-value-ranges.php          # Wertebereiche: Formulargrenzen = Modulprüfung, Status 243
 C:/php/php tests/check-status-recovery.php       # Meldung „Konfiguration ist gültig" nach Fehlerstatus
+C:/php/php tests/check-debug-schedule.php        # Debug-Zeile zum Wochenplan (Kurzfassung statt Ereignis-JSON)
 ```
 
 Die CI (`.github/workflows/check.yml`, PHP 8.4, Checkout mit Submodulen) fährt diese Schritte:
@@ -34,7 +35,8 @@ Die CI (`.github/workflows/check.yml`, PHP 8.4, Checkout mit Submodulen) fährt 
 `tests/check-level-conversion.php`; Code-Stil mit php-cs-fixer gegen das Regelwerk im Submodul
 `.style` (`--dry-run`); JSON-Validität aller `*.json` außer `tests/stubs`; `check_locale.php`;
 danach jede `tests/check-*.php` (derzeit `check-level-conversion.php`, `check-archiv-belegt.php`,
-`check-form-hints.php`, `check-value-ranges.php`, `check-status-recovery.php`, `check-readme.php`). Bis auf `check-readme.php` sind es Regressionstests gegen den offiziellen
+`check-form-hints.php`, `check-value-ranges.php`, `check-status-recovery.php`, `check-debug-schedule.php`,
+`check-readme.php`). Bis auf `check-readme.php` sind es Regressionstests gegen den offiziellen
 Kernel-Stub (`tests/stubs`, über `tests/harness.php`) — lokal also dasselbe vor dem Commit
 laufen lassen.
 
@@ -132,6 +134,10 @@ Details in `docs/ARCHITECTURE.md`; die Kurzfassung:
   keine Literal-Strings, auch nicht im kleinen GroupMaster.
 - Logging dreistufig: `Logger_Dbg` (SendDebug), `Logger_Inf` (`KL_NOTIFY`),
   `Logger_Err` (`KL_ERROR` + Statusvariable `LAST_MESSAGE`).
+- **Debug-Zeilen nennen das Ergebnis, nicht die Rohdaten.** Kein `json_encode` ganzer Kernel-Objekte
+  (Ereignis, Variable) im Steuerungslauf — das Debug wird auch über MCP (`symcon_debug`) gelesen, und
+  ein 2-kB-Dump je Lauf verdeckt die Entscheidungszeilen. Vorbild: `formatScheduleDebug()`. Aus
+  demselben Grund schreibt `GetConfigurationForm()` das Formular (54 kB) nicht mehr ins Debug.
 - Bezeichner englisch, Kommentare und benutzersichtbare Texte deutsch.
 - Neue Entscheidungslogik als eigene private Methode, nicht als weiterer Block in
   `executeControlBlindRun()` oder `SetInstanceStatusAndTimerEvent()`.

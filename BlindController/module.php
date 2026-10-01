@@ -694,7 +694,6 @@ class BlindController extends IPSModuleStrict
         $this->SetVisibilityOfNotUsedElements($form);
         $this->applyLevelRangeHints($form);
 
-        $this->SendDebug('Form', json_encode($form, JSON_THROW_ON_ERROR), 0);
         return json_encode($form, JSON_THROW_ON_ERROR);
     }
 
@@ -4897,7 +4896,6 @@ class BlindController extends IPSModuleStrict
             trigger_error(sprintf('Instance %s: wrong Event ID #%s', $this->InstanceID, $weeklyTimeTableEventId));
             return false;
         }
-        $this->SendDebug(__FUNCTION__, sprintf('event: %s', json_encode($event, JSON_THROW_ON_ERROR)), 0);
         if ($event['EventType'] !== EVENTTYPE_SCHEDULE) {
             trigger_error(sprintf('Instance %s: wrong Eventtype %s', $this->InstanceID, $event['EventType']));
             return false;
@@ -4906,7 +4904,26 @@ class BlindController extends IPSModuleStrict
         $auf = $this->getUpTimeOfDay($weekDay, $event['ScheduleGroups']);
         $ab  = $this->getDownTimeOfDay($weekDay, $event['ScheduleGroups']);
 
+        $this->SendDebug(__FUNCTION__, $this->formatScheduleDebug($weeklyTimeTableEventId, $weekDay, $auf, $ab), 0);
+
         return true;
+    }
+
+    /**
+     * Kurzfassung des Wochenplans für das Debug: nur das, was der Steuerungslauf daraus liest. Das vollständige
+     * Ereignis (rund 2 kB JSON je Lauf) verdeckte die Entscheidungszeilen; wer es braucht, holt es mit IPS_GetEvent.
+     */
+    private function formatScheduleDebug(int $eventID, int $weekDay, ?string $auf, ?string $ab): string
+    {
+        $dayNames = [1 => 'Montag', 2 => 'Dienstag', 3 => 'Mittwoch', 4 => 'Donnerstag', 5 => 'Freitag', 6 => 'Samstag', 7 => 'Sonntag'];
+
+        return sprintf(
+            'Wochenplan #%d, %s: auf %s, ab %s',
+            $eventID,
+            $dayNames[$weekDay] ?? sprintf('Tag %d', $weekDay),
+            $auf ?? 'keine Zeit',
+            $ab ?? 'keine Zeit'
+        );
     }
 
     /**
