@@ -5203,9 +5203,10 @@ class BlindController extends IPSModuleStrict
         $this->SendDebug('LOG_INFO', $message, 0);
         if (function_exists('IPSLogger_Inf') && $this->ReadPropertyBoolean('WriteLogInformationToIPSLogger')) {
             IPSLogger_Inf(__CLASS__, $message);
-        } else {
-            $this->LogMessage($message, KL_NOTIFY);
         }
+
+        // immer auch ins Symcon-Log: eine KI über MCP sieht die IPSLibrary nicht
+        $this->LogMessage($message, KL_NOTIFY);
 
         if (!$this->dryRun) {
             $this->SetValue(self::VAR_IDENT_LAST_MESSAGE, $message);
