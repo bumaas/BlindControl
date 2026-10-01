@@ -145,4 +145,34 @@ foreach ([false, true] as $alleZeigen) {
     pruefe(($hinweis['visible'] ?? true) === false, 'Label ist unsichtbar' . $zusatz);
 }
 
+/* G. Drei Regeln, die im Blindtest über MCP (01.10.2026) nur durch Probieren zu finden waren,
+ *    stehen jetzt im Formular: Sonnenrichtung über Norden hinweg, Aufbau des Wochenplans und die
+ *    Art der Interpolation in der einfachen Beschattungsvariante. */
+echo "\nG. Regeln, die nur im README standen\n";
+$labels = labelTexte(formular($m));
+$mit    = static function (string $stichwort) use ($labels): string {
+    foreach ($labels as $text) {
+        if (stripos($text, $stichwort) !== false) {
+            return $text;
+        }
+    }
+    return '';
+};
+$azimut = $mit('range of azimuth');
+pruefe(str_contains($azimut, '300') && str_contains($azimut, '60') && str_contains($azimut, '420'), 'Sonnenrichtung: Bereich über Norden mit beiden Schreibweisen (300 bis 60, 300 bis 420)');
+pruefe(stripos($mit('extreme sun positions'), 'tangent') !== false, 'einfache Variante: Interpolation über den Tangens genannt');
+$plan = $mit('first switching point');
+pruefe($plan !== '' && stripos($plan, 'action 1') !== false && stripos($plan, 'action 2') !== false, 'Wochenplan: Aktion 1/2 und die Regel zur Schließzeit genannt');
+
+/* H. Der Knopf "Wochenplan anlegen" wählt den Plan nur im offenen Formular aus. Wer die Funktion
+ *    per Skript ruft, muss die Property selbst setzen - das steht (unsichtbar) im Formular, und die
+ *    Rückmeldung behauptet nicht mehr pauschal "ausgewählt". */
+echo "\nH. BLC_CreateWeeklySchedule per Skript\n";
+$hinweis = formularElement(formular($m), 'CreateWeeklyScheduleHint');
+$text    = (string)($hinweis['caption'] ?? '');
+pruefe(str_contains($text, 'BLC_CreateWeeklySchedule') && str_contains($text, 'WeeklyTimeTableEventID'), 'Label nennt Funktion und Property');
+pruefe(($hinweis['visible'] ?? true) === false, 'Label ist unsichtbar');
+$quelle = file_get_contents(dirname(__DIR__) . '/BlindController/module.php');
+pruefe(str_contains($quelle, 'was created and selected in the form.') && !str_contains($quelle, 'was created and selected. '), 'Rückmeldung sagt „im Formular ausgewählt“');
+
 ergebnis();

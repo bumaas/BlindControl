@@ -1,0 +1,15 @@
+{
+    "quelle": "IPS_GetEvent(27935) am nuc, 01.10.2026 - von Hand in der Konsole angelegter Wochenplan (Aufbau wie docs/Wochenplan.jpg). Nur ScheduleGroups übernommen.",
+    "ScheduleGroups": [
+        {"Days": 31, "ID": 0, "Points": [
+            {"ActionID": 1, "ID": 0, "Start": {"Hour": 0, "Minute": 0, "Second": 0}},
+            {"ActionID": 2, "ID": 3, "Start": {"Hour": 7, "Minute": 30, "Second": 0}},
+            {"ActionID": 1, "ID": 2, "Start": {"Hour": 23, "Minute": 0, "Second": 0}}
+        ]},
+        {"Days": 96, "ID": 1, "Points": [
+            {"ActionID": 1, "ID": 0, "Start": {"Hour": 0, "Minute": 0, "Second": 0}},
+            {"ActionID": 2, "ID": 1, "Start": {"Hour": 8, "Minute": 0, "Second": 0}},
+            {"ActionID": 1, "ID": 2, "Start": {"Hour": 23, "Minute": 30, "Second": 0}}
+        ]}
+    ]
+}

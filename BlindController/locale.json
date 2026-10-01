@@ -14,6 +14,8 @@
       "Time Schedule":"Wochenplan",
       "Weekly Timetable Event ID":"Wochenplan Ereignis ID",
       "Create weekly schedule": "Wochenplan anlegen",
+      "Only the times and action IDs of the weekly schedule are used: action 2 opens the blind, action 1 closes it. The closing time is the first switching point of action 1 after opening.": "Aus dem Wochenplan werden nur die Zeiten und Aktions-IDs gelesen: Aktion 2 öffnet den Rollladen, Aktion 1 schließt ihn. Als Schließzeit gilt der erste Schaltpunkt der Aktion 1 nach dem Öffnen.",
+      "From a script: BLC_CreateWeeklySchedule($InstanceID, 0) creates the schedule below the instance but does not select it. Take its ID from the returned text, set the property WeeklyTimeTableEventID and apply the configuration.": "Per Skript: BLC_CreateWeeklySchedule($InstanceID, 0) legt den Wochenplan unterhalb der Instanz an, wählt ihn aber nicht aus. Die ID aus dem Rückgabetext nehmen, die Property WeeklyTimeTableEventID setzen und die Konfiguration übernehmen.",
       "Create a weekly schedule below this BlindControl instance with opening at 07:00 and closing at 22:00?": "Unterhalb dieser BlindControl-Instanz einen Wochenplan mit Öffnen um 07:00 und Schließen um 22:00 anlegen?",
       "Weekly schedule \"%s\" (#%d) is already selected. No new schedule was created.": "Der Wochenplan \"%s\" (#%d) ist bereits ausgewählt. Es wurde kein neuer Wochenplan angelegt.",
       "The selected event is not a weekly schedule. Clear the selection before creating one.": "Das ausgewählte Ereignis ist kein Wochenplan. Bitte die Auswahl leeren, bevor ein Wochenplan angelegt wird.",
@@ -23,7 +25,7 @@
       "Close blind": "Rollladen schließen",
       "Open blind": "Rollladen öffnen",
       "The weekly schedule could not be created. See the log for details.": "Der Wochenplan konnte nicht angelegt werden. Details stehen im Meldungsprotokoll.",
-      "Weekly schedule \"%s\" (#%d) was created and selected. Adjust its times if necessary, then apply the configuration.": "Der Wochenplan \"%s\" (#%d) wurde angelegt und ausgewählt. Bei Bedarf die Zeiten anpassen und anschließend die Konfiguration übernehmen.",
+      "Weekly schedule \"%s\" (#%d) was created and selected in the form. Adjust its times if necessary, then apply the configuration.": "Der Wochenplan \"%s\" (#%d) wurde angelegt und im Formular ausgewählt. Bei Bedarf die Zeiten anpassen und anschließend die Konfiguration übernehmen.",
       "Consider Holiday (optional)":"Berücksichtigung von Feier-/Urlaubstagen (optional)",
       "Holiday Indicator ID":"Feier-/Urlaubstag ID",
       "Used Weekday when Holiday":"zu nutzender Wochentag am Feier-/Urlaubstag",
@@ -61,7 +63,7 @@
       "Define the sun position indicators": "Angabe der Sonnenstand Indikatoren",
       "Azimuth ID": "Sonnenrichtung (Azimuth) ID",
       "Altitude ID": "Sonnenhöhe (Altitude) ID",
-      "Define the range of azimuth and altitude for shadowing:": "Angabe des Bereichs der Sonnenrichtung und -höhe, in dem beschattet werden soll",
+      "Define the range of azimuth and altitude for shadowing. A range across north is possible, e.g. from 300° to 60° or equivalently from 300° to 420°:": "Angabe des Bereichs der Sonnenrichtung und -höhe, in dem beschattet werden soll. Ein Bereich über Norden hinweg ist möglich, z. B. von 300° bis 60° oder gleichbedeutend von 300° bis 420°:",
       "From Azimuth": "Sonnenrichtung (von)",
       "To Azimuth": "Sonnenrichtung (bis)",
       "From Altitude": "Sonnenhöhe (von)",
@@ -72,8 +74,8 @@
       "Two alternative methods are available for determining the degree of shadowing.\\nThe simple variant calculates the height using the specified minimum and maximum position. It is only suitable for vertical window surfaces.\\nThe more precise variant calculates the height based on the orientation of the window, the inclination of the window and the specified depth that the sun is allowed to shine through the window. It is also suitable for inclined windows.":
               "Zur Ermittlung des Beschattungsgrades stehen zwei alternative Methoden zur Verfügung.\nDie einfache Variante berechnet die Höhe anhand der vorgegebenen minimalen und maximalen Position. Sie ist nur für senkrechte Fensterflächen geeignet.\nDie genauere Variante berechnet die Höhe anhand der Ausrichtung des Fensters, der Neigung des Fensters und der vorgegebenen Tiefe, die die Sonne durch das Fenster scheinen darf. Sie ist auch für geneigte Fenster geeignet.",
       "Determination of the degree of shadowing - simple variant, only suitable for facade windows (alternative)": "Bestimmung des Beschattungsgrades - einfache Variante, nur für Fassadenfenster geeignet (alternativ)",
-      "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate shading position is calculated to the current altitude.":
-      "Angabe von zwei extremen Sonnenhöhen und den zugehörigen Rollladenpositionen. Aus diesen Werten werden die zum jeweiligen Sonnenstand passenden Rollladenpositionen ermittelt.",
+      "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate shading position is calculated to the current altitude. Between the two altitudes the position is interpolated via the tangent of the altitude, i.e. not linearly in degrees.":
+      "Angabe von zwei extremen Sonnenhöhen und den zugehörigen Rollladenpositionen. Aus diesen Werten werden die zum jeweiligen Sonnenstand passenden Rollladenpositionen ermittelt. Zwischen den beiden Sonnenhöhen wird über den Tangens der Sonnenhöhe interpoliert, also nicht linear in Grad.",
       "Low Sun Position (Altitude)": "Sonnenhöhe (niedrige Sonnenposition)",
       "High Sun Position (Altitude)": "Sonnenhöhe (hohe Sonnenposition)",
       "Low Sun Position (Blind Level)": "Rollladenposition (niedrige Sonnenposition)",

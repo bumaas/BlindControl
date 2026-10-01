@@ -155,6 +155,7 @@ Das Modul bezieht aus dem Wochenplan ausschließlich die Aktionszeiten und den A
 - Der Wochenplan muss genau zwei Aktionen mit den IDs 1 und 2 beinhalten. Die eigentlichen Aktionen bleiben dabei jedoch "leer" (ohne Funktion), da der Wochenplan nicht von Symcon direkt ausgeführt werden soll. Wählen Sie hierzu die Aktion "Führe PHP Code" aus und lassen Sie das Code-Feld leer.
 - Die Aktion mit ID 1 definiert das **Herunter**fahren, die ID 2 das **Hoch**fahren des Rollladens.
 - Es darf maximal einen Zeitraum für Aktion 2 (Hochfahren) geben.
+- Als Zeit zum Herunterfahren gilt der erste Schaltpunkt der Aktion 1 **nach** dem Hochfahren. Ob der Tag um 00:00 mit Aktion 1 beginnt (wie im Bild) oder erst mit dem Hochfahren, spielt keine Rolle.
 - Ob der Wochenplan selbst in Symcon als "aktiv" markiert ist, wird nicht berücksichtigt.
 
 Über diesen Wochenplan werden die Grundfahrzeiten (morgens hoch / abends runter) definiert.

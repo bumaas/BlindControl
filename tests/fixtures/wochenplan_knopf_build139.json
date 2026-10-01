@@ -1,0 +1,9 @@
+{
+    "quelle": "IPS_GetEvent des Wochenplans, den BLC_CreateWeeklySchedule unter 2.51 build 139 am nuc angelegt hat (01.10.2026, Wegwerf-Instanz). Nur ScheduleGroups übernommen. So liegen die Pläne bei allen, die den Knopf seit build 114 benutzt haben.",
+    "ScheduleGroups": [
+        {"Days": 127, "ID": 0, "Points": [
+            {"ActionID": 2, "ID": 0, "Start": {"Hour": 7, "Minute": 0, "Second": 0}},
+            {"ActionID": 1, "ID": 1, "Start": {"Hour": 22, "Minute": 0, "Second": 0}}
+        ]}
+    ]
+}

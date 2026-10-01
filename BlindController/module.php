@@ -376,6 +376,18 @@ class BlindController extends IPSModuleStrict
     }
 
     /**
+     * Schaltpunkte des Standard-Wochenplans als [Stunde, Minute, ActionID]: ab 00:00 geschlossen, 07:00 öffnen,
+     * 22:00 schließen. Der Punkt um 00:00 gehört dazu - so sieht auch ein in der Konsole angelegter Plan aus
+     * (docs/Wochenplan.jpg), und der Tag ist im Wochenplan-Editor lückenlos belegt.
+     *
+     * @return list<array{0: int, 1: int, 2: int}>
+     */
+    private function defaultWeeklySchedulePoints(): array
+    {
+        return [[0, 0, 1], [7, 0, 2], [22, 0, 1]];
+    }
+
+    /**
      * Legt nach ausdrücklicher Benutzeraktion (Formular-Button) einen einfachen Wochenplan
      * unterhalb der Instanz an (Öffnen 07:00 / Schließen 22:00, alle Wochentage) und wählt ihn
      * im Formular aus. Ein bereits ausgewählter oder früher durch das Modul angelegter
@@ -421,9 +433,11 @@ class BlindController extends IPSModuleStrict
                           && IPS_SetEventScheduleAction($eventID, 1, $this->Translate('Close blind'), 0xE74C3C, '')
                           && IPS_SetEventScheduleAction($eventID, 2, $this->Translate('Open blind'), 0x2ECC71, '')
                           && IPS_SetEventScheduleGroup($eventID, 0, 127)
-                          && IPS_SetEventScheduleGroupPoint($eventID, 0, 0, 7, 0, 0, 2)
-                          && IPS_SetEventScheduleGroupPoint($eventID, 0, 1, 22, 0, 0, 1)
                           && IPS_SetEventActive($eventID, false);
+
+            foreach ($this->defaultWeeklySchedulePoints() as $pointID => [$hour, $minute, $actionID]) {
+                $configured = $configured && IPS_SetEventScheduleGroupPoint($eventID, 0, $pointID, $hour, $minute, 0, $actionID);
+            }
 
             if (!$configured) {
                 throw new RuntimeException('The weekly schedule could not be configured.');
@@ -439,7 +453,7 @@ class BlindController extends IPSModuleStrict
         $this->UpdateFormField(self::PROP_WEEKLYTIMETABLEEVENTID, 'value', $eventID);
         $this->UpdateFormField('CreateWeeklySchedule', 'enabled', false);
         return sprintf(
-            $this->Translate('Weekly schedule "%s" (#%d) was created and selected. Adjust its times if necessary, then apply the configuration.'),
+            $this->Translate('Weekly schedule "%s" (#%d) was created and selected in the form. Adjust its times if necessary, then apply the configuration.'),
             IPS_GetName($eventID),
             $eventID
         );
@@ -4958,16 +4972,29 @@ class BlindController extends IPSModuleStrict
     {
         $weekDay = 2 ** ($weekDay - 1);
 
-        $count = 0;
+        // Abzeit ist der erste Schließen-Punkt (ActionID 1) NACH dem Öffnen-Punkt (ActionID 2). Früher zählte der
+        // zweite Schließen-Punkt des Tages - das setzte einen Schließen-Punkt um 00:00 voraus und ließ den vom
+        // Formular angelegten Plan (nur "auf" und "zu") ohne Abzeit.
+        $secondsOf = static fn(array $point): int => $point['Start']['Hour'] * 3600 + $point['Start']['Minute'] * 60 + $point['Start']['Second'];
+
         foreach ($groups as $group) {
-            if ($group['Days'] & $weekDay) {
-                foreach ($group['Points'] as $point) {
-                    if ($point['ActionID'] === 1) {
-                        $count++;
-                        if ($count === 2) {
-                            return sprintf("%'.02s:%'.02s", $point['Start']['Hour'], $point['Start']['Minute']);
-                        }
+            if (!($group['Days'] & $weekDay)) {
+                continue;
+            }
+
+            $points = $group['Points'];
+            usort($points, static fn(array $a, array $b): int => $secondsOf($a) <=> $secondsOf($b));
+
+            $upSeconds = null;
+            foreach ($points as $point) {
+                if ($upSeconds === null) {
+                    if ($point['ActionID'] === 2) {
+                        $upSeconds = $secondsOf($point);
                     }
+                    continue;
+                }
+                if ($point['ActionID'] === 1 && $secondsOf($point) > $upSeconds) {
+                    return sprintf("%'.02s:%'.02s", $point['Start']['Hour'], $point['Start']['Minute']);
                 }
             }
         }

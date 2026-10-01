@@ -16,6 +16,8 @@
               {"type": "Button", "name": "CreateWeeklySchedule", "caption": "Create weekly schedule", "confirm": "Create a weekly schedule below this BlindControl instance with opening at 07:00 and closing at 22:00?", "onClick": "echo BLC_CreateWeeklySchedule($id, $WeeklyTimeTableEventID);"}
             ]
             },
+            {"type": "Label", "caption": "Only the times and action IDs of the weekly schedule are used: action 2 opens the blind, action 1 closes it. The closing time is the first switching point of action 1 after opening."},
+            {"type": "Label", "name": "CreateWeeklyScheduleHint", "visible": false, "caption": "From a script: BLC_CreateWeeklySchedule($InstanceID, 0) creates the schedule below the instance but does not select it. Take its ID from the returned text, set the property WeeklyTimeTableEventID and apply the configuration."},
             {
               "type":  "ExpansionPanel", "caption": "Consider Holiday (optional)",
               "items": [
@@ -111,7 +113,7 @@
             {"type": "Label", "caption": "Define the sun position indicators"},
             {"type": "SelectVariable", "name": "AzimuthID", "validVariableTypes": [2], "caption": "Azimuth ID", "width": "600px"},
             {"type": "SelectVariable", "name": "AltitudeID", "validVariableTypes": [2], "caption": "Altitude ID", "width": "600px"},
-            {"type": "Label", "caption": "Define the range of azimuth and altitude for shadowing:"},
+            {"type": "Label", "caption": "Define the range of azimuth and altitude for shadowing. A range across north is possible, e.g. from 300° to 60° or equivalently from 300° to 420°:"},
             {
               "type": "RowLayout", "items": [
               {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1", "minimum": 0, "maximum": 720, "suffix": "°"},
@@ -138,7 +140,7 @@
             {
               "type":  "ExpansionPanel", "caption": "Determination of the degree of shadowing - simple variant, only suitable for facade windows (alternative)",
               "items": [
-                {"type": "Label", "caption": "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate shading position is calculated to the current altitude."},
+                {"type": "Label", "caption": "Define two extreme sun positions (altitudes) and their associated shutter positions. From these values, the appropriate shading position is calculated to the current altitude. Between the two altitudes the position is interpolated via the tangent of the altitude, i.e. not linearly in degrees."},
                 {
                   "type": "RowLayout", "items": [
                   {"type": "NumberSpinner", "name": "LowSunPositionAltitude", "caption": "Low Sun Position (Altitude)", "digits": "1", "minimum": 0, "maximum": 90, "suffix": "°"},

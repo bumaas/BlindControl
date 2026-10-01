@@ -28,6 +28,7 @@ C:/php/php tests/check-form-hints.php            # Skalenhinweise und Temperatur
 C:/php/php tests/check-value-ranges.php          # Wertebereiche: Formulargrenzen = Modulprüfung, Status 243
 C:/php/php tests/check-status-recovery.php       # Meldung „Konfiguration ist gültig" nach Fehlerstatus
 C:/php/php tests/check-debug-schedule.php        # Debug-Zeile zum Wochenplan (Kurzfassung statt Ereignis-JSON)
+C:/php/php tests/check-weekly-schedule.php       # Auf-/Abzeit aus dem Wochenplan (Fixtures: echte IPS_GetEvent-Mitschnitte)
 ```
 
 Die CI (`.github/workflows/check.yml`, PHP 8.4, Checkout mit Submodulen) fährt diese Schritte:
@@ -36,7 +37,7 @@ Die CI (`.github/workflows/check.yml`, PHP 8.4, Checkout mit Submodulen) fährt 
 `.style` (`--dry-run`); JSON-Validität aller `*.json` außer `tests/stubs`; `check_locale.php`;
 danach jede `tests/check-*.php` (derzeit `check-level-conversion.php`, `check-archiv-belegt.php`,
 `check-form-hints.php`, `check-value-ranges.php`, `check-status-recovery.php`, `check-debug-schedule.php`,
-`check-readme.php`). Bis auf `check-readme.php` sind es Regressionstests gegen den offiziellen
+`check-weekly-schedule.php`, `check-readme.php`). Bis auf `check-readme.php` sind es Regressionstests gegen den offiziellen
 Kernel-Stub (`tests/stubs`, über `tests/harness.php`) — lokal also dasselbe vor dem Commit
 laufen lassen.
 
@@ -72,6 +73,17 @@ die Antwort von `ExplainControlBlind()`.
 kein Fahrbefehl, keine Änderung an Attributen, Variablen oder Timern. Wer Logik ergänzt,
 die schreibt, muss `$this->dryRun` berücksichtigen — sonst verändert der „Erklären"-Knopf
 den Anlagenzustand.
+
+### Wochenplan
+
+Gelesen werden nur Zeiten und Aktionstyp (`getUpTimeOfDay()`/`getDownTimeOfDay()`): Aufzeit ist der
+erste Punkt mit ActionID 2, **Abzeit der erste Punkt mit ActionID 1 danach**. Bis build 139 galt der
+*zweite* Schließen-Punkt des Tages als Abzeit — das setzte stillschweigend einen Schließen-Punkt um
+00:00 voraus, und der vom Formular-Knopf angelegte Plan (seit build 114: nur 07:00 auf, 22:00 zu)
+hatte dadurch keine Abzeit; der Rollladen wäre nach Plan nie geschlossen worden (gefunden im
+MCP-Blindtest am 01.10.2026). **Ein Plan ohne Abzeit ist kein Fehler:** Der 24-h-Plan für reine
+Beschattung (README 5.2) hat bewusst keine — `checkTimeTable()` darf das nicht beanstanden.
+Der Knopf legt jetzt `defaultWeeklySchedulePoints()` an (00:00 zu, 07:00 auf, 22:00 zu).
 
 ### Manuelle Bedienung
 
@@ -154,7 +166,7 @@ Danach `tests/check_locale.php` laufen lassen — es prüft `caption`/`label`/`s
 `form.json` **und** alle `Translate('…')`-Aufrufe in `module.php` und in form.json-Skripten.
 
 **Das Formular muss ohne README verständlich sein** (MCP-Evaluierung 01.10.2026: Eine KI liest nur
-das Formular). Zwei Stellen tragen deshalb Wissen, das sonst nur im README stand:
+das Formular). Diese Stellen tragen deshalb Wissen, das sonst nur im README stand:
 
 - Die Labels `BlindLevelRangeHint`/`SlatsLevelRangeHint` nennen die Skala der Höhen- bzw.
   Lamellenfelder („… 1 = geöffnet, 0 = geschlossen"). Sie werden in `applyLevelRangeHints()` aus
@@ -167,6 +179,12 @@ das Formular). Zwei Stellen tragen deshalb Wissen, das sonst nur im README stand
 - Das Label `ExplainControlBlindHint` unter `actions` nennt `BLC_ExplainControlBlind` als
   Skriptfunktion. **Es ist absichtlich unsichtbar** (`visible: false`, Vorgabe Burkhard): In der
   Konsole soll es nicht erscheinen, im Formular-JSON findet es eine KI trotzdem. Nicht sichtbar schalten.
+  Dasselbe gilt für `CreateWeeklyScheduleHint`: `BLC_CreateWeeklySchedule` wählt den Plan nur im
+  offenen Formular aus (`UpdateFormField`); per Skript muss `WeeklyTimeTableEventID` selbst gesetzt werden.
+- Sichtbare Labels nennen drei Regeln, die im Blindtest nur durch Probieren zu finden waren:
+  Sonnenrichtung über Norden (300 bis 60 oder 300 bis 420), Aufbau des Wochenplans (Aktion 1/2,
+  Schließzeit = erster Punkt der Aktion 1 nach dem Öffnen) und die Tangens-Interpolation der
+  einfachen Beschattungsvariante (`calculateAltitudeDependentPosition()`).
 
 ## Support-Kontext
 
