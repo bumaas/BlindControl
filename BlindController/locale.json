@@ -8,6 +8,8 @@
       "In this instance, all parameters for controlling a single blind are stored.": "In dieser Instanz werden alle Parameter zur Steuerung eines einzelnen Rollladens hinterlegt.",
       "Blind Level ID":"Rollladen Level ID",
       "Slats Level ID (optional)":"Lamellen Level ID (optional)",
+      "All blind level values in this form are raw values of this variable: %s = open, %s = closed": "Alle Höhenangaben in diesem Formular sind Rohwerte dieser Variable: %s = geöffnet, %s = geschlossen",
+      "All slats level values in this form are raw values of this variable: %s = open, %s = closed": "Alle Lamellenangaben in diesem Formular sind Rohwerte dieser Variable: %s = geöffnet, %s = geschlossen",
       "Change of Night and Day": "Tag/Nacht Wechsel",
       "Time Schedule":"Wochenplan",
       "Weekly Timetable Event ID":"Wochenplan Ereignis ID",
@@ -65,7 +67,7 @@
       "From Altitude": "Sonnenhöhe (von)",
       "To Altitude": "Sonnenhöhe (bis)",
       "Define a brightness sensor if the brightness should be considered": "Angabe eines Helligkeitssensors und eines Schwellwertes wenn die Helligkeit berücksichtigt werden soll",
-      "Define an additional temperature sensor when the outdoor temperature should be considered": "Angabe eines Temperatursensors wenn zusätzlich die Außentemperatur berücksichtigt werden soll",
+      "Define an additional temperature sensor if the outdoor temperature should be considered. The thresholds are fixed: above 24 °C the brightness threshold is lowered by 10 % per degree (earlier shadowing), below 10 °C it is raised by 10 % per degree. Above 27 °C the blind is closed a further 15 %, above 30 °C to at least 90 %.": "Angabe eines Temperatursensors, wenn zusätzlich die Außentemperatur berücksichtigt werden soll. Die Schwellen sind fest: Über 24 °C sinkt der Helligkeitsschwellwert um 10 % je Grad (frühere Beschattung), unter 10 °C steigt er um 10 % je Grad. Über 27 °C fährt der Rollladen 15 % weiter zu, über 30 °C auf mindestens 90 %.",
       "Temperature ID": "Temperatur ID",
       "Two alternative methods are available for determining the degree of shadowing.\\nThe simple variant calculates the height using the specified minimum and maximum position. It is only suitable for vertical window surfaces.\\nThe more precise variant calculates the height based on the orientation of the window, the inclination of the window and the specified depth that the sun is allowed to shine through the window. It is also suitable for inclined windows.":
               "Zur Ermittlung des Beschattungsgrades stehen zwei alternative Methoden zur Verfügung.\nDie einfache Variante berechnet die Höhe anhand der vorgegebenen minimalen und maximalen Position. Sie ist nur für senkrechte Fensterflächen geeignet.\nDie genauere Variante berechnet die Höhe anhand der Ausrichtung des Fensters, der Neigung des Fensters und der vorgegebenen Tiefe, die die Sonne durch das Fenster scheinen darf. Sie ist auch für geneigte Fenster geeignet.",

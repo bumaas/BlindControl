@@ -172,6 +172,18 @@ class BlindController extends IPSModuleStrict
     //nach dieser Zeit verfällt ein unbestätigter Zustand - er ist dann verwaist (z. B. Nachfass-Lauf kam nie bis zur Fahrt)
     private const int UNCONFIRMED_MOVE_MAX_AGE   = self::RECHECK_POSITION_DELAY * (self::MAX_UNCONFIRMED_MOVES + 2);
 
+    // Skalenhinweise im Formular: Label-Name => zugehörige Variable und Text (zugleich Übersetzungsschlüssel aus form.json)
+    private const array LEVEL_RANGE_HINTS = [
+        'BlindLevelRangeHint' => [
+            'prop'     => self::PROP_BLINDLEVELID,
+            'template' => 'All blind level values in this form are raw values of this variable: %s = open, %s = closed',
+        ],
+        'SlatsLevelRangeHint' => [
+            'prop'     => self::PROP_SLATSLEVELID,
+            'template' => 'All slats level values in this form are raw values of this variable: %s = open, %s = closed',
+        ],
+    ];
+
     private string $objectName;
 
     private ?array $profileBlindLevel;
@@ -303,7 +315,15 @@ class BlindController extends IPSModuleStrict
                 $this->UpdateFormField('WindowOrientationHint', 'caption', $this->buildWindowOrientationHint((float)$Value));
                 break;
 
+            case self::PROP_BLINDLEVELID:
+                $this->updateLevelRangeHint('BlindLevelRangeHint', (int)$Value);
+                break;
+
             case self::PROP_SLATSLEVELID:
+                $this->updateFormVisibility($Ident, $Value);
+                $this->updateLevelRangeHint('SlatsLevelRangeHint', (int)$Value);
+                break;
+
             case self::PROP_HOLIDAYINDICATORID:
             case self::PROP_WAKEUPTIMEID:
             case self::PROP_BEDTIMEID:
@@ -637,6 +657,7 @@ class BlindController extends IPSModuleStrict
         $form['elements'] = array_merge($elements, $form['elements']);
 
         $this->SetVisibilityOfNotUsedElements($form);
+        $this->applyLevelRangeHints($form);
 
         $this->SendDebug('Form', json_encode($form, JSON_THROW_ON_ERROR), 0);
         return json_encode($form, JSON_THROW_ON_ERROR);
@@ -720,6 +741,60 @@ class BlindController extends IPSModuleStrict
         $azimuth    = fmod(fmod($orientation, 360.0) + 360.0, 360.0);
         return $directions[((int)round($azimuth / 45)) % 8];
     }
+
+    /**
+     * Blendet unter der Höhen- und der Lamellenvariable den Hinweis ein, in welcher Skala die
+     * Höhen- bzw. Lamellenangaben des Formulars einzutragen sind (Rohwerte der Variable).
+     *
+     * @param array $form Referenz auf das geladene Formular-Array.
+     */
+    private function applyLevelRangeHints(array &$form): void
+    {
+        foreach (self::LEVEL_RANGE_HINTS as $labelName => $hintDefinition) {
+            $hint = $this->buildLevelRangeHint($this->ReadPropertyInteger($hintDefinition['prop']), $hintDefinition['template']);
+            $form = $this->MyUpdateFormField($form, $labelName, 'visible', $hint !== null);
+            if ($hint !== null) {
+                $form = $this->MyUpdateFormField($form, $labelName, 'caption', $hint);
+            }
+        }
+    }
+
+    /** Zieht den Skalenhinweis nach, sobald im Formular eine andere Variable gewählt wird. */
+    private function updateLevelRangeHint(string $labelName, int $variableID): void
+    {
+        $hint = $this->buildLevelRangeHint($variableID, self::LEVEL_RANGE_HINTS[$labelName]['template']);
+        $this->UpdateFormField($labelName, 'visible', $hint !== null);
+        if ($hint !== null) {
+            $this->UpdateFormField($labelName, 'caption', $hint);
+        }
+    }
+
+    /**
+     * Liefert den Skalenhinweis zu einer Höhen- oder Lamellenvariable, z. B. "… 1 = geöffnet, 0 = geschlossen".
+     * MinValue ist per Definition die Offen-Position, MaxValue die Geschlossen-Position (siehe Level-Konvention).
+     *
+     * @return string|null null, wenn die Variable fehlt oder ihre Darstellung keinen Wertebereich hergibt.
+     */
+    private function buildLevelRangeHint(int $variableID, string $template): ?string
+    {
+        if (!IPS_VariableExists($variableID)) {
+            return null;
+        }
+
+        // eine ungeeignete Darstellung meldet schon der Instanzstatus - im Formular keine zweite Meldung
+        $profile = @$this->getPresentationInformationOfVariable($variableID, $template);
+        if ($profile === null) {
+            return null;
+        }
+
+        return sprintf($this->Translate($template), $this->formatLevelValue($profile['MinValue']), $this->formatLevelValue($profile['MaxValue']));
+    }
+
+    private function formatLevelValue(int|float $value): string
+    {
+        return rtrim(rtrim(sprintf('%.2f', $value), '0'), '.');
+    }
+
     public function ReceiveData(string $JSONString): string
     {
         trigger_error(sprintf('Fatal error: no ReceiveData expected. (%s)', $JSONString));
@@ -4799,7 +4874,16 @@ class BlindController extends IPSModuleStrict
      */
     private function GetPresentationInformation(string $propName): ?array
     {
-        if (!($presentation = @IPS_GetVariablePresentation($this->ReadPropertyInteger($propName)))) {
+        return $this->getPresentationInformationOfVariable($this->ReadPropertyInteger($propName), $propName);
+    }
+
+    /**
+     * Wie GetPresentationInformation(), aber für eine beliebige Variable - etwa eine im Formular
+     * gewählte, die noch nicht übernommen ist. $propName dient nur der Fehlermeldung.
+     */
+    private function getPresentationInformationOfVariable(int $variableID, string $propName): ?array
+    {
+        if (!($presentation = @IPS_GetVariablePresentation($variableID))) {
             return null;
         }
 

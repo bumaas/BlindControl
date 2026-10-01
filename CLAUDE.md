@@ -24,6 +24,7 @@ C:/php/php php-cs-fixer.phar fix --config=.style/.php-cs-fixer.php --dry-run --d
 C:/php/php tests/check_locale.php                 # Übersetzungs-Vollständigkeit, Exit-Code 1 bei Lücken
 C:/php/php tests/check-level-conversion.php       # Umrechnung Profilwerte/Prozent, Exit-Code 1 bei Fehlern
 C:/php/php tests/check-archiv-belegt.php         # Helligkeit bei gesperrtem Archiv (Monatsverdichtung)
+C:/php/php tests/check-form-hints.php            # Skalenhinweise und Temperaturschwellen im Formular
 ```
 
 Die CI (`.github/workflows/check.yml`, PHP 8.4, Checkout mit Submodulen) fährt diese Schritte:
@@ -31,7 +32,7 @@ Die CI (`.github/workflows/check.yml`, PHP 8.4, Checkout mit Submodulen) fährt 
 `tests/check-level-conversion.php`; Code-Stil mit php-cs-fixer gegen das Regelwerk im Submodul
 `.style` (`--dry-run`); JSON-Validität aller `*.json` außer `tests/stubs`; `check_locale.php`;
 danach jede `tests/check-*.php` (derzeit `check-level-conversion.php`, `check-archiv-belegt.php`,
-`check-readme.php`). Die ersten beiden sind Regressionstests gegen den offiziellen
+`check-form-hints.php`, `check-readme.php`). Die ersten drei sind Regressionstests gegen den offiziellen
 Kernel-Stub (`tests/stubs`, über `tests/harness.php`) — lokal also dasselbe vor dem Commit
 laufen lassen.
 
@@ -126,6 +127,18 @@ Bei Änderungen an Formular-/Hilfetexten immer synchron halten:
 
 Danach `tests/check_locale.php` laufen lassen — es prüft `caption`/`label`/`suffix` aus
 `form.json` **und** alle `Translate('…')`-Aufrufe in `module.php` und in form.json-Skripten.
+
+**Das Formular muss ohne README verständlich sein** (MCP-Evaluierung 01.10.2026: Eine KI liest nur
+das Formular). Zwei Stellen tragen deshalb Wissen, das sonst nur im README stand:
+
+- Die Labels `BlindLevelRangeHint`/`SlatsLevelRangeHint` nennen die Skala der Höhen- bzw.
+  Lamellenfelder („… 1 = geöffnet, 0 = geschlossen"). Sie werden in `applyLevelRangeHints()` aus
+  der Darstellung der gewählten Variable gefüllt und per `onChange` live nachgezogen; Texte und
+  Zuordnung stehen in `LEVEL_RANGE_HINTS`.
+- Das Label am Temperatursensor nennt die festen Schwellen (24/10 °C, 27 °C, 30 °C). **Die Zahlen
+  stehen als Literale im Code** (`getBrightnessThreshold()`, `getPositionsOfShadowingBySunPosition()`)
+  — wer sie ändert, muss Label, `locale.json` und README mitziehen; `tests/check-form-hints.php`
+  prüft nur, dass das Label sie nennt.
 
 ## Support-Kontext
 

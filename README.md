@@ -251,9 +251,10 @@ Die **Kontakte zum Schließen** unterstützen dieselben Wertegruppen und dieselb
 ### 5.6 Blind Controller
 
 **Hinweis**: Als Werte sind immer die **Rohwerte der Variable** anzugeben (keine umgerechneten Werte).
+Welcher Rohwert "geöffnet" und welcher "geschlossen" bedeutet, zeigt das Formular direkt unter der gewählten Höhen- bzw. Lamellenvariable an (z. B. "Alle Höhenangaben in diesem Formular sind Rohwerte dieser Variable: 1 = geöffnet, 0 = geschlossen").
 *Beispiele*:
 *   Hat die Variable einen Bereich von **0 bis 255**, ist für "geschlossen" **255** einzutragen (und nicht 100).
-*   Hat die Variable einen Bereich von **0.0 bis 1.0** (z. B. Homematic), ist für "geschlossen" **1.0** einzutragen.
+*   Hat die Variable einen Bereich von **0.0 bis 1.0** und ist bei 1.0 geöffnet (z. B. Homematic), ist für "geschlossen" **0.0** einzutragen.
 
 | Eigenschaft                                                                                                                                                               |   Typ   | Standardwert | Funktion                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------:|:-------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
