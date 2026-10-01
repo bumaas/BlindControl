@@ -19,6 +19,7 @@ jobs:
           php -l tests/check_locale.php
           php -l tests/harness.php
           php -l tests/check-level-conversion.php
+          php -l tests/check-archiv-belegt.php
       - name: Code-Stil (gemeinsames Regelwerk, Submodul .style)
         run: |
           wget -q https://cs.symfony.com/download/php-cs-fixer-v3.phar

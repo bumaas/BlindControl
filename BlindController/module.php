@@ -3119,7 +3119,9 @@ class BlindController extends IPSModuleStrict
         }
         $archiveId = $archiveIds[0];
 
-        if (AC_GetLoggingStatus($archiveId, $brightnessID)) {
+        // Während der monatlichen Verdichtung ist das Archiv gesperrt: jeder AC_*-Aufruf wartet 30 s und scheitert
+        // mit der Warnung „Instanz … ist belegt". Dann gilt wie bei fehlenden Archivdaten der aktuelle Sensorwert.
+        if (@AC_GetLoggingStatus($archiveId, $brightnessID)) {
             $werte = @AC_GetAggregatedValues($archiveId, $brightnessID, 6, strtotime('-' . $brightnessAvgMinutes . ' minutes'), time(), 0);
             if (empty($werte)) {
                 //bei der Sommer auf Winterzeitumstellung gab es eine Warning (EndTime is before StartTime) um kurz vor 3

@@ -23,13 +23,15 @@ C:/php/php -l BlindController/module.php          # Syntaxprüfung (auch GroupMa
 C:/php/php php-cs-fixer.phar fix --config=.style/.php-cs-fixer.php --dry-run --diff --allow-risky=yes
 C:/php/php tests/check_locale.php                 # Übersetzungs-Vollständigkeit, Exit-Code 1 bei Lücken
 C:/php/php tests/check-level-conversion.php       # Umrechnung Profilwerte/Prozent, Exit-Code 1 bei Fehlern
+C:/php/php tests/check-archiv-belegt.php         # Helligkeit bei gesperrtem Archiv (Monatsverdichtung)
 ```
 
 Die CI (`.github/workflows/check.yml`, PHP 8.4, Checkout mit Submodulen) fährt diese Schritte:
 `php -l` auf beide `module.php` und `tests/check_locale.php`, `tests/harness.php`,
 `tests/check-level-conversion.php`; Code-Stil mit php-cs-fixer gegen das Regelwerk im Submodul
 `.style` (`--dry-run`); JSON-Validität aller `*.json` außer `tests/stubs`; `check_locale.php`;
-`check-level-conversion.php`. Letzterer ist ein Regressionstest gegen den offiziellen
+danach jede `tests/check-*.php` (derzeit `check-level-conversion.php`, `check-archiv-belegt.php`,
+`check-readme.php`). Die ersten beiden sind Regressionstests gegen den offiziellen
 Kernel-Stub (`tests/stubs`, über `tests/harness.php`) — lokal also dasselbe vor dem Commit
 laufen lassen.
 
