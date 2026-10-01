@@ -131,4 +131,18 @@ foreach (['24 °C', '10 °C', '27 °C', '30 °C', '15 %', '90 %'] as $angabe) {
     pruefe(str_contains($temperaturLabel, $angabe), "Label nennt $angabe");
 }
 
+/* F. Der Probelauf ist auch per Skript zu haben. Der Hinweis darauf steht im Formular-JSON, damit
+ *    ihn eine KI findet — in der Konsole soll er nicht erscheinen, auch nicht mit eingeblendeten
+ *    ungenutzten Elementen. */
+echo "\nF. Hinweis auf BLC_ExplainControlBlind (unsichtbar)\n";
+foreach ([false, true] as $alleZeigen) {
+    IPS_SetProperty($m->id(), 'ShowNotUsedElements', $alleZeigen);
+    IPS_ApplyChanges($m->id());
+    $aktionen = json_decode($m->GetConfigurationForm(), true, 512, JSON_THROW_ON_ERROR)['actions'];
+    $hinweis  = formularElement($aktionen, 'ExplainControlBlindHint');
+    $zusatz   = $alleZeigen ? ' (ungenutzte Elemente eingeblendet)' : '';
+    pruefe($hinweis !== null && str_contains((string)($hinweis['caption'] ?? ''), 'BLC_ExplainControlBlind'), 'Label nennt BLC_ExplainControlBlind' . $zusatz);
+    pruefe(($hinweis['visible'] ?? true) === false, 'Label ist unsichtbar' . $zusatz);
+}
+
 ergebnis();

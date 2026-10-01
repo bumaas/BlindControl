@@ -46,6 +46,7 @@ class BlindController extends IPSModuleStrict
     private const int STATUS_INST_SLATSLEVEL_ID_PROFILE_MIN_MAX_INVALID                  = 239;
     private const int STATUS_INST_SLATSLEVEL_ID_PROFILE_NOT_SET                          = 240;
     private const int STATUS_INST_CONTACT_VALUES_ARE_INVALID                             = 242;
+    private const int STATUS_INST_VALUE_IS_OUT_OF_RANGE                                  = 243;
 
     // -- property names --
     private const string PROP_BLINDLEVELID                      = 'BlindLevelID';
@@ -84,6 +85,8 @@ class BlindController extends IPSModuleStrict
     private const string PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION  = 'BrightnessAvgMinutesShadowingBySunPosition';
     private const string PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION = 'BrightnessThresholdIDShadowingBySunPosition';
     private const string PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION         = 'TemperatureIDShadowingBySunPosition';
+    private const string PROP_LOWSUNPOSITIONALTITUDE                      = 'LowSunPositionAltitude';
+    private const string PROP_HIGHSUNPOSITIONALTITUDE                     = 'HighSunPositionAltitude';
     private const string PROP_LOWSUNPOSITIONBLINDLEVEL                    = 'LowSunPositionBlindLevel';
     private const string PROP_HIGHSUNPOSITIONBLINDLEVEL                   = 'HighSunPositionBlindLevel';
     private const string PROP_LOWSUNPOSITIONSLATSLEVEL                    = 'LowSunPositionSlatsLevel';
@@ -182,6 +185,38 @@ class BlindController extends IPSModuleStrict
             'prop'     => self::PROP_SLATSLEVELID,
             'template' => 'All slats level values in this form are raw values of this variable: %s = open, %s = closed',
         ],
+    ];
+
+    // Wertebereiche der Zahlenfelder: Property => [Minimum, Maximum], null = offen. Dieselben Grenzen stehen als
+    // minimum/maximum in form.json, wirken dort aber nur in der Konsole - geprüft wird hier (checkValueRangesGroup).
+    // tests/check-value-ranges.php hält Formular und Tabellen gleich. Getrennt nach Typ der Property.
+    private const array INTEGER_PROPERTY_RANGES = [
+        self::PROP_BRIGHTNESSAVGMINUTES                       => [0, null],
+        self::PROP_DELAYTIMEDAYNIGHTCHANGE                    => [0, null],
+        self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION => [0, null],
+        self::PROP_WINDOWORIENTATION                          => [0, 360],
+        self::PROP_WINDOWSSLOPE                               => [0, 180],
+        self::PROP_WINDOWSHEIGHT                              => [0, null],
+        self::PROP_PARAPETHEIGHT                              => [0, null],
+        self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBRIGHTNESS    => [0, null],
+        'ContactCloseDelay1'                                  => [0, null], // Namen wie contactDelayProp()
+        'ContactCloseDelay2'                                  => [0, null],
+        'ContactOpenDelay1'                                   => [0, null],
+        'ContactOpenDelay2'                                   => [0, null],
+        self::PROP_UPDATEINTERVAL                             => [0, null],
+        self::PROP_DEACTIVATIONAUTOMATICMOVEMENT              => [0, null],
+        self::PROP_DEACTIVATIONMANUALMOVEMENT                 => [0, null],
+    ];
+
+    // Azimut bis 720: Ein Bereich über Norden hinweg darf als "240 bis 120" oder als "240 bis 480" angegeben werden
+    // (isAzimuthInRange rechnet beide Grenzen auf den Vollkreis zurück).
+    private const array FLOAT_PROPERTY_RANGES = [
+        self::PROP_AZIMUTHFROM             => [0, 720],
+        self::PROP_AZIMUTHTO               => [0, 720],
+        self::PROP_ALTITUDEFROM            => [-90, 90],
+        self::PROP_ALTITUDETO              => [-90, 90],
+        self::PROP_LOWSUNPOSITIONALTITUDE  => [0, 90],
+        self::PROP_HIGHSUNPOSITIONALTITUDE => [0, 90],
     ];
 
     private string $objectName;
@@ -1574,8 +1609,8 @@ class BlindController extends IPSModuleStrict
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSAVGMINUTESSHADOWINGBYSUNPOSITION, 0);
         $this->RegisterPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION, 1);
         $this->RegisterPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION, 1);
-        $this->RegisterPropertyFloat('LowSunPositionAltitude', 0);
-        $this->RegisterPropertyFloat('HighSunPositionAltitude', 0);
+        $this->RegisterPropertyFloat(self::PROP_LOWSUNPOSITIONALTITUDE, 0);
+        $this->RegisterPropertyFloat(self::PROP_HIGHSUNPOSITIONALTITUDE, 0);
         $this->RegisterPropertyFloat(self::PROP_LOWSUNPOSITIONBLINDLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_HIGHSUNPOSITIONBLINDLEVEL, 0);
         $this->RegisterPropertyFloat(self::PROP_LOWSUNPOSITIONSLATSLEVEL, 0);
@@ -1806,6 +1841,8 @@ class BlindController extends IPSModuleStrict
 
     private function SetInstanceStatusAndTimerEvent(): void
     {
+        $previousStatus = $this->GetStatus();
+
         if ($ret = $this->checkBlindLevelGroup()) {
             $this->SetStatus($ret);
             return;
@@ -1861,7 +1898,26 @@ class BlindController extends IPSModuleStrict
             return;
         }
 
+        if ($ret = $this->checkValueRangesGroup()) {
+            $this->SetStatus($ret);
+            return;
+        }
+
         $this->configureTimersAndFinalStatus();
+        $this->logRecoveryFromErrorStatus($previousStatus);
+    }
+
+    /**
+     * Schließt einen Fehlereintrag im Protokoll "Letzte Nachricht" ab: Fehler und Fahrten stehen in derselben
+     * Variable, und ohne diese Meldung bliebe der Fehlertext nach der Korrektur stehen, bis die nächste Fahrt ihn
+     * überschreibt - bei ausgeschalteter Automatik also unbegrenzt. Geschrieben wird nur beim Wechsel aus einem
+     * Fehlerstatus, nicht bei jedem Übernehmen.
+     */
+    private function logRecoveryFromErrorStatus(int $previousStatus): void
+    {
+        if ($previousStatus >= IS_EBASE) {
+            $this->Logger_Inf(sprintf('\'%s\': Konfiguration ist gültig.', $this->objectName));
+        }
     }
 
     private function checkBlindLevelGroup(): int
@@ -2329,6 +2385,43 @@ class BlindController extends IPSModuleStrict
         }
 
         return 0;
+    }
+
+    /**
+     * Prüft die Zahlenfelder gegen die Grenzen, die das Formular nennt. In der Konsole verhindert schon das
+     * Formular einen Wert außerhalb; per Skript, Gruppen-Master oder MCP gesetzte Werte kommen nur hier vorbei.
+     */
+    private function checkValueRangesGroup(): int
+    {
+        foreach (self::INTEGER_PROPERTY_RANGES as $propName => [$min, $max]) {
+            if ($ret = $this->checkValueRange($propName, $this->ReadPropertyInteger($propName), $min, $max)) {
+                return $ret;
+            }
+        }
+
+        foreach (self::FLOAT_PROPERTY_RANGES as $propName => [$min, $max]) {
+            if ($ret = $this->checkValueRange($propName, $this->ReadPropertyFloat($propName), $min, $max)) {
+                return $ret;
+            }
+        }
+
+        return 0;
+    }
+
+    private function checkValueRange(string $propName, int|float $value, ?int $min, ?int $max): int
+    {
+        if (($min === null || $value >= $min) && ($max === null || $value <= $max)) {
+            return 0;
+        }
+
+        $range = match (true) {
+            $max === null => sprintf('ab %d', $min),
+            $min === null => sprintf('bis %d', $max),
+            default       => sprintf('%d - %d', $min, $max),
+        };
+        $this->Logger_Err(sprintf('\'%s\': %s: Wert (%s) nicht im gültigen Bereich (%s)', $this->objectName, $propName, $value, $range));
+
+        return self::STATUS_INST_VALUE_IS_OUT_OF_RANGE;
     }
 
     private function configureTimersAndFinalStatus(): void
@@ -3316,8 +3409,8 @@ class BlindController extends IPSModuleStrict
      */
     private function calculateAltitudeDependentPosition(float $lowPosition, float $highPosition, float $sunAltitude): float
     {
-        $altitudeLow  = $this->ReadPropertyFloat('LowSunPositionAltitude');
-        $altitudeHigh = $this->ReadPropertyFloat('HighSunPositionAltitude');
+        $altitudeLow  = $this->ReadPropertyFloat(self::PROP_LOWSUNPOSITIONALTITUDE);
+        $altitudeHigh = $this->ReadPropertyFloat(self::PROP_HIGHSUNPOSITIONALTITUDE);
 
         if (abs($altitudeLow - $altitudeHigh) < PHP_FLOAT_EPSILON) {
             return $lowPosition;

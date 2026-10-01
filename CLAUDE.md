@@ -25,6 +25,8 @@ C:/php/php tests/check_locale.php                 # Übersetzungs-Vollständigke
 C:/php/php tests/check-level-conversion.php       # Umrechnung Profilwerte/Prozent, Exit-Code 1 bei Fehlern
 C:/php/php tests/check-archiv-belegt.php         # Helligkeit bei gesperrtem Archiv (Monatsverdichtung)
 C:/php/php tests/check-form-hints.php            # Skalenhinweise und Temperaturschwellen im Formular
+C:/php/php tests/check-value-ranges.php          # Wertebereiche: Formulargrenzen = Modulprüfung, Status 243
+C:/php/php tests/check-status-recovery.php       # Meldung „Konfiguration ist gültig" nach Fehlerstatus
 ```
 
 Die CI (`.github/workflows/check.yml`, PHP 8.4, Checkout mit Submodulen) fährt diese Schritte:
@@ -32,7 +34,7 @@ Die CI (`.github/workflows/check.yml`, PHP 8.4, Checkout mit Submodulen) fährt 
 `tests/check-level-conversion.php`; Code-Stil mit php-cs-fixer gegen das Regelwerk im Submodul
 `.style` (`--dry-run`); JSON-Validität aller `*.json` außer `tests/stubs`; `check_locale.php`;
 danach jede `tests/check-*.php` (derzeit `check-level-conversion.php`, `check-archiv-belegt.php`,
-`check-form-hints.php`, `check-readme.php`). Die ersten drei sind Regressionstests gegen den offiziellen
+`check-form-hints.php`, `check-value-ranges.php`, `check-status-recovery.php`, `check-readme.php`). Bis auf `check-readme.php` sind es Regressionstests gegen den offiziellen
 Kernel-Stub (`tests/stubs`, über `tests/harness.php`) — lokal also dasselbe vor dem Commit
 laufen lassen.
 
@@ -80,11 +82,28 @@ jede Fahrt sich selbst als manuelle Bedienung melden und die Automatik lahmlegen
 ### Instanzstatus und Validierung
 
 `SetInstanceStatusAndTimerEvent()` ruft der Reihe nach die `check*Group()`-Methoden auf und
-setzt beim ersten Fehler den zugehörigen `STATUS_INST_*`-Code (201–242, Konstanten am
+setzt beim ersten Fehler den zugehörigen `STATUS_INST_*`-Code (201–243, Konstanten am
 Dateianfang). Eine neue Property mit Prüfbedarf braucht daher: Konstante `PROP_*`,
 Registrierung in `RegisterProperties()`, ggf. `RegisterReferences()`/`RegisterMessages()`,
 einen Zweig in der passenden `check*Group()` und — bei neuem Fehlerfall — einen neuen
 `STATUS_INST_*`-Code samt Text in `form.json`/`locale.json`.
+
+**Wertebereiche stehen zweimal:** als `minimum`/`maximum` am `NumberSpinner` in `form.json` (wirkt
+nur in der Konsole) und in `INTEGER_PROPERTY_RANGES`/`FLOAT_PROPERTY_RANGES` (wirkt immer, auch bei
+Konfiguration per Skript, Gruppen-Master oder MCP). `checkValueRangesGroup()` läuft als letzte Gruppe
+und setzt Status 243; die Meldung nennt Feld, Wert und Bereich. `tests/check-value-ranges.php` wird
+rot, sobald Formular und Tabellen auseinanderlaufen — eine neue Formulargrenze gehört also in die
+Tabelle des passenden Typs. **Azimut geht bewusst bis 720:** Ein Bereich über Norden hinweg darf als
+`240 – 120` oder als `240 – 480` angegeben werden (Vorgabe Burkhard, 01.10.2026).
+
+**„Letzte Nachricht" ist ein Protokoll, kein Zustand** — Fahrten und Fehler stehen in derselben
+Variable. Kommt die Instanz aus einem Fehlerstatus (>= `IS_EBASE`) in einen gültigen, schreibt
+`logRecoveryFromErrorStatus()` deshalb einmal „Konfiguration ist gültig" (ohne „wieder" — auch eine
+neue Instanz kommt bei der ersten gültigen Konfiguration aus dem Fehlerstatus 203); sonst bliebe der
+Fehlertext bei ausgeschalteter Automatik unbegrenzt stehen. Nur beim Wechsel, nie bei jedem
+Übernehmen (`SetInstanceStatusAndTimerEvent()` läuft auch aus Timern). **Der Kernel-Stub trägt keine
+vollständig gültige Konfiguration** (`IPS_GetEvent` liefert `[]`, der Wochenplan scheitert mit 201) —
+Tests prüfen daher die einzelne Gruppe bzw. Entscheidung per `ruf()` und die Einbindung am Quelltext.
 
 ## Level-Konvention (wichtig!)
 
@@ -139,6 +158,9 @@ das Formular). Zwei Stellen tragen deshalb Wissen, das sonst nur im README stand
   stehen als Literale im Code** (`getBrightnessThreshold()`, `getPositionsOfShadowingBySunPosition()`)
   — wer sie ändert, muss Label, `locale.json` und README mitziehen; `tests/check-form-hints.php`
   prüft nur, dass das Label sie nennt.
+- Das Label `ExplainControlBlindHint` unter `actions` nennt `BLC_ExplainControlBlind` als
+  Skriptfunktion. **Es ist absichtlich unsichtbar** (`visible: false`, Vorgabe Burkhard): In der
+  Konsole soll es nicht erscheinen, im Formular-JSON findet es eine KI trotzdem. Nicht sichtbar schalten.
 
 ## Support-Kontext
 

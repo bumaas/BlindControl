@@ -114,8 +114,8 @@
             {"type": "Label", "caption": "Define the range of azimuth and altitude for shadowing:"},
             {
               "type": "RowLayout", "items": [
-              {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1", "minimum": 0, "maximum": 360, "suffix": "°"},
-              {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1", "minimum": 0, "maximum": 360, "suffix": "°"}
+              {"type": "NumberSpinner", "name": "AzimuthFrom", "caption": "From Azimuth", "digits": "1", "minimum": 0, "maximum": 720, "suffix": "°"},
+              {"type": "NumberSpinner", "name": "AzimuthTo", "caption": "To Azimuth", "digits": "1", "minimum": 0, "maximum": 720, "suffix": "°"}
             ]
             },
             {
@@ -396,7 +396,8 @@
     },
     {"type": "Button", "caption": "Show Configuration", "onClick": "echo IPS_GetObject($id)['ObjectName'] . ' (#' . $id . ')' . PHP_EOL . PHP_EOL; print_r(json_decode(IPS_GetConfiguration ($id), true));"},
     {"type": "Button", "caption": "Perform control run", "onClick": "$module = new IPSModule($id);if (BLC_ControlBlind($id, true)){echo $module->Translate('Finished!');} else {echo $module->Translate('Error!');}"},
-    {"type": "Button", "caption": "Explain decision (test run, no movement)", "onClick": "echo BLC_ExplainControlBlind($id);"}
+    {"type": "Button", "caption": "Explain decision (test run, no movement)", "onClick": "echo BLC_ExplainControlBlind($id);"},
+    {"type": "Label", "name": "ExplainControlBlindHint", "visible": false, "caption": "The explanation is also available in scripts: BLC_ExplainControlBlind($InstanceID) returns it as text. The blind is not moved."}
   ],
   "status":   [
     {"code": 201, "icon": "error", "caption": "Weekly Timetable Event ID is not valid"},
@@ -435,6 +436,7 @@
     {"code": 239, "icon": "error", "caption": "Profile of Slats Level variable has wrong min/max values"},
     {"code": 240, "icon": "error", "caption": "Slats Level variable without profile"},
     {"code": 241, "icon": "error", "caption": "Window handle position ID is not valid"},
-    {"code": 242, "icon": "error", "caption": "A contact raw value is not valid (see message log)"}
+    {"code": 242, "icon": "error", "caption": "A contact raw value is not valid (see message log)"},
+    {"code": 243, "icon": "error", "caption": "A given value is out of range (see message log)"}
   ]
 }

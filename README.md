@@ -199,7 +199,7 @@ Es gibt zwei Möglichkeiten der Beschattung: "nach Sonnenstand" und "nach Hellig
 Es sind die Variablen anzugeben, aus denen der Sonnenstand (Azimuth = Sonnenrichtung, Altitude = Sonnenhöhe) geholt werden soll. Hier bieten sich die gleichnamigen Variablen des Location-Moduls an.
 
 Des Weiteren ist der Bereich (Azimuth von/bis) der Sonnenrichtung anzugeben, in dem die Beschattung stattfinden soll.
-Dabei sind auch Bereiche über 0° hinweg möglich, z.B. 280° bis 70° für Nordfenster.
+Dabei sind auch Bereiche über 0° hinweg möglich, z.B. 280° bis 70° für Nordfenster. Ein solcher Bereich kann auf zwei Arten angegeben werden, die gleich wirken: `240` bis `120` oder `240` bis `480` (Werte bis 720° sind zulässig).
 Für einen Helligkeitsvergleich ist die Variable anzugeben, die den aktuellen Helligkeitswert beinhaltet (z.B. von einem Helligkeitssensor) sowie eine Variable, die den Schwellwert beinhaltet. Soll als Helligkeitswert ein Durchschnittswert der letzten Minuten genommen werden,
 dann ist die Anzahl der Minuten anzugeben, über die der Durchschnitt gebildet werden soll. Der Durchschnitt wird aus den archivierten Daten gewonnen. Dazu ist es notwendig, dass für die Variable die Archivierung aktiviert ist.
 
@@ -255,6 +255,8 @@ Welcher Rohwert "geöffnet" und welcher "geschlossen" bedeutet, zeigt das Formul
 *Beispiele*:
 *   Hat die Variable einen Bereich von **0 bis 255**, ist für "geschlossen" **255** einzutragen (und nicht 100).
 *   Hat die Variable einen Bereich von **0.0 bis 1.0** und ist bei 1.0 geöffnet (z. B. Homematic), ist für "geschlossen" **0.0** einzutragen.
+
+**Wertebereiche**: Die Zahlenfelder haben die Grenzen, die das Formular nennt (z. B. Sonnenhöhe -90° bis 90°, Fensterneigung 0° bis 180°, Zeiten nicht negativ). Sie gelten auch, wenn die Instanz per Skript oder über den Gruppen-Master konfiguriert wird: Liegt ein Wert außerhalb, geht die Instanz in den Fehlerstatus "Ein angegebener Wert liegt außerhalb des gültigen Bereichs", und die Meldung nennt das betroffene Feld.
 
 | Eigenschaft                                                                                                                                                               |   Typ   | Standardwert | Funktion                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------:|:-------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -358,6 +360,7 @@ Folgende Statusvariablen werden angelegt:
 #####LAST_MESSAGE
 Die Statusvariable beinhaltet einen Hinweis über die letzte Bewegung. Um die Bewegungen eines Rollladens zu kontrollieren, bietet es sich an, die Archivierung für diese Variable einzuschalten. 
 Dann werden im Webfront die Bewegungen in Form eines Logfiles dargestellt.  
+Auch Konfigurationsfehler werden hier gemeldet. Ist ein solcher Fehler behoben, folgt der Eintrag "Konfiguration ist gültig" – die Fehlermeldung bleibt also nicht als letzter Stand stehen.
 
 #####LAST_DECISION
 Diese Statusvariable ist **optional**. Sie wird nur angelegt, wenn im Konfigurationsformular die Option **„Statusvariable »Letzte Entscheidung« anlegen"** aktiviert ist (andernfalls wird eine ggf. vorhandene Variable wieder entfernt).
