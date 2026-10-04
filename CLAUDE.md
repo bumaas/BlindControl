@@ -39,7 +39,8 @@ danach jede `tests/check-*.php` (derzeit `check-level-conversion.php`, `check-ar
 `check-form-hints.php`, `check-value-ranges.php`, `check-status-recovery.php`, `check-debug-schedule.php`,
 `check-weekly-schedule.php`, `check-readme.php`). Bis auf `check-readme.php` sind es Regressionstests gegen den offiziellen
 Kernel-Stub (`tests/stubs`, über `tests/harness.php`) — lokal also dasselbe vor dem Commit
-laufen lassen.
+laufen lassen. Zuletzt die statischen MCP-Regeln über die Action `bumaas/symcon-mcp-check@v1`
+(privates Repo, für eigene Repos freigegeben); sie scheitert nur an Fehlern, Warnungen sind offene Punkte.
 
 Geänderte Bibliothek per `MC_ReloadModule` mit Ordnername `BlindControl` neu einlesen;
 eingebettetes PHP ≠ CLI-PHP — beides siehe globale CLAUDE.md.
