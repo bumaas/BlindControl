@@ -70,6 +70,16 @@ Jeder Schritt schreibt über `addTrace()` in `$this->decisionTrace`. Das Protoko
 im Debug-Log, optional als HTML in der Statusvariablen `DECISION_TRACE` und ist zugleich
 die Antwort von `ExplainControlBlind()`.
 
+**Jeder Text, der ins Protokoll gelangt, läuft über `Translate()`** (englischer Schlüssel, deutsche Fassung in
+`locale.json`; seit build 143, vorher stand der Großteil fest auf Deutsch im Code). Das gilt auch für die
+Zuarbeiter: Gründe (`shadowingReason`, `moveSkipReason`, Sperrgründe aus `shouldBlockMovement()`), `$Hinweis`
+(`Day`/`Night`/`WS` …), Kontaktlabels, `describeLevel()`/`describeTargetPositions()`, `formatTraceTime()`.
+`buildDecisionTraceHtml()` erkennt die Ergebniszeile am übersetzten Präfix von `Result: %s`.
+`tests/check-explain-language.php` hält das fest: statisch kein freies Textliteral in diesen Funktionen
+(Debug-Ausgaben ausgenommen), dazu die Bausteine englisch und mit `BlindControllerHarness::$sprache = 'de'`
+im bisherigen deutschen Wortlaut. Neue Protokolltexte also gleich mit Schlüssel und Übersetzung anlegen.
+Weiter fest auf Deutsch (nicht Teil des Protokolls): `WriteInfo()` (Letzte Nachricht) und die Log-Meldungen.
+
 **`$dryRun`** (gesetzt nur von `ExplainControlBlind()`) macht denselben Lauf zustandsfrei:
 kein Fahrbefehl, keine Änderung an Attributen, Variablen oder Timern. Wer Logik ergänzt,
 die schreibt, muss `$this->dryRun` berücksichtigen — sonst verändert der „Erklären"-Knopf

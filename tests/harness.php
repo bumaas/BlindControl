@@ -45,7 +45,41 @@ final class BlindControllerHarness extends BlindController
     /** @var array<string, int> letztes SetTimerInterval je Timer */
     public array $timer = [];
 
+    /** null = Schlüssel zurückgeben wie der Stub, 'de' = Übersetzung aus locale.json */
+    public static ?string $sprache = null;
+
     private int $logOffset = 0;
+
+    public function Translate(string $Text): string
+    {
+        if (self::$sprache === null) {
+            return parent::Translate($Text);
+        }
+        static $uebersetzungen = null;
+        $uebersetzungen ??= json_decode(
+            (string)file_get_contents(dirname(__DIR__) . '/BlindController/locale.json'),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        )['translations'];
+        return $uebersetzungen[self::$sprache][$Text] ?? $Text;
+    }
+
+    /** Setzt eine private Eigenschaft des Moduls (z. B. die Profile, die sonst erst ein Steuerlauf liest). */
+    public function setzeEigenschaft(string $name, mixed $wert): void
+    {
+        $p = new ReflectionProperty(BlindController::class, $name);
+        $p->setAccessible(true);
+        $p->setValue($this, $wert);
+    }
+
+    /** Liest eine private Eigenschaft des Moduls. */
+    public function eigenschaft(string $name): mixed
+    {
+        $p = new ReflectionProperty(BlindController::class, $name);
+        $p->setAccessible(true);
+        return $p->getValue($this);
+    }
 
     public function id(): int
     {

@@ -389,6 +389,8 @@ Im Konfigurationsformular steht unter den Aktionen der Schalter **„Entscheidun
 
 Der Probelauf funktioniert auch bei **ausgeschalteter Automatik** (Statusvariable „Aktiviert" = aus) – die Ausgabe beginnt dann mit dem Hinweis, dass die ermittelte Fahrt nur bei eingeschalteter Automatik ausgeführt würde. Nur bei fehlerhafter Konfiguration (Fehlerstatus der Instanz) ist kein Probelauf möglich.
 
+Die Ausgabe erscheint in der Sprache der Symcon-Installation, ebenso `LAST_DECISION` und `DECISION_TRACE`; die Beispiele zeigen die deutsche Fassung.
+
 Beispielausgabe, wenn beschattet wird:
 ```
 Erklärung des Steuerungslaufs (Probelauf - der Rollladen wird nicht bewegt):

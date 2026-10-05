@@ -939,7 +939,7 @@ class BlindController extends IPSModuleStrict
             }
             $this->addTrace('');
         }
-        $this->addTrace(sprintf('Aktuelle Position: %s', $this->describeTargetPositions($positionsAct)));
+        $this->addTrace(sprintf($this->Translate('Current position: %s'), $this->describeTargetPositions($positionsAct)));
 
         // Verwaiste unbestätigte Zustände zuerst abräumen (Verfall), damit sie den Lauf nicht mehr beeinflussen
         if (!$this->dryRun) {
@@ -949,12 +949,12 @@ class BlindController extends IPSModuleStrict
         // Unbestätigte Fahrt ausweisen: die gemeldete Position kann veraltet sein
         $unconfirmedTrace = $this->buildUnconfirmedMoveTrace();
         if ($unconfirmedTrace !== '') {
-            $this->addTrace('Aktor-Rückmeldung: ' . $unconfirmedTrace);
+            $this->addTrace(sprintf($this->Translate('Actuator feedback: %s'), $unconfirmedTrace));
         }
 
         // --- 1. Tageszeit bestimmen ---
         $dayState = $this->determineDayState($positionsAct['BlindLevel']);
-        $this->addTrace('Tageszeit: ' . $this->buildDayStateTrace($dayState));
+        $this->addTrace(sprintf($this->Translate('Time of day: %s'), $this->buildDayStateTrace($dayState)));
 
         //Zeitpunkt der letzten Rollladenbewegung (Höhe oder Lamellen)
         $tsBlindLastMovement = $this->GetBlindLastTimeStamp($blindLevelId, $slatsLevelId);
@@ -977,7 +977,7 @@ class BlindController extends IPSModuleStrict
                 );
             }
             $bNoMove = false;
-            $this->addTrace('Bewegungssperre: keine (Tag/Nacht-Wechsel, erkannte manuelle Bedienung wird verworfen)');
+            $this->addTrace($this->Translate('Movement lock: none (day/night change, a detected manual operation is discarded)'));
         } else {
             // während der Verzögerung ist die ursprüngliche Tageszeit anzunehmen
             $isDay = $dayState['isDay'];
@@ -992,7 +992,10 @@ class BlindController extends IPSModuleStrict
             );
             $bNoMove     = $blockResult['block'];
             $blockReason = $blockResult['reason'];
-            $this->addTrace('Bewegungssperre: ' . ($bNoMove ? $blockReason : ($blockReason !== '' ? sprintf('keine (%s)', $blockReason) : 'keine')));
+            $this->addTrace(sprintf(
+                $this->Translate('Movement lock: %s'),
+                $bNoMove ? $blockReason : ($blockReason !== '' ? sprintf($this->Translate('none (%s)'), $blockReason) : $this->Translate('none'))
+            ));
         }
         $isDay = $dayState['isDay'];
 
@@ -1016,7 +1019,7 @@ class BlindController extends IPSModuleStrict
         $positionsNew = $calcResult['positions'];
         $Hinweis      = $calcResult['hint'];
         if (!$bNoMove) {
-            $this->addTrace(sprintf('Basis-Zielposition: %s (%s)', $this->describeTargetPositions($positionsNew), $Hinweis !== '' ? $Hinweis : '—'));
+            $this->addTrace(sprintf($this->Translate('Base target position: %s (%s)'), $this->describeTargetPositions($positionsNew), $Hinweis !== '' ? $Hinweis : '—'));
         }
 
         // --- 4. Beschattungslogik anwenden (nur tagsüber und wenn keine Sperre) ---
@@ -1030,11 +1033,11 @@ class BlindController extends IPSModuleStrict
                 if ($shadowResult['heatInfo'] !== '') {
                     $shadowDetail .= ', ' . $shadowResult['heatInfo'];
                 }
-                $this->addTrace(sprintf('Beschattung: aktiv -> %s (%s)', $this->describeTargetPositions($shadowResult['positions']), $shadowDetail));
+                $this->addTrace(sprintf($this->Translate('Shadowing: active -> %s (%s)'), $this->describeTargetPositions($shadowResult['positions']), $shadowDetail));
             } elseif ($shadowResult['reason'] !== '') {
-                $this->addTrace('Beschattung: keine (' . $shadowResult['reason'] . ')');
+                $this->addTrace(sprintf($this->Translate('Shadowing: none (%s)'), $shadowResult['reason']));
             } else {
-                $this->addTrace('Beschattung: keine (nicht konfiguriert)');
+                $this->addTrace($this->Translate('Shadowing: none (not configured)'));
             }
             $positionsNew = $shadowResult['positions'];
             $Hinweis      = $shadowResult['hint'];
@@ -1048,7 +1051,7 @@ class BlindController extends IPSModuleStrict
 
         // Kontaktstatus immer protokollieren - auch wenn kein Kontakt aktiv ist oder ein offener
         // Kontakt die Zielposition nicht verändert (häufige Rückfrage: "warum sehe ich den Kontakt nicht?")
-        $this->addTrace('Kontakte: ' . $contactResult['trace']);
+        $this->addTrace(sprintf($this->Translate('Contacts: %s'), $contactResult['trace']));
 
         $positionsNew         = $contactResult['positions'];
         $deactivationTimeAuto = $contactResult['deactivationTimeAuto'];
@@ -1155,11 +1158,11 @@ class BlindController extends IPSModuleStrict
 
         // Basis-Hinweis und Attribut-Update (für Tag und Nacht gleich)
         if ($dayState['isDayByTimeSchedule'] !== $this->ReadAttributeBoolean(self::ATTR_LAST_ISDAYBYTIMESCHEDULE)) {
-            $hint = 'WP';
+            $hint = $this->Translate('WS');
         } elseif ($dayState['isDay']) {
-            $hint = 'Tag';
+            $hint = $this->Translate('Day');
         } else {
-            $hint = 'Nacht';
+            $hint = $this->Translate('Night');
         }
 
         if (!$this->dryRun && $this->ReadAttributeInteger(self::ATTR_DAYTIME_CHANGE_TIME) === 0) {
@@ -1171,7 +1174,7 @@ class BlindController extends IPSModuleStrict
         } else {
             $positionsNew = $this->calculateNightPosition($positionsNew);
             if ($this->ReadPropertyBoolean(self::PROP_ACTIVATEDINDIVIDUALNIGHTLEVELS)) {
-                $hint .= ', indiv.Pos.';
+                $hint .= $this->Translate(', indiv. pos.');
             }
         }
 
@@ -1238,7 +1241,7 @@ class BlindController extends IPSModuleStrict
             $positionsNew = $this->mergePositions($positionsNew, $positionsShadowingBySun);
 
             if ($this->levelsEqual($positionsNew['BlindLevel'], $positionsShadowingBySun['BlindLevel'])) {
-                $Hinweis        = 'Beschattung nach Sonnenstand';
+                $Hinweis        = $this->Translate('Shadowing by sun position');
                 $brightnessInfo = $sunBrightnessInfo;
                 $heatInfo       = $sunHeatInfo;
             }
@@ -1252,14 +1255,14 @@ class BlindController extends IPSModuleStrict
             $positionsNew = $this->mergePositions($positionsNew, $positionsShadowingBrightness);
 
             if ($this->levelsEqual($positionsNew['BlindLevel'], $positionsShadowingBrightness['BlindLevel'])) {
-                $Hinweis        = 'Beschattung nach Helligkeit';
+                $Hinweis        = $this->Translate('Shadowing by brightness');
                 $brightnessInfo = $brightnessShadowingInfo;
             }
         }
 
         // Beschattung wurde berechnet, hat aber die Zielposition nicht verändert (Basisposition bereits restriktiver)
         if (($positionsShadowingBySun !== null || $positionsShadowingBrightness !== null) && $this->shadowingReason === '') {
-            $this->shadowingReason = 'Beschattungsposition nicht restriktiver als die Basisposition';
+            $this->shadowingReason = $this->Translate('shadowing position not more restrictive than the base position');
         }
 
         return ['positions' => $positionsNew, 'hint' => $Hinweis, 'reason' => $this->shadowingReason, 'brightnessInfo' => $brightnessInfo, 'heatInfo' => $heatInfo];
@@ -1352,9 +1355,9 @@ class BlindController extends IPSModuleStrict
                 'positions'            => $positionsNew,
                 'deactivationTimeAuto' => 0,
                 'bNoMove'              => false,
-                'hint'                 => 'Notfallkontakt offen',
+                'hint'                 => $this->Translate('Emergency contact open'),
                 'bEmergency'           => true,
-                'trace'                => sprintf('Notfallkontakt offen -> %s', $this->describeTargetPositions($positionsNew))
+                'trace'                => sprintf($this->Translate('Emergency contact open -> %s'), $this->describeTargetPositions($positionsNew))
             ];
         }
 
@@ -1397,7 +1400,7 @@ class BlindController extends IPSModuleStrict
                 // Kontakt ist offen, das Öffnungslevel ist aber nicht offener als die bereits ermittelte
                 // Zielposition - der Kontakt hat daher keine Wirkung.
                 $contactTrace = sprintf(
-                    '%s, aber Zielposition bereits offen genug (%s) -> keine Änderung',
+                    $this->Translate('%s, but target position already open enough (%s) -> no change'),
                     $openingTraceLabel,
                     $this->describeTargetPositions($positionsNew)
                 );
@@ -1418,7 +1421,7 @@ class BlindController extends IPSModuleStrict
                 // Kontakt ist offen, das Schließlevel ist aber nicht restriktiver als die bereits
                 // ermittelte Zielposition - der Kontakt hat daher keine Wirkung.
                 $contactTrace = sprintf(
-                    '%s, aber Zielposition bereits geschlossen genug (%s) -> keine Änderung',
+                    $this->Translate('%s, but target position already closed enough (%s) -> no change'),
                     $closingTraceLabel,
                     $this->describeTargetPositions($positionsNew)
                 );
@@ -1434,9 +1437,9 @@ class BlindController extends IPSModuleStrict
         // Fallback-Beschreibung, wenn kein offener Kontakt die Position beeinflusst hat
         if ($contactTrace === '') {
             if (!$emergencyConfigured && !$openConfigured && !$closeConfigured) {
-                $contactTrace = 'nicht konfiguriert';
+                $contactTrace = $this->Translate('not configured');
             } else {
-                $contactTrace = 'kein Kontakt offen';
+                $contactTrace = $this->Translate('no contact open');
             }
         }
 
@@ -1511,7 +1514,7 @@ class BlindController extends IPSModuleStrict
     private function formatContactLabels(array $labels): string
     {
         if ($labels === []) {
-            return 'Kontakt offen';
+            return $this->Translate('Contact open');
         }
 
         return implode(' + ', $labels);
@@ -2736,7 +2739,7 @@ class BlindController extends IPSModuleStrict
     // Beschriftung der Kontaktfunktion für Labels, Trace und Debug-Log
     private function contactFunctionLabel(bool $isOpening): string
     {
-        return $isOpening ? 'Öffnen-Kontakt' : 'Schließen-Kontakt';
+        return $isOpening ? $this->Translate('Opening contact') : $this->Translate('Closing contact');
     }
 
     private function contactDebounceTimer(bool $isOpening, int $i): string
@@ -3039,7 +3042,7 @@ class BlindController extends IPSModuleStrict
             return null;
         }
         if (!GetValue($activatorID)) {
-            $this->addShadowingReason('nach Sonnenstand nicht aktiviert');
+            $this->addShadowingReason($this->Translate('by sun position not activated'));
             return null;
         }
 
@@ -3146,7 +3149,7 @@ class BlindController extends IPSModuleStrict
                     $positions['BlindLevel'] = max($positions['BlindLevel'], $levelPositionHeat);
                 }
                 $this->Logger_Dbg(__FUNCTION__, sprintf('Temp gt 30°, levelAct: %.2f, level: %.2f', $levelAct, $positions['BlindLevel']));
-                $this->shadowingHeatInfo = sprintf('Hitzeschutz: %s > 30 °C -> mindestens 90 %% geschlossen', GetValueFormattedEx($temperatureID, $temperature));
+                $this->shadowingHeatInfo = sprintf($this->Translate('Heat protection: %s > 30 °C -> at least 90 %% closed'), GetValueFormattedEx($temperatureID, $temperature));
                 return $positions;
             }
 
@@ -3166,7 +3169,7 @@ class BlindController extends IPSModuleStrict
                         $levelCorrectionHeat
                     )
                 );
-                $this->shadowingHeatInfo = sprintf('Wärmeschutz: %s > 27 °C -> 15 %% weiter geschlossen', GetValueFormattedEx($temperatureID, $temperature));
+                $this->shadowingHeatInfo = sprintf($this->Translate('Thermal protection: %s > 27 °C -> 15 %% further closed'), GetValueFormattedEx($temperatureID, $temperature));
                 return $positions;
             }
         }
@@ -3176,7 +3179,7 @@ class BlindController extends IPSModuleStrict
             $reasons = [];
             if ($brightness !== null && $brightness < $thresholdBrightness) {
                 $reasons[] = sprintf(
-                    'Helligkeit %s%s unter Schwellwert %s%s',
+                    $this->Translate('brightness %s%s below threshold %s%s'),
                     $this->formatBrightnessForTrace($this->ReadPropertyInteger(self::PROP_BRIGHTNESSIDSHADOWINGBYSUNPOSITION), $brightness),
                     $this->brightnessAvgInfo,
                     $this->formatBrightnessForTrace($this->ReadPropertyInteger(self::PROP_BRIGHTNESSTHRESHOLDIDSHADOWINGBYSUNPOSITION), $thresholdBrightness),
@@ -3184,13 +3187,13 @@ class BlindController extends IPSModuleStrict
                 );
             }
             if (!$azimuthMatches) {
-                $reasons[] = sprintf('Azimut %.1f° außerhalb %.1f°-%.1f°', floor($rSunAzimuth * 10) / 10, $azimuthFrom, $azimuthTo);
+                $reasons[] = sprintf($this->Translate('azimuth %.1f° outside %.1f°-%.1f°'), floor($rSunAzimuth * 10) / 10, $azimuthFrom, $azimuthTo);
             }
             if ($rSunAltitude < $altitudeFrom || $rSunAltitude > $altitudeTo) {
-                $reasons[] = sprintf('Sonnenhöhe %.1f° außerhalb %.1f°-%.1f°', floor($rSunAltitude * 10) / 10, $altitudeFrom, $altitudeTo);
+                $reasons[] = sprintf($this->Translate('sun altitude %.1f° outside %.1f°-%.1f°'), floor($rSunAltitude * 10) / 10, $altitudeFrom, $altitudeTo);
             }
             if ($reasons !== []) {
-                $this->addShadowingReason('nach Sonnenstand: ' . implode(', ', $reasons));
+                $this->addShadowingReason(sprintf($this->Translate('by sun position: %s'), implode(', ', $reasons)));
             }
         }
 
@@ -3223,7 +3226,7 @@ class BlindController extends IPSModuleStrict
     {
         if ($temperature !== null && $temperature > 24 && $threshold <= 0) {
             return sprintf(
-                'Helligkeit %s%s, Beschattung temperaturbedingt unabhängig von der Helligkeit (%s)',
+                $this->Translate('brightness %s%s, shadowing due to temperature regardless of brightness (%s)'),
                 $this->formatBrightnessForTrace($brightnessID, $brightness),
                 $this->brightnessAvgInfo,
                 GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION), $temperature)
@@ -3231,7 +3234,7 @@ class BlindController extends IPSModuleStrict
         }
 
         return sprintf(
-            'Helligkeit %s%s ≥ Schwellwert %s%s',
+            $this->Translate('brightness %s%s ≥ threshold %s%s'),
             $this->formatBrightnessForTrace($brightnessID, $brightness),
             $this->brightnessAvgInfo,
             $this->formatBrightnessForTrace($thresholdID, $threshold),
@@ -3251,10 +3254,10 @@ class BlindController extends IPSModuleStrict
         }
 
         $baseNote = IPS_VariableExists($thresholdID)
-            ? sprintf(' von %s', $this->formatBrightnessForTrace($thresholdID, (float)GetValue($thresholdID)))
+            ? sprintf($this->Translate(' of %s'), $this->formatBrightnessForTrace($thresholdID, (float)GetValue($thresholdID)))
             : '';
         return sprintf(
-            ' (temperaturkorrigiert%s, %s)',
+            $this->Translate(' (temperature-corrected%s, %s)'),
             $baseNote,
             GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_TEMPERATUREIDSHADOWINGBYSUNPOSITION), $temperature)
         );
@@ -3322,7 +3325,7 @@ class BlindController extends IPSModuleStrict
 
             // nur kennzeichnen, wenn tatsächlich der Mittelwert (und nicht der aktuelle Sensorwert) verwendet wird
             if ($brightnessAvg !== $currentBrightness) {
-                $this->brightnessAvgInfo = sprintf(' (Mittelwert über %d min)', $brightnessAvgMinutes);
+                $this->brightnessAvgInfo = sprintf($this->Translate(' (average over %d min)'), $brightnessAvgMinutes);
             }
 
             return $brightnessAvg;
@@ -3588,7 +3591,7 @@ class BlindController extends IPSModuleStrict
             return null;
         }
         if (!GetValue($activatorID)) {
-            $this->addShadowingReason('nach Helligkeit nicht aktiviert');
+            $this->addShadowingReason($this->Translate('by brightness not activated'));
             return null;
         }
 
@@ -3668,7 +3671,7 @@ class BlindController extends IPSModuleStrict
             $thresholdIDForFormat = IPS_VariableExists($thresholdIDLessBrightness) ? $thresholdIDLessBrightness : $thresholdIDHighBrightness;
             $this->addShadowingReason(
                 sprintf(
-                    'nach Helligkeit: Helligkeit %s%s unter Schwellwert %s',
+                    $this->Translate('by brightness: brightness %s%s below threshold %s'),
                     $this->formatBrightnessForTrace($brightnessID, $brightness),
                     $this->brightnessAvgInfo,
                     $this->formatBrightnessForTrace($thresholdIDForFormat, (float)$threshold)
@@ -3720,7 +3723,7 @@ class BlindController extends IPSModuleStrict
                 $this->confirmMove(self::PROP_SLATSLEVELID);
             }
             $reason = sprintf(
-                'Positionsänderung um %s entspricht der zuletzt kommandierten Position (Aktor-Rückmeldung, keine manuelle Bedienung)',
+                $this->Translate('position change at %s matches the last commanded position (actuator feedback, no manual operation)'),
                 $this->formatTraceTime($tsBlindLastMovement)
             );
             $this->Logger_Dbg(__FUNCTION__, $reason);
@@ -3737,7 +3740,7 @@ class BlindController extends IPSModuleStrict
 
         // 4. Sperr-Logik
         if (!$isDay) {
-            $reason = sprintf('manuelle Bedienung erkannt (%s), Sperre bis zum nächsten Tag/Nacht-Wechsel', $this->formatTraceTime($tsManual));
+            $reason = sprintf($this->Translate('manual operation detected (%s), locked until the next day/night change'), $this->formatTraceTime($tsManual));
             $this->Logger_Dbg(__FUNCTION__, 'Sperre: ' . $reason);
             return ['block' => true, 'reason' => $reason];
         }
@@ -3749,12 +3752,12 @@ class BlindController extends IPSModuleStrict
                     $this->levelsEqual($slatsLevelAct, $this->profileSlatsLevel['MaxValue'] ?? null);
 
         if ($isClosed) {
-            $reason = sprintf('manuell vollständig geschlossen (%s), Sperre bis zum nächsten Tag/Nacht-Wechsel', $this->formatTraceTime($tsManual));
+            $reason = sprintf($this->Translate('manually fully closed (%s), locked until the next day/night change'), $this->formatTraceTime($tsManual));
         } elseif ($deactivationTimeManuSecs === 0) {
-            $reason = sprintf('manuelle Bedienung erkannt (%s), Sperre bis zum nächsten Tag/Nacht-Wechsel', $this->formatTraceTime($tsManual));
+            $reason = sprintf($this->Translate('manual operation detected (%s), locked until the next day/night change'), $this->formatTraceTime($tsManual));
         } elseif (strtotime("+ $deactivationTimeManuSecs seconds", $tsManual) > time()) {
             $reason = sprintf(
-                'manuelle Bedienung erkannt (%s), Sperre bis %s',
+                $this->Translate('manual operation detected (%s), locked until %s'),
                 $this->formatTraceTime($tsManual),
                 $this->formatTraceTime(strtotime("+ $deactivationTimeManuSecs seconds", $tsManual))
             );
@@ -4089,7 +4092,7 @@ class BlindController extends IPSModuleStrict
 
         if ($isSame && $isRecent) {
             $this->Logger_Dbg(__FUNCTION__, 'Move ignored! Same position recently.');
-            $this->moveSkipReason = 'gleiche Zielposition wurde gerade erst angefahren';
+            $this->moveSkipReason = $this->Translate('the same target position was approached just now');
             return true;
         }
         return false;
@@ -4110,7 +4113,7 @@ class BlindController extends IPSModuleStrict
         // unbestätigter Fahrt - sonst würde das Nachfassen die Karenzzeit aushebeln.)
         if ($timeSinceAuto < $deactivation) {
             $this->Logger_Dbg(__FUNCTION__, "#$id($propName): Sperrzeit ($deactivation s) noch nicht erreicht ($timeSinceAuto s).");
-            $this->moveSkipReason = sprintf('Karenzzeit nach Automatikfahrt aktiv (noch %d s)', $deactivation - $timeSinceAuto);
+            $this->moveSkipReason = sprintf($this->Translate('grace period after automatic movement active (%d s left)'), $deactivation - $timeSinceAuto);
             return false;
         }
 
@@ -4128,7 +4131,7 @@ class BlindController extends IPSModuleStrict
         // 3. Toleranzbereich (bereits erreicht)?
         if ($diffPercentage <= (self::ALLOWED_TOLERANCE_MOVEMENT / 100)) {
             $this->Logger_Dbg(__FUNCTION__, "#$id($propName): Position $act bereits im Toleranzbereich.");
-            $this->moveSkipReason = 'Zielposition bereits erreicht';
+            $this->moveSkipReason = $this->Translate('target position already reached');
             return false;
         }
 
@@ -4136,14 +4139,14 @@ class BlindController extends IPSModuleStrict
         $isEndPosition = in_array($new, [$profile['MinValue'], $profile['MaxValue']], false);
         if (!$isEndPosition && ($diffPercentage < $minMove)) {
             $this->Logger_Dbg(__FUNCTION__, sprintf("#$id($propName): Bewegung zu klein (%.2f%% < %.2f%%).", $diffPercentage * 100, $minMove * 100));
-            $this->moveSkipReason = sprintf('Änderung zu gering (%.0f %% < %.0f %%)', $diffPercentage * 100, $minMove * 100);
+            $this->moveSkipReason = sprintf($this->Translate('change too small (%.0f %% < %.0f %%)'), $diffPercentage * 100, $minMove * 100);
             return false;
         }
 
         // 5. Zu kleine Bewegung zur Endposition
         if ($isEndPosition && ($diffPercentage < $minMoveEnd)) {
             $this->Logger_Dbg(__FUNCTION__, sprintf("#$id($propName): Endposition fast erreicht (Differenz %.2f%%).", $diffPercentage * 100));
-            $this->moveSkipReason = sprintf('Endposition nahezu erreicht (Differenz %.0f %%)', $diffPercentage * 100);
+            $this->moveSkipReason = sprintf($this->Translate('end position almost reached (difference %.0f %%)'), $diffPercentage * 100);
             return false;
         }
 
@@ -4388,12 +4391,12 @@ class BlindController extends IPSModuleStrict
     {
         $parts = [];
 
-        foreach ([self::PROP_BLINDLEVELID => 'Behang', self::PROP_SLATSLEVELID => 'Lamellen'] as $propName => $label) {
+        foreach ([self::PROP_BLINDLEVELID => $this->Translate('Blind'), self::PROP_SLATSLEVELID => $this->Translate('Slats')] as $propName => $label) {
             $unconfirmed = $this->readUnconfirmedMove($propName);
 
             if ($unconfirmed['abandoned']) {
                 $parts[] = sprintf(
-                    '%s: Aktor meldet keine Positionen zurück (Nachfassen nach %d Fahrbefehlen eingestellt)',
+                    $this->Translate('%s: actuator reports no positions (follow-up stopped after %d movement commands)'),
                     $label,
                     self::MAX_UNCONFIRMED_MOVES
                 );
@@ -4405,7 +4408,7 @@ class BlindController extends IPSModuleStrict
             }
 
             $parts[] = sprintf(
-                '%s: Fahrt von %s auf %d%% geschlossen nicht bestätigt (Versuch %d von %d), gemeldete Position gilt als unzuverlässig',
+                $this->Translate('%s: movement of %s to %d%% closed not confirmed (attempt %d of %d), reported position is considered unreliable'),
                 $label,
                 $this->formatTraceTime($unconfirmed['timeStamp']),
                 $unconfirmed['percentClose'],
@@ -4524,23 +4527,25 @@ class BlindController extends IPSModuleStrict
     private function buildDayStateTrace(array $dayState): string
     {
         $parts   = [];
-        $wochenplan = sprintf('Wochenplan: %s', $dayState['isDayByTimeSchedule'] ? 'Tag' : 'Nacht');
+        $day        = $this->Translate('Day');
+        $night      = $this->Translate('Night');
+        $wochenplan = sprintf($this->Translate('Weekly schedule: %s'), $dayState['isDayByTimeSchedule'] ? $day : $night);
         if (!empty($dayState['scheduleAuf']) || !empty($dayState['scheduleAb'])) {
             $wochenplan .= sprintf(' (%s–%s)', $dayState['scheduleAuf'] ?? '—', $dayState['scheduleAb'] ?? '—');
         }
         $parts[] = $wochenplan;
         if ($dayState['isDayByDayDetection'] !== null) {
-            $parts[] = sprintf('Tagerkennung: %s', $dayState['isDayByDayDetection'] ? 'Tag' : 'Nacht');
+            $parts[] = sprintf($this->Translate('Day detection: %s'), $dayState['isDayByDayDetection'] ? $day : $night);
         }
         if ($dayState['brightness'] !== null) {
             $parts[] = sprintf(
-                'Helligkeit: %s%s',
+                $this->Translate('Brightness: %s%s'),
                 GetValueFormattedEx($this->ReadPropertyInteger(self::PROP_BRIGHTNESSID), $dayState['brightness']),
                 $dayState['brightnessAvgNote'] ?? ''
             );
         }
 
-        return sprintf('%s (%s)', $dayState['isDay'] ? 'Tag' : 'Nacht', implode(', ', $parts));
+        return sprintf('%s (%s)', $dayState['isDay'] ? $day : $night, implode(', ', $parts));
     }
 
     /**
@@ -4563,17 +4568,17 @@ class BlindController extends IPSModuleStrict
 
         if ($bNoMove) {
             // Sperre: es wurde gar kein Fahrbefehl ausgelöst
-            $reason  = $blockReason !== '' ? $blockReason : 'Bewegungssperre aktiv';
-            $message = sprintf('Keine Fahrt: %s.', $reason);
+            $reason  = $blockReason !== '' ? $blockReason : $this->Translate('movement lock active');
+            $message = sprintf($this->Translate('No movement: %s.'), $reason);
         } elseif ($this->moveSkipReason !== '') {
             // Fahrbefehl wurde geprüft, aber als nicht erforderlich verworfen (bereits erreicht, Karenzzeit, zu kleine Bewegung)
-            $message = sprintf('Keine Fahrt: %s (Ziel: %s%s).', $this->moveSkipReason, $target, $hint !== '' ? ', ' . $hint : '');
+            $message = sprintf($this->Translate('No movement: %s (target: %s%s).'), $this->moveSkipReason, $target, $hint !== '' ? ', ' . $hint : '');
         } else {
             // Fahrbefehl wurde ausgelöst
-            $message = sprintf('Fahrt: %s%s.', $target, $hint !== '' ? sprintf(' (%s)', $hint) : '');
+            $message = sprintf($this->Translate('Movement: %s%s.'), $target, $hint !== '' ? sprintf(' (%s)', $hint) : '');
         }
 
-        $this->addTrace('Ergebnis: ' . $message);
+        $this->addTrace(sprintf($this->Translate('Result: %s'), $message));
         $this->Logger_Dbg(__FUNCTION__, $message);
 
         // Statusvariable nur bei aktivierter Option und nur bei einer geänderten Entscheidung aktualisieren
@@ -4609,13 +4614,14 @@ class BlindController extends IPSModuleStrict
      */
     private function buildDecisionTraceHtml(): string
     {
-        $rows = '';
+        $rows         = '';
+        $resultPrefix = sprintf($this->Translate('Result: %s'), ''); // Ergebniszeile in der Sprache der Anlage
         foreach ($this->decisionTrace as $line) {
             if ($line === '') {
                 continue;
             }
 
-            $isResult  = str_starts_with($line, 'Ergebnis:');
+            $isResult  = str_starts_with($line, $resultPrefix);
             $rowStyle  = $isResult ? ' style="font-weight:bold;"' : '';
             $cellStyle = 'padding:2px 8px 2px 0;vertical-align:top;';
 
@@ -4686,14 +4692,14 @@ class BlindController extends IPSModuleStrict
         $slatsLevel = $positions['SlatsLevel'];
 
         if ($this->levelsEqual($blindLevel, $this->profileBlindLevel['MaxValue']) && $this->levelsEqual($slatsLevel, $this->profileSlatsLevel['MaxValue'])) {
-            return 'geschlossen';
+            return $this->Translate('closed');
         }
         if ($this->levelsEqual($blindLevel, $this->profileBlindLevel['MinValue']) && $this->levelsEqual($slatsLevel, $this->profileSlatsLevel['MinValue'])) {
-            return 'geöffnet';
+            return $this->Translate('opened');
         }
 
         return sprintf(
-            'Höhe %s, Lamellen %s',
+            $this->Translate('height %s, slats %s'),
             $this->describeLevel($blindLevel, $this->profileBlindLevel),
             $this->describeLevel($slatsLevel, $this->profileSlatsLevel)
         );
@@ -4708,15 +4714,15 @@ class BlindController extends IPSModuleStrict
         $max = (float)$profile['MaxValue']; // geschlossen
 
         if ($this->levelsEqual($rawLevel, $max)) {
-            return 'geschlossen';
+            return $this->Translate('closed');
         }
         if ($this->levelsEqual($rawLevel, $min)) {
-            return 'geöffnet';
+            return $this->Translate('opened');
         }
 
         $range   = $max - $min;
         $percent = abs($range) > PHP_FLOAT_EPSILON ? (($rawLevel - $min) / $range) * 100 : 0;
-        return sprintf('%.0f %% geschlossen', $percent);
+        return sprintf($this->Translate('%.0f %% closed'), $percent);
     }
 
     private function checkTimeTable(): int
@@ -5149,7 +5155,7 @@ class BlindController extends IPSModuleStrict
             return date('H:i', $ts);
         }
         if (date('Y-m-d', $ts) === date('Y-m-d', strtotime('yesterday'))) {
-            return 'gestern ' . date('H:i', $ts);
+            return sprintf($this->Translate('yesterday %s'), date('H:i', $ts));
         }
         return date('d.m. H:i', $ts);
     }
