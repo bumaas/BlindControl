@@ -181,7 +181,9 @@ Danach `tests/check_locale.php` laufen lassen — es prüft `caption`/`label`/`s
 `form.json` **und** alle `Translate('…')`-Aufrufe in `module.php` und in form.json-Skripten.
 
 **Das Formular muss ohne README verständlich sein** (MCP-Evaluierung 01.10.2026: Eine KI liest nur
-das Formular). Diese Stellen tragen deshalb Wissen, das sonst nur im README stand:
+das Formular). Die allgemeinen Regeln dazu und das Prüfverfahren stehen im Skill `symcon-modul-repo`,
+Beidatei `mcp-tauglichkeit.md`; hier nur, was BlindControl daraus gemacht hat. Diese Stellen tragen
+Wissen, das sonst nur im README stand:
 
 - Die Labels `BlindLevelRangeHint`/`SlatsLevelRangeHint` nennen die Skala der Höhen- bzw.
   Lamellenfelder („… 1 = geöffnet, 0 = geschlossen"). Sie werden in `applyLevelRangeHints()` aus
