@@ -361,7 +361,7 @@ Folgende Statusvariablen werden angelegt:
 #####LAST_MESSAGE
 Die Statusvariable beinhaltet einen Hinweis über die letzte Bewegung. Um die Bewegungen eines Rollladens zu kontrollieren, bietet es sich an, die Archivierung für diese Variable einzuschalten. 
 Dann werden im Webfront die Bewegungen in Form eines Logfiles dargestellt.  
-Auch Konfigurationsfehler werden hier gemeldet. Ist ein solcher Fehler behoben, folgt der Eintrag "Konfiguration ist gültig" – die Fehlermeldung bleibt also nicht als letzter Stand stehen.
+Auch Konfigurationsfehler werden hier gemeldet. Ist ein solcher Fehler behoben, folgt der Eintrag "Konfiguration ist gültig" – die Fehlermeldung bleibt also nicht als letzter Stand stehen. Die Meldungen erscheinen in der Sprache der Symcon-Installation (wie die Erklärung).
 
 #####LAST_DECISION
 Diese Statusvariable ist **optional**. Sie wird nur angelegt, wenn im Konfigurationsformular die Option **„Statusvariable »Letzte Entscheidung« anlegen"** aktiviert ist (andernfalls wird eine ggf. vorhandene Variable wieder entfernt).

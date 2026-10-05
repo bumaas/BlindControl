@@ -24,6 +24,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/harness.php';
 
+// Seit 2.51 build 144 läuft die Meldung über Translate(); geprüft wird der deutsche Wortlaut aus locale.json
+// (die Sprachfrage selbst prüft tests/check-messages-language.php).
+BlindControllerHarness::$sprache = 'de';
 const MELDUNG = 'Konfiguration ist gültig.';
 
 /** Ruft die Entscheidung mit dem bisherigen Status; liefert die dabei geschriebenen Nachrichten. */

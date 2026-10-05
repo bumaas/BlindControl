@@ -446,7 +446,7 @@ class BlindController extends IPSModuleStrict
             if (IPS_EventExists($eventID)) {
                 IPS_DeleteEvent($eventID);
             }
-            $this->Logger_Err(sprintf('CreateWeeklySchedule: %s', $exception->getMessage()));
+            $this->Logger_Err(sprintf($this->Translate('CreateWeeklySchedule: %s'), $exception->getMessage()));
             return $this->Translate('The weekly schedule could not be created. See the log for details.');
         }
 
@@ -464,7 +464,7 @@ class BlindController extends IPSModuleStrict
         if ($Value) {
             $this->resetManualMovement();
         } else {
-            $this->Logger_Inf(sprintf('\'%s\' wurde deaktiviert.', IPS_GetObject($this->InstanceID)['ObjectName']));
+            $this->Logger_Inf(sprintf($this->Translate("'%s' was deactivated."), IPS_GetObject($this->InstanceID)['ObjectName']));
         }
 
         $this->SetValue(self::VAR_IDENT_ACTIVATED, $Value);
@@ -1575,7 +1575,7 @@ class BlindController extends IPSModuleStrict
         // Timestamp der Automatik merken (sonst wird die Bewegung später als manuelle Bewegung erkannt)
         $this->WriteAttributeInteger(self::ATTR_TIMESTAMP_AUTOMATIC, time());
 
-        $this->Logger_Inf(sprintf('\'%s\' bewegt sich nun wieder automatisch.', $this->objectName));
+        $this->Logger_Inf(sprintf($this->Translate("'%s' moves automatically again."), $this->objectName));
     }
 
     private function RegisterProperties(): void
@@ -1932,7 +1932,7 @@ class BlindController extends IPSModuleStrict
     private function logRecoveryFromErrorStatus(int $previousStatus): void
     {
         if ($previousStatus >= IS_EBASE) {
-            $this->Logger_Inf(sprintf('\'%s\': Konfiguration ist gültig.', $this->objectName));
+            $this->Logger_Inf(sprintf($this->Translate("'%s': Configuration is valid."), $this->objectName));
         }
     }
 
@@ -2152,7 +2152,7 @@ class BlindController extends IPSModuleStrict
                     foreach ($this->splitConfiguredValues($this->ReadPropertyString($propName)) as $token) {
                         if ($this->parseNumericToken($token) === null) {
                             $this->Logger_Err(
-                                sprintf('%s: Rohwert "%s" ist ungültig (erlaubt: Zahl, >x, >=x, <x, <=x, a-b; Dezimaltrennzeichen ist der Punkt)', $propName, $token)
+                                sprintf($this->Translate('%s: raw value "%s" is invalid (allowed: number, >x, >=x, <x, <=x, a-b; the decimal separator is the point)'), $propName, $token)
                             );
                             return self::STATUS_INST_CONTACT_VALUES_ARE_INVALID;
                         }
@@ -2435,7 +2435,7 @@ class BlindController extends IPSModuleStrict
             $min === null => sprintf('bis %d', $max),
             default       => sprintf('%d - %d', $min, $max),
         };
-        $this->Logger_Err(sprintf('\'%s\': %s: Wert (%s) nicht im gültigen Bereich (%s)', $this->objectName, $propName, $value, $range));
+        $this->Logger_Err(sprintf($this->Translate("'%s': %s: value (%s) not in the valid range (%s)"), $this->objectName, $propName, $value, $range));
 
         return self::STATUS_INST_VALUE_IS_OUT_OF_RANGE;
     }
@@ -2464,20 +2464,20 @@ class BlindController extends IPSModuleStrict
         $variableID = $this->ReadPropertyInteger($propName);
 
         if (!$optional && !IPS_VariableExists($variableID)) {
-            $this->Logger_Err(sprintf('\'%s\': ID nicht gesetzt: %s', $this->objectName, $propName));
+            $this->Logger_Err(sprintf($this->Translate("'%s': ID not set: %s"), $this->objectName, $propName));
             return $errStatus;
         }
 
         if (IPS_VariableExists($variableID)) {
             if (!$variable = @IPS_GetVariable($variableID)) {
-                $this->Logger_Err(sprintf('\'%s\': falsche Variablen ID (#%s) für "%s"', $this->objectName, $variableID, $propName));
+                $this->Logger_Err(sprintf($this->Translate("'%s': wrong variable ID (#%s) for \"%s\""), $this->objectName, $variableID, $propName));
                 return $errStatus;
             }
 
             if (!in_array($variable['VariableType'], $variableTypes, true)) {
                 $this->Logger_Err(
                     sprintf(
-                        '\'%s\': falscher Variablentyp (%s) für "%s" - nur %s erlaubt',
+                        $this->Translate("'%s': wrong variable type (%s) for \"%s\" - only %s allowed"),
                         $this->objectName,
                         $variable['VariableType'],
                         $propName,
@@ -2496,7 +2496,7 @@ class BlindController extends IPSModuleStrict
 
                 if ($profileAction <= 10000) {
                     $this->Logger_Err(
-                        sprintf('\'%s\': die Variable #%s für "%s" ist nicht schaltbar', $this->objectName, $variableID, $propName)
+                        sprintf($this->Translate("'%s': the variable #%s for \"%s\" is not switchable"), $this->objectName, $variableID, $propName)
                     );
                     return $errStatus;
                 }
@@ -2539,18 +2539,18 @@ class BlindController extends IPSModuleStrict
         $eventID = $this->ReadPropertyInteger($propName);
 
         if (!$optional && !IPS_EventExists($eventID)) {
-            $this->Logger_Err(sprintf('\'%s\': ID nicht gesetzt: %s', $this->objectName, $propName));
+            $this->Logger_Err(sprintf($this->Translate("'%s': ID not set: %s"), $this->objectName, $propName));
             return $errStatus;
         }
 
         if (IPS_EventExists($eventID)) {
             if (!$variable = @IPS_GetEvent($eventID)) {
-                $this->Logger_Err(sprintf('\'%s\': falsche Event ID #%s', $this->objectName, $propName));
+                $this->Logger_Err(sprintf($this->Translate("'%s': wrong event ID #%s"), $this->objectName, $propName));
                 return $errStatus;
             }
 
             if ($variable['EventType'] !== $eventType) {
-                $this->Logger_Err(sprintf('\'%s\': falscher Eventtyp - nur %s erlaubt', $this->objectName, $eventType));
+                $this->Logger_Err(sprintf($this->Translate("'%s': wrong event type - only %s allowed"), $this->objectName, $eventType));
                 return $errStatus;
             }
         }
@@ -2563,7 +2563,7 @@ class BlindController extends IPSModuleStrict
         $value = $this->ReadPropertyInteger($propName);
 
         if ($value < $min || $value > $max) {
-            $this->Logger_Err(sprintf('\'%s\': %s: Wert (%s) nicht im gültigen Bereich (%s - %s)', $this->objectName, $propName, $value, $min, $max));
+            $this->Logger_Err(sprintf($this->Translate("'%s': %s: value (%s) not in the valid range (%s - %s)"), $this->objectName, $propName, $value, $min, $max));
             return $errStatus;
         }
 
@@ -2580,7 +2580,7 @@ class BlindController extends IPSModuleStrict
 
         if ($value < $min || $value > $max) {
             $this->Logger_Err(
-                sprintf('\'%s\': %s: Wert (%.2f) nicht im gültigen Bereich (%.2f - %.2f)', $this->objectName, $propName, $value, $min, $max)
+                sprintf($this->Translate("'%s': %s: value (%.2f) not in the valid range (%.2f - %.2f)"), $this->objectName, $propName, $value, $min, $max)
             );
             return $errStatus;
         }
@@ -3874,12 +3874,12 @@ class BlindController extends IPSModuleStrict
 
         if ($slatsLevelAct === null) {
             if ($this->levelsEqual($blindLevelAct, $blindLevelClosed)) {
-                $this->Logger_Inf(sprintf('\'%s\' wurde manuell geschlossen.', $this->objectName));
+                $this->Logger_Inf(sprintf($this->Translate("'%s' was closed manually."), $this->objectName));
             } elseif ($this->levelsEqual($blindLevelAct, $blindLevelOpened)) {
-                $this->Logger_Inf(sprintf('\'%s\' wurde manuell geöffnet.', $this->objectName));
+                $this->Logger_Inf(sprintf($this->Translate("'%s' was opened manually."), $this->objectName));
             } else {
                 $percent = ($blindLevelAct - $blindLevelOpened) / ($blindLevelClosed - $blindLevelOpened);
-                $this->Logger_Inf(sprintf('\'%s\' wurde manuell auf %.0f%% gefahren.', $this->objectName, 100 * $percent));
+                $this->Logger_Inf(sprintf($this->Translate("'%s' was moved manually to %.0f%%."), $this->objectName, 100 * $percent));
             }
             return;
         }
@@ -3889,16 +3889,16 @@ class BlindController extends IPSModuleStrict
         $slatsLevelOpened = $this->profileSlatsLevel['MinValue'];
 
         if ($this->levelsEqual($blindLevelAct, $blindLevelClosed) && $this->levelsEqual($slatsLevelAct, $slatsLevelClosed)) {
-            $this->Logger_Inf(sprintf('\'%s\' wurde manuell geschlossen.', $this->objectName));
+            $this->Logger_Inf(sprintf($this->Translate("'%s' was closed manually."), $this->objectName));
         } elseif ($this->levelsEqual($blindLevelAct, $blindLevelOpened) && $this->levelsEqual($slatsLevelAct, $slatsLevelOpened)) {
-            $this->Logger_Inf(sprintf('\'%s\' wurde manuell geöffnet.', $this->objectName));
+            $this->Logger_Inf(sprintf($this->Translate("'%s' was opened manually."), $this->objectName));
         } else {
             $blindPercent = ($blindLevelAct - $blindLevelOpened) / ($blindLevelClosed - $blindLevelOpened);
             $slatsPercent = ($slatsLevelAct - $slatsLevelOpened) / ($slatsLevelClosed - $slatsLevelOpened);
 
             $this->Logger_Inf(
                 sprintf(
-                    '\'%s\' wurde manuell auf %.0f%%(Höhe), %.0f%%(Lamellen) gefahren.',
+                    $this->Translate("'%s' was moved manually to %.0f%% (height), %.0f%% (slats)."),
                     $this->objectName,
                     100 * $blindPercent,
                     100 * $slatsPercent
@@ -3935,11 +3935,11 @@ class BlindController extends IPSModuleStrict
         );
 
         if ($percentBlindClose < 0 || $percentBlindClose > 100) {
-            $this->Logger_Err(sprintf('%s: percentBlindClose (%s) out of range 0-100', __FUNCTION__, $percentBlindClose));
+            $this->Logger_Err(sprintf($this->Translate('%s: percentBlindClose (%s) out of range 0-100'), __FUNCTION__, $percentBlindClose));
             return false;
         }
         if ($percentSlatsClose !== null && ($percentSlatsClose < 0 || $percentSlatsClose > 100)) {
-            $this->Logger_Err(sprintf('%s: percentSlatsClose (%s) out of range 0-100', __FUNCTION__, $percentSlatsClose));
+            $this->Logger_Err(sprintf($this->Translate('%s: percentSlatsClose (%s) out of range 0-100'), __FUNCTION__, $percentSlatsClose));
             return false;
         }
 
@@ -4162,7 +4162,7 @@ class BlindController extends IPSModuleStrict
 
         $this->Logger_Err(
             sprintf(
-                '\'%s\': ID %s (%s): Fehler beim Setzen des Wertes. (Value = %s, Parent: "%s").',
+                $this->Translate("'%s': ID %s (%s): error while setting the value. (Value = %s, Parent: \"%s\")."),
                 $this->objectName,
                 $id,
                 $propName,
@@ -4291,7 +4291,7 @@ class BlindController extends IPSModuleStrict
             $this->stopRecheckTimerIfIdle();
             $this->Logger_Err(
                 sprintf(
-                    '\'%s\': Der Aktor hat die Zielposition (%d%% geschlossen) auch nach %d Fahrbefehlen nicht bestätigt. Die von #%s(%s) gemeldete Position ist möglicherweise nicht aktuell.',
+                    $this->Translate("'%s': The actuator did not confirm the target position (%d%% closed) even after %d move commands. The position reported by #%s(%s) may not be up to date."),
                     $this->objectName,
                     $percentClose,
                     $attempts,
@@ -4464,7 +4464,7 @@ class BlindController extends IPSModuleStrict
         }
         $this->Logger_Inf(
             sprintf(
-                '\'%s\': Die Statusvariable #%s(%s) hat die Zielposition (%s%% geschlossen) nicht erreicht! (Differenz: %.2f%%).',
+                $this->Translate("'%s': The status variable #%s(%s) did not reach the target position (%s%% closed)! (Difference: %.2f%%)."),
                 $this->objectName,
                 $levelID,
                 $propName,
@@ -4486,23 +4486,27 @@ class BlindController extends IPSModuleStrict
         $min = (float)$profile['MinValue'];
         $max = (float)$profile['MaxValue'];
 
-        // Status-Text ermitteln
+        // Nachricht als ganzer Satz je Fall, damit die Übersetzung die Wortstellung bestimmen kann
         if ($this->levelsEqual($rLevelneu, $max)) {
-            $actionText = 'geschlossen';
+            $logMessage = sprintf(
+                $isBlind ? $this->Translate("'%s' was closed.") : $this->Translate("The slats '%s' were closed."),
+                $this->objectName
+            );
         } elseif ($this->levelsEqual($rLevelneu, $min)) {
-            $actionText = 'geöffnet';
+            $logMessage = sprintf(
+                $isBlind ? $this->Translate("'%s' was opened.") : $this->Translate("The slats '%s' were opened."),
+                $this->objectName
+            );
         } else {
             // Division durch Null verhindern, falls Min == Max (unwahrscheinlich, aber sicher ist sicher)
             $range        = ($max - $min);
             $levelPercent = $range != 0 ? ($rLevelneu - $min) / $range : 0;
-            $actionText   = sprintf('auf %.0f%% gefahren', 100 * $levelPercent);
+            $logMessage   = sprintf(
+                $isBlind ? $this->Translate("'%s' was moved to %.0f%%.") : $this->Translate("The slats '%s' were moved to %.0f%%."),
+                $this->objectName,
+                100 * $levelPercent
+            );
         }
-
-        // Subjekt des Satzes bestimmen
-        $subject = $isBlind ? sprintf("'%s' wurde", $this->objectName) : sprintf("Die Lamellen '%s' wurden", $this->objectName);
-
-        // Nachricht zusammensetzen
-        $logMessage = sprintf('%s %s.', $subject, $actionText);
 
         // Hinweis anhängen, falls vorhanden
         if ($hint !== '') {

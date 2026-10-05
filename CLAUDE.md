@@ -78,7 +78,11 @@ Zuarbeiter: Gründe (`shadowingReason`, `moveSkipReason`, Sperrgründe aus `shou
 `tests/check-explain-language.php` hält das fest: statisch kein freies Textliteral in diesen Funktionen
 (Debug-Ausgaben ausgenommen), dazu die Bausteine englisch und mit `BlindControllerHarness::$sprache = 'de'`
 im bisherigen deutschen Wortlaut. Neue Protokolltexte also gleich mit Schlüssel und Übersetzung anlegen.
-Weiter fest auf Deutsch (nicht Teil des Protokolls): `WriteInfo()` (Letzte Nachricht) und die Log-Meldungen.
+**Ebenso jede Meldung an `Logger_Inf`/`Logger_Err`** („Letzte Nachricht“ und Symcon-Log, seit build 144): Der
+erste Parameter ist `$this->Translate(…)` bzw. `sprintf($this->Translate(…), …)`; `WriteInfo()` setzt den Satz je
+Fall als Ganzes zusammen (Rollladen/Lamellen × zu/auf/Prozent), damit die Übersetzung die Wortstellung bestimmt.
+`tests/check-messages-language.php` prüft das statisch und an den Meldungen selbst; `check-status-recovery.php`
+läuft dafür mit `$sprache = 'de'`. Nur `Logger_Dbg`/`SendDebug` bleiben, wie sie sind.
 
 **`$dryRun`** (gesetzt nur von `ExplainControlBlind()`) macht denselben Lauf zustandsfrei:
 kein Fahrbefehl, keine Änderung an Attributen, Variablen oder Timern. Wer Logik ergänzt,
