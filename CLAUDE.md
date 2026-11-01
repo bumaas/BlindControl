@@ -9,7 +9,7 @@ Symcon-Modulbibliothek zur Rollladen-/Jalousiesteuerung (`IPSModuleStrict`, `dec
   - `locale.json` — deutsche Übersetzungen (Schlüssel müssen exakt den form.json-/`Translate()`-Texten entsprechen)
 - `BlindControlGroupMaster/` — Gruppen-Master (Präfix `BLCGM`), liest/setzt Properties mehrerer Blind-Controller-Instanzen; Formular **dynamisch** in `GetConfigurationForm()` erzeugt, kein `form.json`
 - `docs/ARCHITECTURE.md` — verbindliche Konventionen für neuen Code (Lifecycle, Konstantenschema, Logging, Methodengröße) plus offene To-dos
-- `README.md` — Endnutzer-Doku (Funktionsumfang, Konfiguration, Statusvariablen)
+- `README.md` und `README.en.md` — Endnutzer-Doku deutsch und englisch (Funktionsumfang, Konfiguration, Statusvariablen); die englische ist seit build 147 die Store-Doku für Englisch
 - `library.json` (Repo-Wurzel) — Version, Build, Datum (Build-Konvention siehe globale CLAUDE.md)
 
 Beide Module sind eigenständige Geräte-Instanzen (`type: 3`) ohne Parent; `ReceiveData()` im
@@ -29,6 +29,7 @@ C:/php/php tests/check-value-ranges.php          # Wertebereiche: Formulargrenze
 C:/php/php tests/check-status-recovery.php       # Meldung „Konfiguration ist gültig" nach Fehlerstatus
 C:/php/php tests/check-debug-schedule.php        # Debug-Zeile zum Wochenplan (Kurzfassung statt Ereignis-JSON)
 C:/php/php tests/check-weekly-schedule.php       # Auf-/Abzeit aus dem Wochenplan (Fixtures: echte IPS_GetEvent-Mitschnitte)
+C:/php/php tests/check-readme-languages.php      # README.md und README.en.md: Sprachverweis, gleiche Eigenschaften/Funktionen/Überschriften
 ```
 
 Die CI (`.github/workflows/check.yml`, PHP 8.4, Checkout mit Submodulen) fährt diese Schritte:
@@ -37,7 +38,7 @@ Die CI (`.github/workflows/check.yml`, PHP 8.4, Checkout mit Submodulen) fährt 
 `.style` (`--dry-run`); JSON-Validität aller `*.json` außer `tests/stubs`; `check_locale.php`;
 danach jede `tests/check-*.php` (derzeit `check-level-conversion.php`, `check-archiv-belegt.php`,
 `check-form-hints.php`, `check-value-ranges.php`, `check-status-recovery.php`, `check-debug-schedule.php`,
-`check-weekly-schedule.php`, `check-readme.php`). Bis auf `check-readme.php` sind es Regressionstests gegen den offiziellen
+`check-weekly-schedule.php`, `check-readme.php`, `check-readme-languages.php`). Bis auf die beiden README-Prüfungen sind es Regressionstests gegen den offiziellen
 Kernel-Stub (`tests/stubs`, über `tests/harness.php`) — lokal also dasselbe vor dem Commit
 laufen lassen. Zuletzt die statischen MCP-Regeln über die Action `bumaas/symcon-mcp-check@v1`
 (privates Repo, für eigene Repos freigegeben); sie scheitert nur an Fehlern, Warnungen sind offene Punkte.
@@ -175,7 +176,7 @@ Bei Änderungen an Formular-/Hilfetexten immer synchron halten:
 
 1. `form.json` — englischer Text (zugleich Übersetzungsschlüssel)
 2. `locale.json` — deutscher Text unter exakt diesem Schlüssel
-3. `README.md` — falls die Stelle dort ebenfalls dokumentiert ist
+3. `README.md` **und** `README.en.md` — falls die Stelle dort ebenfalls dokumentiert ist; `tests/check-readme-languages.php` wird rot, wenn Eigenschaften, Skriptfunktionen, Statusvariablen, Bilder oder Überschriften nur in einer Fassung stehen
 
 Danach `tests/check_locale.php` laufen lassen — es prüft `caption`/`label`/`suffix` aus
 `form.json` **und** alle `Translate('…')`-Aufrufe in `module.php` und in form.json-Skripten.
