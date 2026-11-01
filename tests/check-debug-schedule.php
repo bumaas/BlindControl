@@ -49,9 +49,45 @@ $quelle  = implode('', array_slice(file($methode->getFileName()), $methode->getS
 pruefe(!str_contains($quelle, 'json_encode($event'), 'getUpDownTime schreibt das Ereignis nicht mehr als JSON');
 pruefe(str_contains($quelle, 'formatScheduleDebug('), 'getUpDownTime nutzt die Kurzfassung');
 
-/* D. Dasselbe beim Formular: GetConfigurationForm schrieb bei jedem Öffnen das ganze Formular
+/* D. Feiertag: Gilt wegen des Feiertagsindikators der Plan eines anderen Wochentags, muss das dastehen.
+ *    Anlass Forum 01.11.2026 (Allerheiligen): Das Debug zeigte an einem Sonntag „Samstag“, ohne Grund. */
+echo "\nD. Feiertag: Debug und Erklärung nennen den Grund für den anderen Wochentag\n";
+$text = zeile($m, 41321, 6, '09:00', '22:00', 7);
+pruefe(str_contains($text, 'Samstag') && str_contains($text, 'Feier-/Urlaubstag') && str_contains($text, 'Sonntag'), "nennt Plantag, Feiertag und echten Tag ($text)");
+pruefe(strlen($text) < 120, 'bleibt kurz (' . strlen($text) . ' Zeichen)');
+$text = zeile($m, 41321, 7, '09:00', '22:00');
+pruefe(!str_contains($text, 'Feier-/Urlaubstag'), "ohne Feiertag kein Hinweis ($text)");
+
+$dayState = [
+    'isDay'               => true,
+    'isDayByTimeSchedule' => true,
+    'isDayByDayDetection' => null,
+    'brightness'          => null,
+    'brightnessAvgNote'   => '',
+    'scheduleAuf'         => '09:00',
+    'scheduleAb'          => '22:00',
+    'scheduleHolidayDay'  => 6,
+];
+BlindControllerHarness::$sprache = 'de';
+try {
+    $text = (string)$m->ruf('buildDayStateTrace', $dayState);
+} finally {
+    BlindControllerHarness::$sprache = null;
+}
+pruefe(str_contains($text, 'Feier-/Urlaubstag') && str_contains($text, 'Samstag'), "Erklärung nennt Feiertag und Plantag ($text)");
+$text = (string)$m->ruf('buildDayStateTrace', $dayState);
+pruefe(str_contains($text, 'Holiday') && str_contains($text, 'Saturday'), "englisch ebenso ($text)");
+unset($dayState['scheduleHolidayDay']);
+$text = (string)$m->ruf('buildDayStateTrace', $dayState);
+pruefe(!str_contains($text, 'Holiday'), "ohne Feiertag kein Hinweis in der Erklärung ($text)");
+
+$methode = new ReflectionMethod(BlindController::class, 'getUpAndDownPoints');
+$quelle  = implode('', array_slice(file($methode->getFileName()), $methode->getStartLine() - 1, $methode->getEndLine() - $methode->getStartLine() + 1));
+pruefe(str_contains($quelle, "date('N')") && preg_match('/getUpDownTime\([^)]*,[^)]*,[^)]*,[^)]*\)/', $quelle) === 1, 'getUpAndDownPoints reicht den echten Wochentag an getUpDownTime weiter');
+
+/* E. Dasselbe beim Formular: GetConfigurationForm schrieb bei jedem Öffnen das ganze Formular
  *    (rund 54 kB) ins Debug. Wer es braucht, holt es mit IPS_GetConfigurationForm. */
-echo "\nD. Das Formular landet nicht mehr im Debug\n";
+echo "\nE. Das Formular landet nicht mehr im Debug\n";
 $methode = new ReflectionMethod(BlindController::class, 'GetConfigurationForm');
 $quelle  = implode('', array_slice(file($methode->getFileName()), $methode->getStartLine() - 1, $methode->getEndLine() - $methode->getStartLine() + 1));
 pruefe(!str_contains($quelle, 'SendDebug'), 'GetConfigurationForm schreibt nichts ins Debug');

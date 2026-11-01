@@ -54,6 +54,9 @@ class BlindController extends IPSModuleStrict
     private const string PROP_WEEKLYTIMETABLEEVENTID            = 'WeeklyTimeTableEventID';
     private const string PROP_HOLIDAYINDICATORID                = 'HolidayIndicatorID';
     private const string PROP_DAYUSEDWHENHOLIDAY                = 'DayUsedWhenHoliday';
+
+    // Wochentage nach date('N'), englisch als Übersetzungsschlüssel (dieselben wie im Formular)
+    private const array WEEKDAY_NAMES = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'];
     private const string PROP_WAKEUPTIMEID                      = 'WakeUpTimeID';
     private const string PROP_WAKEUPTIMEOFFSET                  = 'WakeUpTimeOffset';
     private const string PROP_BEDTIMEID                         = 'BedTimeID';
@@ -1127,7 +1130,8 @@ class BlindController extends IPSModuleStrict
     {
         $scheduleAuf         = null;
         $scheduleAb          = null;
-        $isDayByTimeSchedule = $this->getIsDayByTimeSchedule($scheduleAuf, $scheduleAb);
+        $scheduleHolidayDay  = null;
+        $isDayByTimeSchedule = $this->getIsDayByTimeSchedule($scheduleAuf, $scheduleAb, $scheduleHolidayDay);
         $brightness          = null;
         $isDayByDayDetection = $this->getIsDayByDayDetection($brightness, $currentBlindLevel);
 
@@ -1144,7 +1148,8 @@ class BlindController extends IPSModuleStrict
             'brightness'          => $brightness,
             'brightnessAvgNote'   => $brightness !== null ? $this->brightnessAvgInfo : '',
             'scheduleAuf'         => $scheduleAuf,
-            'scheduleAb'          => $scheduleAb
+            'scheduleAb'          => $scheduleAb,
+            'scheduleHolidayDay'  => $scheduleHolidayDay
         ];
     }
 
@@ -4534,8 +4539,20 @@ class BlindController extends IPSModuleStrict
         $day        = $this->Translate('Day');
         $night      = $this->Translate('Night');
         $wochenplan = sprintf($this->Translate('Weekly schedule: %s'), $dayState['isDayByTimeSchedule'] ? $day : $night);
+        $details    = [];
         if (!empty($dayState['scheduleAuf']) || !empty($dayState['scheduleAb'])) {
-            $wochenplan .= sprintf(' (%s–%s)', $dayState['scheduleAuf'] ?? '—', $dayState['scheduleAb'] ?? '—');
+            $details[] = sprintf('%s–%s', $dayState['scheduleAuf'] ?? '—', $dayState['scheduleAb'] ?? '—');
+        }
+        // Am Feier-/Urlaubstag gilt der Plan eines anderen Wochentags; ohne diesen Hinweis passen die Zeiten
+        // scheinbar nicht zum Tag.
+        if (!empty($dayState['scheduleHolidayDay']) && isset(self::WEEKDAY_NAMES[$dayState['scheduleHolidayDay']])) {
+            $details[] = sprintf(
+                $this->Translate('Holiday/vacation day: %s'),
+                $this->Translate(self::WEEKDAY_NAMES[$dayState['scheduleHolidayDay']])
+            );
+        }
+        if ($details !== []) {
+            $wochenplan .= sprintf(' (%s)', implode(', ', $details));
         }
         $parts[] = $wochenplan;
         if ($dayState['isDayByDayDetection'] !== null) {
@@ -4849,7 +4866,7 @@ class BlindController extends IPSModuleStrict
         return $isDayDayDetection;
     }
 
-    private function getIsDayByTimeSchedule(?string &$heute_auf = null, ?string &$heute_ab = null): ?bool
+    private function getIsDayByTimeSchedule(?string &$heute_auf = null, ?string &$heute_ab = null, ?int &$holidayDay = null): ?bool
     {
         //Ermitteln, welche Zeiten heute und gestern gelten
         // heute_auf/heute_ab werden zusätzlich per Referenz zurückgegeben und fließen in den
@@ -4858,7 +4875,7 @@ class BlindController extends IPSModuleStrict
         $heute_auf = null;
         $heute_ab  = null;
 
-        if (!$this->getUpAndDownPoints($heute_auf, $heute_ab)) {
+        if (!$this->getUpAndDownPoints($heute_auf, $heute_ab, $holidayDay)) {
             return null;
         }
         $this->SendDebug(__FUNCTION__, sprintf('heute_auf: %s, heute_ab: %s', $heute_auf, $heute_ab), 0);
@@ -4866,21 +4883,19 @@ class BlindController extends IPSModuleStrict
     }
 
     //-------------------------------------
-    private function getUpAndDownPoints(?string &$heute_auf, ?string &$heute_ab): bool
+    private function getUpAndDownPoints(?string &$heute_auf, ?string &$heute_ab, ?int &$holidayDay = null): bool
     {
-        // An Feiertagen und Urlaubstagen können abweichende Tage gelten
+        // An Feiertagen und Urlaubstagen können abweichende Tage gelten; $holidayDay ist dann der Plantag.
+        $weekDay            = (int)date('N');
+        $holidayDay         = null;
         $holidayIndicatorID = $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID);
         if (IPS_VariableExists($holidayIndicatorID) && ($this->ReadPropertyInteger(self::PROP_DAYUSEDWHENHOLIDAY) !== 0)
-            && GetValueBoolean(
-                $this->ReadPropertyInteger(self::PROP_HOLIDAYINDICATORID)
-            )) {
-            $weekDay = $this->ReadPropertyInteger(self::PROP_DAYUSEDWHENHOLIDAY);
-        } else {
-            $weekDay = (int)date('N');
+            && GetValueBoolean($holidayIndicatorID)) {
+            $holidayDay = $this->ReadPropertyInteger(self::PROP_DAYUSEDWHENHOLIDAY);
         }
 
         //Ermitteln, welche Zeiten heute laut Wochenplan gelten
-        if (!$this->getUpDownTime($weekDay, $heute_auf, $heute_ab)) {
+        if (!$this->getUpDownTime($holidayDay ?? $weekDay, $heute_auf, $heute_ab, $holidayDay !== null ? $weekDay : null)) {
             //der Wochenplan ist ungültig
             return false;
         }
@@ -4913,7 +4928,7 @@ class BlindController extends IPSModuleStrict
     }
 
     //-----------------------------------------------
-    private function getUpDownTime(int $weekDay, ?string &$auf, ?string &$ab): bool
+    private function getUpDownTime(int $weekDay, ?string &$auf, ?string &$ab, ?int $actualWeekDayIfHoliday = null): bool
     {
         $weeklyTimeTableEventId = $this->ReadPropertyInteger(self::PROP_WEEKLYTIMETABLEEVENTID);
         if (!$event = @IPS_GetEvent($weeklyTimeTableEventId)) {
@@ -4928,7 +4943,7 @@ class BlindController extends IPSModuleStrict
         $auf = $this->getUpTimeOfDay($weekDay, $event['ScheduleGroups']);
         $ab  = $this->getDownTimeOfDay($weekDay, $event['ScheduleGroups']);
 
-        $this->SendDebug(__FUNCTION__, $this->formatScheduleDebug($weeklyTimeTableEventId, $weekDay, $auf, $ab), 0);
+        $this->SendDebug(__FUNCTION__, $this->formatScheduleDebug($weeklyTimeTableEventId, $weekDay, $auf, $ab, $actualWeekDayIfHoliday), 0);
 
         return true;
     }
@@ -4936,15 +4951,24 @@ class BlindController extends IPSModuleStrict
     /**
      * Kurzfassung des Wochenplans für das Debug: nur das, was der Steuerungslauf daraus liest. Das vollständige
      * Ereignis (rund 2 kB JSON je Lauf) verdeckte die Entscheidungszeilen; wer es braucht, holt es mit IPS_GetEvent.
+     *
+     * $actualWeekDayIfHoliday ist gesetzt, wenn der Feier-/Urlaubstag-Indikator einen anderen Plantag vorgibt;
+     * sonst stünde z. B. an einem Sonntag kommentarlos „Samstag“ im Debug.
      */
-    private function formatScheduleDebug(int $eventID, int $weekDay, ?string $auf, ?string $ab): string
+    private function formatScheduleDebug(int $eventID, int $weekDay, ?string $auf, ?string $ab, ?int $actualWeekDayIfHoliday = null): string
     {
         $dayNames = [1 => 'Montag', 2 => 'Dienstag', 3 => 'Mittwoch', 4 => 'Donnerstag', 5 => 'Freitag', 6 => 'Samstag', 7 => 'Sonntag'];
+        $dayName  = $dayNames[$weekDay] ?? sprintf('Tag %d', $weekDay);
+        if ($actualWeekDayIfHoliday !== null) {
+            $dayName .= $actualWeekDayIfHoliday === $weekDay
+                ? ' (Feier-/Urlaubstag)'
+                : sprintf(' (Feier-/Urlaubstag, heute %s)', $dayNames[$actualWeekDayIfHoliday] ?? $actualWeekDayIfHoliday);
+        }
 
         return sprintf(
             'Wochenplan #%d, %s: auf %s, ab %s',
             $eventID,
-            $dayNames[$weekDay] ?? sprintf('Tag %d', $weekDay),
+            $dayName,
             $auf ?? 'keine Zeit',
             $ab ?? 'keine Zeit'
         );

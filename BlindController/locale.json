@@ -274,6 +274,7 @@
       "%s: actuator reports no positions (follow-up stopped after %d movement commands)": "%s: Aktor meldet keine Positionen zurück (Nachfassen nach %d Fahrbefehlen eingestellt)",
       "%s: movement of %s to %d%% closed not confirmed (attempt %d of %d), reported position is considered unreliable": "%s: Fahrt von %s auf %d%% geschlossen nicht bestätigt (Versuch %d von %d), gemeldete Position gilt als unzuverlässig",
       "Weekly schedule: %s": "Wochenplan: %s",
+      "Holiday/vacation day: %s": "Feier-/Urlaubstag: %s",
       "Day detection: %s": "Tagerkennung: %s",
       "Brightness: %s%s": "Helligkeit: %s%s",
       "movement lock active": "Bewegungssperre aktiv",
